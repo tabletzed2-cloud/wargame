@@ -111,6 +111,16 @@
 
     const STORAGE_KEY = 'wargameV10';
 
+    // Безопасная обёртка для localStorage
+    function safeLocalStorage(method, ...args) {
+      try {
+        return window.localStorage[method](...args);
+      } catch (e) {
+        console.warn('localStorage недоступен, работаем без сохранения');
+        return null;
+      }
+    }
+
     function getDefaultData() {
       return {
         "factions": {
@@ -175,7 +185,7 @@
 
     let appData;
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = safeLocalStorage('getItem', STORAGE_KEY);
       if (saved) {
         appData = JSON.parse(saved);
         if (!appData.factions || !appData.templates || !appData.squads) throw new Error('Структура повреждена');
@@ -184,7 +194,7 @@
       }
     } catch (e) {
       console.warn('Сброс данных', e);
-      localStorage.removeItem(STORAGE_KEY);
+      safeLocalStorage('removeItem', STORAGE_KEY);
       appData = getDefaultData();
     }
 
@@ -222,7 +232,9 @@
     let morale = currentSquad ? (currentSquad.currentMorale ?? currentSquad.baseMorale) : 0;
     let suppressed = false, routed = false;
 
-    function saveData() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(appData)); } catch(e) { log('Ошибка сохранения.'); } }
+    function saveData() { 
+      safeLocalStorage('setItem', STORAGE_KEY, JSON.stringify(appData));
+    }
 
     // =================== БОЕВЫЕ ФУНКЦИИ ===================
     function updateUI() {
@@ -521,3 +533,4 @@
   </script>
 </body>
 </html>
+```
