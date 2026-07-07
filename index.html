@@ -73,9 +73,16 @@
       <label>Дистанция до цели (гексы): <input type="number" id="targetDistance" value="5" min="1" style="width:60px"></label>
     </div>
     <div id="squadContainer">Загрузка...</div>
+    <div id="activeCardsBattle" style="margin:6px 0; padding:6px; background:#2a2a2a; border-radius:4px;">
+  <strong>Активные карты:</strong> <span id="activeCardsListBattle">Нет</span>
+      <div id="activeCardButtons" style="margin:6px 0;"></div>
+</div>
     <div id="moraleContainer"></div>
     <div id="statusContainer"></div>
     <div>
+      <button onclick="resupply('ammoSmall')">➕ Патроны</button>
+      <button onclick="resupply('ammoOrdnance')">➕ Снаряды</button>
+      <button onclick="resupply('grenades')">➕ Гранаты</button>
       <button onclick="changeMorale(1)">+1</button>
       <button onclick="changeMorale(-1)">-1</button>
       <button onclick="changeMorale(5)">+5</button>
@@ -169,7 +176,6 @@ if (!selectedFaction) {
             ],
             "cardLibrary": [
   { "name": "Кальвинистская эффективность", "desc": "Голландское подразделение получает +1 к меткости, если не двигалось.", "effect": "+1 меткость (голландцы, без движения)", "shotMod": 0, "accuracyMod": 1, "moraleMod": 0, "icon": "", "subfaction": "dutch", "requires": "stationary" },
-  { "name": "Mannlicher M.95", "desc": "Бельгийские отряды не могут быть выбраны.", "effect": "Блокировка бельгийцев", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "dutch", "blockBelgian": true },
   { "name": "Ослепляющие гранаты Panzerblinde", "desc": "3 гранаты, ослепляют танк на 2 хода.", "effect": "Ослепление техники (3 заряда)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "charges": 3 },
   { "name": "Дисковый магазин к FN model D", "desc": "Замена ручных пулемётов FN model D на D-exp во всех отрядах.", "effect": "Апгрейд пулемётов", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "upgradeMGs": true },
   { "name": "Кумулятивные винтовочные гранаты", "desc": "Каждое пехотное отделение получает по 2 гранаты против техники (пробитие 50мм).", "effect": "2 винтовочные гранаты на отделение", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "atGrenades": 2 },
@@ -293,6 +299,7 @@ appData.templates.forEach(t => {
 });
     appData.modifiers = appData.modifiers || [];
     appData.activeCards = appData.activeCards || [];
+    appData.activeCards.forEach(c => { if (c.active === undefined) c.active = true; });
     Object.values(appData.factions).forEach(f => {
       f.cardLibrary = f.cardLibrary || [];
       f.weapons = f.weapons || [];
@@ -531,9 +538,58 @@ function resetAllData() {
       const eff = morale + mod;
       const pct = Math.max(0, eff / base * 100);
       document.getElementById('moraleContainer').innerHTML = `<div>Дух: ${morale}/${base} ${mod !== 0 ? `(эфф. ${eff})` : ''}</div><div class="morale-bar" style="width:${pct}%; background:${eff <= 0 ? '#c0392b' : eff <= base/2 ? '#f39c12' : '#27ae60'}"></div>`;
+      updateActiveCardsBattle();
       document.getElementById('statusContainer').innerHTML = ` 🔫 Патроны: ${currentSquad.ammoSmall} | 💣 Гранаты: ${currentSquad.grenades} | 🚀 Снаряды: ${currentSquad.ammoOrdnance}`;
     }
+    renderActiveCardButtons();
+    function renderActiveCardButtons() {
+  const container = document.getElementById('activeCardButtons');
+  if (!container) return;
+  const active = appData.activeCards.filter(c => c.active);
+  if (active.length === 0) { container.innerHTML = ''; return; }
 
+  let html = '<div style="font-size:0.9rem; margin-bottom:4px;">🎴 Использовать карту:</div>';
+  active.forEach((card, idx) => {
+    // Ослепляющие гранаты (есть заряды)
+    if (card.name === 'Ослепляющие гранаты Panzerblinde' && (card.charges || 0) > 0) {
+      html += `<button onclick="usePanzerblinde(${idx})" style="background:#5d3a1a;">✨ Ослепить танк (${card.charges} залп.)</button> `;
+    }
+    // Кумулятивные винтовочные гранаты (работают через обычный бросок гранат)
+    // Фламандская фурия (переброс в рукопашной) – применяется автоматически в meleeAttack
+    // Mannlicher M.95 – блокирует бельгийцев (уже учтено при выборе шаблонов)
+  });
+  container.innerHTML = html;
+}
+
+// Использование ослепляющих гранат
+function usePanzerblinde(cardIndex) {
+  const card = appData.activeCards[cardIndex];
+  if (!card || card.name !== 'Ослепляющие гранаты Panzerblinde' || card.charges <= 0) return;
+  card.charges--;
+  log('=== ОСЛЕПЛЯЮЩАЯ ГРАНАТА ===');
+  const roll = rollD10();
+  if (roll >= 6) { // как обычная граната
+    log(`✅ Успех! Танк ослеплён и обездвижен на 2 тактических хода.`);
+  } else {
+    log(`❌ Промах (d10=${roll}).`);
+  }
+  if (card.charges <= 0) {
+    appData.activeCards.splice(cardIndex, 1);
+    log('Заряды ослепляющих гранат закончились.');
+  }
+  saveData();
+  updateUI();
+}
+function updateActiveCardsBattle() {
+  const container = document.getElementById('activeCardsListBattle');
+  if (!container) return;
+  const active = appData.activeCards.filter(c => c.active);
+  if (active.length === 0) {
+    container.innerHTML = 'Нет';
+    return;
+  }
+  container.innerHTML = active.map(c => `${c.name} [${c.faction}]`).join(', ');
+}
     function adjustHP(index, delta) {
       if (!currentSquad || index < 0 || index >= currentSquad.fighters.length) return;
       const f = currentSquad.fighters[index];
@@ -544,7 +600,16 @@ function resetAllData() {
       saveData();
       if (f.hp === 0) log(`${f.name} потерял сознание (HP 0).`);
     }
-
+function resupply(type) {
+  if (!currentSquad) return;
+  const amount = parseInt(prompt(`Сколько единиц добавить?`, '10'));
+  if (isNaN(amount) || amount <= 0) return;
+  if (type === 'ammoSmall') currentSquad.ammoSmall += amount;
+  else if (type === 'ammoOrdnance') currentSquad.ammoOrdnance += amount;
+  else if (type === 'grenades') currentSquad.grenades += amount;
+  saveData();
+  updateUI();
+}
     function changeMorale(d) { if (!currentSquad) return; morale = Math.max(0, morale + d); currentSquad.currentMorale = morale; updateUI(); saveData(); }
     function setMoraleDirect() { const v = parseInt(document.getElementById('moraleDirectInput').value); if (!isNaN(v) && currentSquad) { morale = Math.max(0, v); currentSquad.currentMorale = morale; updateUI(); saveData(); } }
     function healAll() { if (!currentSquad) return; currentSquad.fighters.forEach(f => f.hp = f.maxHp); morale = currentSquad.baseMorale; currentSquad.currentMorale = morale; suppressed = routed = false; updateUI(); saveData(); }
@@ -610,6 +675,12 @@ function meleeAttack() {
     else { log(`${f.name}: рукопашная d6=${roll - bonus}+${bonus}=${roll} промах`); }
   });
   log(`Раунд: попаданий ${hits}, урон ${totalDamage}. Враг -1 дух.`);
+  const furyCard = appData.activeCards.find(c => c.active && c.name === 'Фламандская Фурия');
+let roll = rollD6() + bonus;
+if (furyCard && roll === 1 + bonus) {
+  log(`${f.name}: переброс d6=1 (Фламандская Фурия)`);
+  roll = rollD6() + bonus;
+}
 }
 
 function attackVehicle() {
@@ -935,7 +1006,41 @@ function renderCardSelectionForBattle() {
   }
   container.innerHTML = allCards.map((c, i) => `<label><input type="checkbox" class="card-check" value="${i}" data-faction="${c.faction}" data-name="${c.name}"> ${c.name} [${c.faction}] — ${c.effect}</label><br>`).join('');
 }
-    function activateSelectedCards() { const checks = document.querySelectorAll('.card-check:checked'); if (checks.length === 0) return; checks.forEach(cb => { const faction = cb.dataset.faction; const name = cb.dataset.name; const card = appData.factions[faction].cardLibrary.find(c => c.name === name); if (card) { appData.activeCards.push({ ...card, faction, active: true }); } }); saveData(); renderActiveEffects(); updateUI(); log('Карты активированы'); }
+    function activateSelectedCards() {
+  const checks = document.querySelectorAll('.card-check:checked');
+  if (checks.length === 0) return;
+  checks.forEach(cb => {
+    const faction = cb.dataset.faction;
+    const name = cb.dataset.name;
+    const card = appData.factions[faction].cardLibrary.find(c => c.name === name);
+    if (card) {
+      appData.activeCards.push({ ...card, faction, active: true });
+      // Уже есть в коде, но убедитесь, что заряды копируются: { ...card } включает charges и atGrenades.
+      // Специальные эффекты при активации
+      if (card.upgradeMGs) {
+        // Замена во всех отрядах
+        appData.squads.forEach(squad => {
+          squad.fighters.forEach(f => {
+            if (f.weapon === 'Ручной пулемет FN model D') {
+              f.weapon = 'Ручной пулемет FN model D-exp';
+            }
+          });
+        });
+        log('Все ручные пулемёты FN model D заменены на D-exp.');
+      }
+    }
+    if (card.name === 'Кумулятивные винтовочные гранаты') {
+  appData.squads.forEach(squad => {
+    squad.grenades += 2;
+  });
+  log('Каждый отряд получил по 2 кумулятивные винтовочные гранаты.');
+}
+  });
+  saveData();
+  renderActiveEffects();
+  updateUI();
+  log('Карты активированы');
+}
     function populateCardsFactionSelect() { const sel = document.getElementById('cardsFactionSelect'); if (sel) sel.innerHTML = Object.keys(appData.factions).map(f=>`<option>${f}</option>`).join(''); }
 
     // =================== ВКЛАДКА ЭФФЕКТЫ ===================
