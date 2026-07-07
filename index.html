@@ -116,6 +116,10 @@
     function log(msg) { const d = document.getElementById('log'); if(d){ d.innerHTML += msg+'<br>'; d.scrollTop = d.scrollHeight; } }
 
     const STORAGE_KEY = 'wargameV10';
+function safeLocalStorage(method, ...args) {
+      try { return window.localStorage[method](...args); }
+      catch(e) { console.warn('localStorage недоступен, работаем без сохранения'); return null; }
+    }    
 let selectedFaction = null;
 let selectedSubFaction = null; // 'belgian', 'dutch' или null
 
@@ -143,11 +147,6 @@ if (!selectedFaction) {
   // Сохраняем выбор
   safeLocalStorage('setItem', 'wargame_choice', JSON.stringify({faction: selectedFaction, sub: selectedSubFaction}));
 }
-    function safeLocalStorage(method, ...args) {
-      try { return window.localStorage[method](...args); }
-      catch(e) { console.warn('localStorage недоступен, работаем без сохранения'); return null; }
-    }
-
     function getDefaultData() {
       return {
         "factions": {
@@ -913,7 +912,7 @@ function attackOrdnance() {
   cards = cards.filter(c => !c.subfaction || c.subfaction === selectedSubFaction || c.subfaction === 'common');
 } else if (selectedFaction !== 'test') {
   cards = cards.filter(c => c.faction === selectedFaction);
-};
+}
     const container = document.getElementById('cardLibraryContainer'); if (cards.length === 0) { container.innerHTML = '<p>Нет карт для этой фракции.</p>'; } else { container.innerHTML = cards.map((c, i) => `<div class="card-item">${c.icon ? `<img src="${c.icon}" onerror="this.style.display='none'">` : ''}<div class="card-info"><h4>${c.name}</h4><div class="desc">${c.desc}</div><div class="effect">Эффект: ${c.effect}</div><small>Выстр: ${c.shotMod}, Точн: ${c.accuracyMod}, Дух: ${c.moraleMod}</small></div><button onclick="editCard('${faction}',${i})">✏️</button><button onclick="deleteCard('${faction}',${i})">❌</button></div>`).join(''); } renderCardSelectionForBattle(); }
     function addCardToLibrary() { const faction = document.getElementById('cardsFactionSelect').value; const name = prompt('Название карты:', 'Новая карта'); if (!name) return; const desc = prompt('Описание:', ''); const effect = prompt('Эффект (текст):', ''); const shotMod = parseInt(prompt('Модификатор выстрелов:', '0')) || 0; const accMod = parseInt(prompt('Модификатор точности:', '0')) || 0; const moraleMod = parseInt(prompt('Модификатор духа:', '0')) || 0; const icon = prompt('URL иконки (или оставьте пустым):', ''); appData.factions[faction].cardLibrary.push({ name, desc: desc || '', effect: effect || '', shotMod, accuracyMod: accMod, moraleMod, icon: icon || '' }); saveData(); renderCardLibrary(); }
     function editCard(faction, idx) { const c = appData.factions[faction].cardLibrary[idx]; const name = prompt('Название:', c.name); if (name === null) return; c.name = name; c.desc = prompt('Описание:', c.desc) || ''; c.effect = prompt('Эффект:', c.effect) || ''; c.shotMod = parseInt(prompt('Модификатор выстрелов:', c.shotMod)) || 0; c.accuracyMod = parseInt(prompt('Модификатор точности:', c.accuracyMod)) || 0; c.moraleMod = parseInt(prompt('Модификатор духа:', c.moraleMod)) || 0; c.icon = prompt('URL иконки:', c.icon) || ''; saveData(); renderCardLibrary(); }
@@ -967,6 +966,7 @@ container.innerHTML = filteredTemplates.map(t => {
   const origIdx = appData.templates.indexOf(t);
   return `<label><input type="checkbox" class="template-check" value="${origIdx}"> ${t.name} [${t.faction}] (${t.fighters.length} бойцов, дух ${t.baseMorale})</label><br>`;
 }).join('');
+}                                        
     function addSelectedTemplatesToBattle() { const checks = document.querySelectorAll('.template-check:checked'); if (checks.length === 0) return; checks.forEach(cb => { const idx = parseInt(cb.value); const tmpl = JSON.parse(JSON.stringify(appData.templates[idx])); tmpl.currentMorale = tmpl.baseMorale; tmpl.hidden = false; appData.squads.push(tmpl); }); if (appData.squads.length > 0) selectSquad(appData.squads.length - 1); saveData(); renderSquadSelector(); updateUI(); }
     function clearAllSquads() { if (!confirm('Удалить ВСЕ отряды из боя?')) return; appData.squads = []; currentSquad = null; currentSquadIndex = -1; morale = 0; saveData(); renderSquadSelector(); updateUI(); }
     function renderTemplates() { const filterFaction = document.getElementById('templateFactionFilter')?.value || ''; const list = appData.templates.filter(t=>!filterFaction || t.faction===filterFaction); document.getElementById('templatesList').innerHTML = list.map((t,i)=>{ const origIdx = appData.templates.indexOf(t); return `<div><b>${t.name}</b> [${t.faction}] (${t.fighters.length} бойцов, дух ${t.baseMorale}) <button onclick="loadTemplateFromList(${origIdx})">Загрузить</button> <button onclick="deleteTemplate(${origIdx})">Удалить</button></div>`; }).join(''); const sel = document.getElementById('templateFactionFilter'); if (sel) { const cur = sel.value; sel.innerHTML = '<option value="">Все</option>' + Object.keys(appData.factions).map(f=>`<option value="${f}" ${f===cur?'selected':''}>${f}</option>`).join(''); } }
