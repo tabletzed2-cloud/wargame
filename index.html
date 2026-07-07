@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v10.7 — увеличение БТР </title>
+  <title>Боевой модуль v10.8 — Брюгге </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -45,7 +45,7 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v10.7 — увеличение БТР </h2>
+  <h2>⚔️ Боевой модуль v10.8 — Брюгге </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -136,7 +136,9 @@
               { "type": "mg", "name": "Станковый пулемет Schwarzlose M.08/15", "crewSize": 3, "shotRule": "sum_d6", "fullCrewDice": 3, "minCrewDice": 1, "effectiveRange": 5 },
               { "type": "mortar", "name": "Минометный расчёт 50мм DBT", "crewSize": 3, "shotRule": "fixed_per_crew", "shotsFull": 3, "shotsReduced2": 2, "shotsReduced1": 1, "effectiveRange": 10 },
               { "type": "at_gun", "name": "Расчёт ПТО Bohler M37", "crewSize": 3, "shotRule": "fixed_per_crew", "shotsFull": 3, "shotsReduced2": 2, "shotsReduced1": 1, "effectiveRange": 10, "penetration": {"1":58,"2":58,"3":58,"4":54,"5":54,"6":54,"7":51,"8":51,"9":51,"10":47,"11":47,"12":47,"13":43,"14":43,"15":43,"16":41,"17":41,"18":41,"19":39,"20":39,"21":39,"22":36,"23":36,"24":36,"25":36,"26":36,"27":36,"28":36,"29":36,"30":36} },
-              { "type": "at_gun", "name": "75-мм орудие SAU Brugge", "crewSize": 5, "shotRule": "fixed_per_crew", "shotsFull": 1, "shotsReduced2": 1, "shotsReduced1": 1, "effectiveRange": 15, "penetration": {"1":65,"2":65,"3":65,"4":60,"5":60,"6":60,"7":57,"8":57,"9":57,"10":55,"11":55,"12":55,"13":55,"14":55,"15":55,"16":52,"17":52,"18":52,"19":50,"20":50,"21":50,"22":47,"23":47,"24":47,"25":45,"26":45,"27":45,"28":40,"29":40,"30":40} }
+              { "type": "at_gun", "name": "75-мм орудие SAU Brugge", "crewSize": 3, "shotRule": "fixed_per_crew", "shotsFull": 2, "shotsReduced2": 1, "shotsReduced1": 1, "effectiveRange": 15, "penetration": {"1":65,"2":65,"3":65,"4":60,"5":60,"6":60,"7":57,"8":57,"9":57,"10":55,"11":55,"12":55,"13":55,"14":55,"15":55,"16":52,"17":52,"18":52,"19":50,"20":50,"21":50,"22":47,"23":47,"24":47,"25":45,"26":45,"27":45,"28":40,"29":40,"30":40} },
+              { "type": "mg", "name": "Пулемёт SAU Brugge", "crewSize": 1, "shotRule": "sum_d6", "fullCrewDice": 1, "minCrewDice": 1, "effectiveRange": 5 
+            }
             ],
             "cardLibrary": [
               { "name": "Фортификация", "desc": "Отряд окапывается на позиции.", "effect": "Враг получает -2 к попаданию", "shotMod": 0, "accuracyMod": -2, "moraleMod": 0, "icon": "" }
@@ -203,9 +205,10 @@
             {"name":"Лейтенант","weapon":"Пистолет Browning Hi-Power","hp":3,"maxHp":3,"isCommander":true}
           ],
           "crewInstances":[
-            {"weaponName":"75-мм орудие SAU Brugge","fighterIndices":[0,1,2,3,4],"active":true}
+            {"weaponName": "75-мм орудие SAU Brugge", "fighterIndices": [2, 3, 4], "active": true },
+            {"weaponName": "Пулемёт SAU Brugge", "fighterIndices": [1], "active": true }
           ],
-          "armor": { "front": 60, "side": 30, "rear": 20, "turret": null }},
+          "armor": { "front": 20, "side": 20, "rear": 40, "turret": 40 }},
           {"name":"Пулеметный расчёт","faction":"A.I.R.F.","baseMorale":5,"currentMorale":5,"icon":"https://i.imgur.com/Gutxlbf.png","fighters":[{"name":"Сержант","weapon":"Винтовка Vz.24","hp":3,"maxHp":3,"isCommander":true},{"name":"Наводчик","weapon":"Пистолет Star M1914","hp":3,"maxHp":3},{"name":"Второй номер","weapon":"Винтовка Vz.24","hp":3,"maxHp":3},{"name":"Подносчик 1","weapon":"Винтовка Vz.24","hp":3,"maxHp":3},{"name":"Подносчик 2","weapon":"Винтовка Vz.24","hp":3,"maxHp":3}],"crewInstances":[{"weaponName":"Станковый пулемет Hotchkiss Mle 1914","fighterIndices":[1,2],"active":true}]},
           {"name":"БТР Llanero","faction":"A.I.R.F.","baseMorale":8,"currentMorale":8,"icon":"","fighters":[
             {"name":"Механик-водитель","weapon":"Пистолет Star M1914","hp":3,"maxHp":3}
