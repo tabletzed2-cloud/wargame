@@ -217,6 +217,20 @@
         "activeCards": []
       };
     }
+     let appData;
+    try {
+      const saved = safeLocalStorage('getItem', STORAGE_KEY);
+      if (saved) {
+        appData = JSON.parse(saved);
+        if (!appData.factions || !appData.templates || !appData.squads) throw new Error('Структура повреждена');
+      } else {
+        appData = getDefaultData();
+      }
+    } catch (e) {
+      console.warn('Сброс данных', e);
+      safeLocalStorage('removeItem', STORAGE_KEY);
+      appData = getDefaultData();
+    }
   appData.squads = appData.squads || [];
     appData.templates = appData.templates || [];
     appData.modifiers = appData.modifiers || [];
