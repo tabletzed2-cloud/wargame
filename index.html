@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v10.3 — рукопашная, ДОТ, САУ, БТР</title>
+  <title>Боевой модуль v10.4 — десант и броня</title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -36,10 +36,16 @@
       border:2px solid #e74c3c; background:#3a2a2a;
     }
     .squad-select-info { flex:1; }
+    .armor-badge {
+      background:#555; color:#fff; padding:2px 6px; border-radius:3px; font-size:0.8rem; margin-right:4px;
+    }
+    .embarked-info {
+      background:#2a2a2a; padding:6px; border-radius:4px; margin-top:8px; display:inline-block;
+    }
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v10.3 — рукопашная, ДОТ, САУ, БТР</h2>
+  <h2>⚔️ Боевой модуль v10.4 — десант и броня</h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -50,7 +56,6 @@
     <button class="tablinks" onclick="openTab(event,'saveTab')">💾 Шаблоны</button>
   </div>
 
-  <!-- Вкладка Бой -->
   <div id="battleTab" class="tabcontent" style="display:block">
     <div class="section">
       <h3>Подготовка к бою</h3>
@@ -62,6 +67,7 @@
     </div>
     <hr>
     <div id="activeSquadArea"></div>
+    <div id="embarkPanel" style="display:none; margin:8px 0; background:#2a2a2a; padding:8px; border-radius:6px;"></div>
     <div class="section">
       <label>Дистанция до цели (гексы): <input type="number" id="targetDistance" value="5" min="1" style="width:60px"></label>
     </div>
@@ -90,22 +96,11 @@
     <div class="log" id="log"></div>
   </div>
 
-  <!-- Вкладка Состав -->
   <div id="rosterTab" class="tabcontent"><h3>Редактирование отряда</h3><div id="rosterContent"></div></div>
-
-  <!-- Вкладка Оружие -->
   <div id="weaponTab" class="tabcontent"><h3>Личное оружие фракций</h3><div><label>Фракция: <select id="factionSelect" onchange="loadWeaponTable()"></select></label><button onclick="addFaction()">➕ Фракция</button><button onclick="deleteFaction()">❌ Удалить</button></div><div class="section">Прицельная дальность (гексы) и рукопашный бонус (для справки).</div><div id="weaponTableContainer"></div><button onclick="addWeapon()">➕ Оружие</button><button onclick="applyWeaponChanges()">💾 Сохранить</button></div>
-
-  <!-- Вкладка Расчёты -->
   <div id="crewTab" class="tabcontent"><h3>Орудия и расчёты</h3><div><label>Фракция: <select id="crewFactionSelect" onchange="loadCrewWeapons()"></select></label></div><div id="crewWeaponList"></div><button onclick="addCrewWeapon()">➕ Орудие</button><button onclick="applyCrewChanges()">💾 Сохранить</button><hr><div id="crewDetails" style="display:none"></div></div>
-
-  <!-- Вкладка Карты -->
   <div id="cardsTab" class="tabcontent"><h3>🃏 Фракционные карты</h3><div><label>Фракция: <select id="cardsFactionSelect" onchange="renderCardLibrary()"></select></label><button onclick="addCardToLibrary()">➕ Добавить карту</button></div><div id="cardLibraryContainer"></div><hr><h4>Выбрать карты в активные</h4><div id="cardSelectionForBattle"></div><button onclick="activateSelectedCards()">✅ Активировать выбранные карты</button></div>
-
-  <!-- Вкладка Активные эффекты -->
   <div id="activeEffectsTab" class="tabcontent"><h3>✨ Активные эффекты</h3><p>Текущие модификаторы, влияющие на бой:</p><div id="activeCardsList"></div><hr><h4>Добавить свободный модификатор</h4><div class="modifier-row"><input type="text" id="modName" placeholder="Название" style="width:100px"><label>Выстр: <input type="number" id="modShots" value="0" style="width:50px"></label><label>Точн: <input type="number" id="modAcc" value="0" style="width:50px"></label><label>Дух: <input type="number" id="modMorale" value="0" style="width:50px"></label><button onclick="addModifier()">➕</button></div><div id="modifiersList"></div></div>
-
-  <!-- Вкладка Шаблоны -->
   <div id="saveTab" class="tabcontent"><h3>Шаблоны отрядов</h3><div><label>Фильтр по фракции: <select id="templateFactionFilter" onchange="renderTemplates()"><option value="">Все</option></select></label><button onclick="saveCurrentAsTemplate()">💾 Сохранить отряд как шаблон</button></div><div id="templatesList"></div><hr><button onclick="exportAllData()">📤 Экспорт всех данных</button><input type="file" id="importFile" onchange="importAllData(event)" style="display:none"><button onclick="document.getElementById('importFile').click()">📥 Импорт данных</button></div>
 
   <script>
@@ -164,7 +159,6 @@
         },
         "squads": [],
         "templates": [
-          // ========== BeVe ==========
           {"name":"Пехотное отделение №1","faction":"BeVe","baseMorale":9,"currentMorale":9,"icon":"https://i.imgur.com/3D9DutR.png","fighters":[{"name":"Сержант","weapon":"Автоматическая винтовка Johanson M1941","hp":3,"maxHp":3,"isCommander":true},{"name":"Стрелок 1","weapon":"Винтовка FN model 24/30","hp":3,"maxHp":3},{"name":"Стрелок 2","weapon":"Винтовка FN model 24/30","hp":3,"maxHp":3},{"name":"Стрелок 3","weapon":"Винтовка FN model 24/30","hp":3,"maxHp":3},{"name":"Стрелок 4","weapon":"Винтовка FN model 24/30","hp":3,"maxHp":3},{"name":"Стрелок 5","weapon":"Винтовка FN model 24/30","hp":3,"maxHp":3},{"name":"Пулемётчик","weapon":"Ручной пулемет FN model D","hp":3,"maxHp":3},{"name":"Второй номер","weapon":"Винтовка FN model 24/30","hp":3,"maxHp":3},{"name":"Стрелок 6","weapon":"Винтовка FN model 24/30","hp":3,"maxHp":3}],"crewInstances":[]},
           {"name":"ДОТ Bosh","faction":"BeVe","baseMorale":10,"currentMorale":10,"icon":"","fighters":[
             {"name":"Лейтенант","weapon":"Пистолет Browning Hi-Power","hp":3,"maxHp":3,"isCommander":true},
@@ -192,23 +186,17 @@
           ],
           "crewInstances":[
             {"weaponName":"75-мм орудие SAU Brugge","fighterIndices":[0,1,2,3,4],"active":true}
-          ]},
-          // ========== A.I.R.F. ==========
+          ],
+          "armor": { "front": 60, "side": 30, "rear": 20, "turret": null }},
           {"name":"Пулеметный расчёт","faction":"A.I.R.F.","baseMorale":5,"currentMorale":5,"icon":"https://i.imgur.com/Gutxlbf.png","fighters":[{"name":"Сержант","weapon":"Винтовка Vz.24","hp":3,"maxHp":3,"isCommander":true},{"name":"Наводчик","weapon":"Пистолет Star M1914","hp":3,"maxHp":3},{"name":"Второй номер","weapon":"Винтовка Vz.24","hp":3,"maxHp":3},{"name":"Подносчик 1","weapon":"Винтовка Vz.24","hp":3,"maxHp":3},{"name":"Подносчик 2","weapon":"Винтовка Vz.24","hp":3,"maxHp":3}],"crewInstances":[{"weaponName":"Станковый пулемет Hotchkiss Mle 1914","fighterIndices":[1,2],"active":true}]},
           {"name":"БТР Llanero","faction":"A.I.R.F.","baseMorale":8,"currentMorale":8,"icon":"","fighters":[
-            {"name":"Механик-водитель","weapon":"Пистолет Star M1914","hp":3,"maxHp":3},
-            {"name":"Деса́нтник 1","weapon":"Винтовка Vz.24","hp":3,"maxHp":3},
-            {"name":"Деса́нтник 2","weapon":"Винтовка Vz.24","hp":3,"maxHp":3},
-            {"name":"Деса́нтник 3","weapon":"Винтовка Vz.24","hp":3,"maxHp":3},
-            {"name":"Деса́нтник 4","weapon":"Винтовка Vz.24","hp":3,"maxHp":3},
-            {"name":"Деса́нтник 5","weapon":"Винтовка Vz.24","hp":3,"maxHp":3},
-            {"name":"Деса́нтник 6","weapon":"Винтовка Vz.24","hp":3,"maxHp":3},
-            {"name":"Деса́нтник 7","weapon":"Винтовка Vz.24","hp":3,"maxHp":3},
-            {"name":"Деса́нтник 8","weapon":"Винтовка Vz.24","hp":3,"maxHp":3}
+            {"name":"Механик-водитель","weapon":"Пистолет Star M1914","hp":3,"maxHp":3}
           ],
           "crewInstances":[
-            {"weaponName":"Станковый пулемет Hotchkiss Mle 1914","fighterIndices":[1],"active":true}
-          ]}
+            {"weaponName":"Станковый пулемет Hotchkiss Mle 1914","fighterIndices":[],"active":true}
+          ],
+          "armor": { "front": 25, "side": 15, "rear": 10, "turret": null },
+          "embarkedSquadIndex": null}
         ],
         "modifiers": [],
         "activeCards": []
@@ -240,8 +228,17 @@
       f.crewWeapons = f.crewWeapons || [];
       if (f.icon === undefined) f.icon = "";
     });
-    appData.squads.forEach(s => { if (s.icon === undefined) s.icon = ""; });
-    appData.templates.forEach(t => { if (t.icon === undefined) t.icon = ""; });
+    appData.squads.forEach(s => { 
+      if (s.icon === undefined) s.icon = ""; 
+      if (s.armor === undefined) s.armor = null;
+      if (s.embarkedSquadIndex === undefined) s.embarkedSquadIndex = null;
+      if (s.hidden === undefined) s.hidden = false;
+    });
+    appData.templates.forEach(t => { 
+      if (t.icon === undefined) t.icon = ""; 
+      if (t.armor === undefined) t.armor = null;
+      if (t.embarkedSquadIndex === undefined) t.embarkedSquadIndex = null;
+    });
 
     if (appData.squads.length === 0 && appData.templates.length > 0) {
       appData.squads = appData.templates.map(t => JSON.parse(JSON.stringify(t)));
@@ -277,29 +274,38 @@
         suppressed = false; routed = false;
         updateUI();
         renderSquadSelector();
+        renderEmbarkPanel();
       } else {
         currentSquadIndex = -1;
         currentSquad = null;
         updateUI();
         renderSquadSelector();
+        document.getElementById('embarkPanel').style.display = 'none';
       }
     }
 
     function renderSquadSelector() {
       const area = document.getElementById('activeSquadArea');
       if (!area) return;
-      if (appData.squads.length === 0) {
+      const visibleSquads = appData.squads.filter(s => !s.hidden);
+      if (visibleSquads.length === 0) {
         area.innerHTML = '<p>Нет активных отрядов.</p><button onclick="createNewSquad()">➕ Создать новый отряд</button>';
         return;
       }
       let html = '<div style="margin-bottom:8px;"><strong>Активные отряды в бою:</strong></div>';
-      appData.squads.forEach((squad, index) => {
+      visibleSquads.forEach((squad) => {
+        const index = appData.squads.indexOf(squad);
         const isActive = index === currentSquadIndex;
         const activeClass = isActive ? 'active-squad' : '';
+        let armorStr = '';
+        if (squad.armor) {
+          armorStr = ` <span class="armor-badge">Лоб:${squad.armor.front} Борт:${squad.armor.side} Корма:${squad.armor.rear}` + (squad.armor.turret !== null && squad.armor.turret !== undefined ? ` Башня:${squad.armor.turret}` : '') + `</span>`;
+        }
         html += `
           <div class="squad-select-card ${activeClass}">
             <div class="squad-select-info">
-              <strong>${squad.name}</strong> [${squad.faction}] — бойцов: ${squad.fighters.length}, дух: ${squad.currentMorale ?? squad.baseMorale}/${squad.baseMorale}
+              <strong>${squad.name}</strong> [${squad.faction}]${armorStr} — бойцов: ${squad.fighters.length}, дух: ${squad.currentMorale ?? squad.baseMorale}/${squad.baseMorale}
+              ${squad.embarkedSquadIndex !== null ? ' <span class="embarked-info">🚌 Десант: ' + appData.squads[squad.embarkedSquadIndex].name + '</span>' : ''}
             </div>
             <button onclick="selectSquad(${index})" ${isActive ? 'disabled' : ''}>${isActive ? '✅ Текущий' : 'Выбрать'}</button>
             <button onclick="removeSquadByIndex(${index})" style="background:#555;">❌</button>
@@ -311,8 +317,14 @@
     }
 
     function removeSquadByIndex(idx) {
-      if (appData.squads.length <= 1) { alert('Нельзя удалить последний отряд из боя.'); return; }
-      if (!confirm(`Удалить отряд "${appData.squads[idx].name}" из боя?`)) return;
+      const squad = appData.squads[idx];
+      if (!confirm(`Удалить отряд "${squad.name}" из боя?`)) return;
+      // Если этот отряд был десантом в другом БТР, снимаем
+      for (let other of appData.squads) {
+        if (other.embarkedSquadIndex === idx) {
+          other.embarkedSquadIndex = null;
+        }
+      }
       appData.squads.splice(idx, 1);
       if (currentSquadIndex === idx) selectSquad(0);
       else if (currentSquadIndex > idx) currentSquadIndex--;
@@ -335,7 +347,10 @@
           { name: "Командир", weapon: getFactionWeapons(faction)[0]?.name || 'Без оружия', hp:3, maxHp:3, isCommander:true },
           { name: "Боец 1", weapon: getFactionWeapons(faction)[0]?.name || 'Без оружия', hp:3, maxHp:3 }
         ],
-        crewInstances: []
+        crewInstances: [],
+        armor: null,
+        embarkedSquadIndex: null,
+        hidden: false
       };
       appData.squads.push(newSquad);
       selectSquad(appData.squads.length - 1);
@@ -343,11 +358,76 @@
       updateUI();
     }
 
+    // =================== ПОСАДКА ДЕСАНТА ===================
+    function renderEmbarkPanel() {
+      const panel = document.getElementById('embarkPanel');
+      if (!currentSquad || !currentSquad.armor || currentSquad.name !== 'БТР Llanero') {
+        panel.style.display = 'none';
+        return;
+      }
+      panel.style.display = 'block';
+      const available = appData.squads.filter((s, i) => 
+        i !== currentSquadIndex && !s.armor && !s.hidden && s.fighters.length <= 9
+      );
+      if (currentSquad.embarkedSquadIndex !== null) {
+        const emb = appData.squads[currentSquad.embarkedSquadIndex];
+        panel.innerHTML = `Десант: ${emb.name} (${emb.fighters.length} чел.) <button onclick="disembarkSquad()">Высадить</button>`;
+      } else {
+        if (available.length === 0) {
+          panel.innerHTML = 'Нет отрядов, которые можно посадить (до 9 чел.).';
+        } else {
+          panel.innerHTML = '<label>Посадить десант: <select id="embarkSelect">' + available.map(s => `<option value="${appData.squads.indexOf(s)}">${s.name} [${s.faction}] (${s.fighters.length} чел.)</option>`).join('') + '</select> <button onclick="embarkSelectedSquad()">Посадить</button></label>';
+        }
+      }
+    }
+
+    function embarkSelectedSquad() {
+      const sel = document.getElementById('embarkSelect');
+      if (!sel || !currentSquad) return;
+      const targetIdx = parseInt(sel.value);
+      if (isNaN(targetIdx)) return;
+      const targetSquad = appData.squads[targetIdx];
+      if (targetSquad.fighters.length > 9) {
+        alert('Отряд слишком большой (макс. 9 человек).');
+        return;
+      }
+      currentSquad.embarkedSquadIndex = targetIdx;
+      targetSquad.hidden = true;
+      saveData();
+      renderSquadSelector();
+      renderEmbarkPanel();
+      updateUI();
+      log(`Отряд "${targetSquad.name}" погрузился в ${currentSquad.name}.`);
+    }
+
+    function disembarkSquad() {
+      if (!currentSquad || currentSquad.embarkedSquadIndex === null) return;
+      const embIdx = currentSquad.embarkedSquadIndex;
+      const embSquad = appData.squads[embIdx];
+      embSquad.hidden = false;
+      currentSquad.embarkedSquadIndex = null;
+      saveData();
+      renderSquadSelector();
+      renderEmbarkPanel();
+      updateUI();
+      log(`Отряд "${embSquad.name}" высадился из ${currentSquad.name}.`);
+    }
+
     // =================== ПОРОГИ ПОДАВЛЕНИЯ ===================
     function getSuppressionThreshold() {
       if (!currentSquad) return 0;
-      const alive = currentSquad.fighters.filter(f => f.hp > 0).length;
+      const alive = getEffectiveFighters();
       return alive > 5 ? 3 : 2;
+    }
+
+    function getEffectiveFighters() {
+      if (!currentSquad) return 0;
+      let count = currentSquad.fighters.filter(f => f.hp > 0).length;
+      if (currentSquad.embarkedSquadIndex !== null) {
+        const emb = appData.squads[currentSquad.embarkedSquadIndex];
+        count += emb.fighters.filter(f => f.hp > 0).length;
+      }
+      return count;
     }
 
     // =================== БОЕВЫЕ ФУНКЦИИ ===================
@@ -356,6 +436,9 @@
       if (!currentSquad) { container.innerHTML = 'Нет активного отряда'; return; }
       let html = '';
       if (currentSquad.icon) html += `<div class="squad-header"><img src="${currentSquad.icon}" alt="icon"><strong>${currentSquad.name}</strong> [${currentSquad.faction}]</div>`;
+      if (currentSquad.armor) {
+        html += `<div style="margin-bottom:6px; font-size:0.9rem; color:#aaa;">🛡️ Броня: Лоб ${currentSquad.armor.front}мм / Борт ${currentSquad.armor.side}мм / Корма ${currentSquad.armor.rear}мм` + (currentSquad.armor.turret !== null && currentSquad.armor.turret !== undefined ? ` / Башня ${currentSquad.armor.turret}мм` : '') + `</div>`;
+      }
       currentSquad.fighters.forEach((f, index) => {
         const cls = f.hp === 0 ? 'dead' : '';
         html += `<div class="card ${cls}">
@@ -364,6 +447,10 @@
           <button onclick="adjustHP(${index}, -1)" style="background:#c0392b; padding:2px 5px;">-</button>
         </div>`;
       });
+      if (currentSquad.embarkedSquadIndex !== null) {
+        const emb = appData.squads[currentSquad.embarkedSquadIndex];
+        html += `<div style="margin-top:8px; padding:6px; background:#2a2a2a; border-radius:4px;"><strong>🚌 Десант: ${emb.name} (${emb.fighters.filter(f=>f.hp>0).length} живых)</strong></div>`;
+      }
       container.innerHTML = html;
 
       const base = currentSquad.baseMorale;
@@ -401,7 +488,7 @@
       const weapons = getFactionWeapons(currentSquad.faction);
       const crewWeapons = getFactionCrewWeapons(currentSquad.faction);
       const isSuppressed = getEffectiveMorale() <= getSuppressionThreshold();
-
+      const isVehicle = !!currentSquad.armor;
       const crewMemberIndices = new Set();
       if (currentSquad.crewInstances) {
         currentSquad.crewInstances.forEach(ci => { if (ci.active !== false) ci.fighterIndices.forEach(idx => crewMemberIndices.add(idx)); });
@@ -409,30 +496,38 @@
 
       log('=== АТАКА ===');
       let totalShots = 0, hits = 0, totalDamage = 0;
-      currentSquad.fighters.forEach((f, index) => {
-        if (f.hp === 0 || crewMemberIndices.has(index)) return;
-        const w = weapons.find(w => w.name === f.weapon);
-        if (!w) { log(`${f.name}: оружие "${f.weapon}" не найдено`); return; }
-        let shots = w.values[rollD6() - 1];
-        shots = Math.max(0, shots + shotMod);
-        if (shots > 0) {
-          totalShots += shots;
-          for (let i = 0; i < shots; i++) {
-            let roll = rollD10();
-            let effRoll = roll + accMod;
-            if (isSuppressed) effRoll -= 1;
-            if (dist > (w.effectiveRange || 0)) { const pen = Math.floor((dist - (w.effectiveRange || 0)) / 2); effRoll -= pen; log(`${f.name}: дальность ${dist}, прицельная ${w.effectiveRange}, штраф -${pen}`); }
-            if (effRoll >= cover) { hits++; log(`${f.name}: d10=${roll} -> ${effRoll} Попал`); } else { log(`${f.name}: d10=${roll} -> ${effRoll} Мимо`); }
+      
+      if (!isVehicle) {
+        currentSquad.fighters.forEach((f, index) => {
+          if (f.hp === 0 || crewMemberIndices.has(index)) return;
+          const w = weapons.find(w => w.name === f.weapon);
+          if (!w) { log(`${f.name}: оружие "${f.weapon}" не найдено`); return; }
+          let shots = w.values[rollD6() - 1];
+          shots = Math.max(0, shots + shotMod);
+          if (shots > 0) {
+            totalShots += shots;
+            for (let i = 0; i < shots; i++) {
+              let roll = rollD10();
+              let effRoll = roll + accMod;
+              if (isSuppressed) effRoll -= 1;
+              if (dist > (w.effectiveRange || 0)) { const pen = Math.floor((dist - (w.effectiveRange || 0)) / 2); effRoll -= pen; log(`${f.name}: дальность ${dist}, прицельная ${w.effectiveRange}, штраф -${pen}`); }
+              if (effRoll >= cover) { hits++; log(`${f.name}: d10=${roll} -> ${effRoll} Попал`); } else { log(`${f.name}: d10=${roll} -> ${effRoll} Мимо`); }
+            }
           }
-        }
-      });
+        });
+      }
 
       if (currentSquad.crewInstances) {
         currentSquad.crewInstances.forEach(ci => {
           if (ci.active === false) return;
           const cw = crewWeapons.find(w => w.name === ci.weaponName);
           if (!cw) return;
-          const alive = ci.fighterIndices.filter(idx => currentSquad.fighters[idx]?.hp > 0).length;
+          let alive = ci.fighterIndices.filter(idx => currentSquad.fighters[idx]?.hp > 0).length;
+          // БТР с десантом: если это пулемёт, используем десант
+          if (isVehicle && currentSquad.embarkedSquadIndex !== null && ci.weaponName.includes('Станковый пулемет')) {
+            const emb = appData.squads[currentSquad.embarkedSquadIndex];
+            alive = emb.fighters.filter(f => f.hp > 0).length > 0 ? 1 : 0;
+          }
           if (alive === 0) return;
           let shots = 0;
           if (cw.shotRule === 'sum_d6') {
@@ -466,8 +561,8 @@
     }
 
     function throwGrenades() {
-      if (!currentSquad) return;
-      if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит и не может бросать гранаты.'); return; }
+      if (!currentSquad || currentSquad.armor) { log('Техника не бросает гранаты.'); return; }
+      if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); return; }
       const activeMods = [...(appData.activeCards || []).filter(c => c.active), ...(appData.modifiers || []).filter(m => m.active)];
       const accMod = activeMods.reduce((s, m) => s + (m.accuracyMod || 0), 0);
       const isSuppressed = getEffectiveMorale() <= getSuppressionThreshold();
@@ -477,44 +572,28 @@
         if (f.hp === 0) return;
         const roll = rollD10();
         let effRoll = roll + accMod - (isSuppressed ? 1 : 0);
-        if (effRoll >= 6) {
-          totalHits++;
-          const dmg = rollD6();
-          totalDamage += dmg;
-          log(`${f.name}: бросок гранаты d10=${roll} (эфф.${effRoll}) -> попадание, урон d6=${dmg}`);
-        } else {
-          log(`${f.name}: бросок гранаты d10=${roll} (эфф.${effRoll}) -> мимо`);
-        }
+        if (effRoll >= 6) { totalHits++; const dmg = rollD6(); totalDamage += dmg; log(`${f.name}: бросок гранаты d10=${roll} -> попадание, урон ${dmg}`); }
+        else { log(`${f.name}: бросок гранаты d10=${roll} -> мимо`); }
       });
-      log(`Всего попаданий гранат: ${totalHits}, суммарный урон: ${totalDamage}. Противник получает урон.`);
+      log(`Всего попаданий гранат: ${totalHits}, суммарный урон: ${totalDamage}.`);
     }
 
     function meleeAttack() {
-      if (!currentSquad) return;
-      if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит, рукопашная невозможна.'); return; }
+      if (!currentSquad || currentSquad.armor) { log('Техника не участвует в рукопашной.'); return; }
+      if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); return; }
       const weapons = getFactionWeapons(currentSquad.faction);
-      log('=== РУКОПАШНАЯ (раунд) ===');
+      log('=== РУКОПАШНАЯ ===');
       let hits = 0, totalDamage = 0;
       currentSquad.fighters.forEach(f => {
         if (f.hp === 0) return;
         const w = weapons.find(w => w.name === f.weapon);
         let bonus = 0;
-        if (w) {
-          const nameLower = w.name.toLowerCase();
-          if (nameLower.includes('винтовка') || nameLower.includes('карабин')) {
-            bonus = 1;
-          }
-        }
+        if (w) { const nameLower = w.name.toLowerCase(); if (nameLower.includes('винтовка') || nameLower.includes('карабин')) bonus = 1; }
         const roll = rollD6() + bonus;
-        if (roll >= 5) {
-          hits++;
-          totalDamage += 3;
-          log(`${f.name}: рукопашная d6=${roll - bonus} + ${bonus} = ${roll} -> попадание (3 урона)`);
-        } else {
-          log(`${f.name}: рукопашная d6=${roll - bonus} + ${bonus} = ${roll} -> промах`);
-        }
+        if (roll >= 5) { hits++; totalDamage += 3; log(`${f.name}: рукопашная d6=${roll - bonus}+${bonus}=${roll} попадание (3 урона)`); }
+        else { log(`${f.name}: рукопашная d6=${roll - bonus}+${bonus}=${roll} промах`); }
       });
-      log(`Раунд завершён: попаданий ${hits}, урон ${totalDamage}. Враг получает -1 боевой дух (единоразово за атаку).`);
+      log(`Раунд: попаданий ${hits}, урон ${totalDamage}. Враг -1 дух.`);
     }
 
     function attackVehicle() {
@@ -533,22 +612,13 @@
         if (alive === 0) return;
         let shots = alive >= (cw.crewSize || 3) ? (cw.shotsFull || 3) : alive >= 2 ? (cw.shotsReduced2 || 2) : (cw.shotsReduced1 || 1);
         const penetration = cw.penetration || {};
-        let penMM = penetration[String(dist)];
-        if (penMM === undefined) {
-          const keys = Object.keys(penetration).map(Number).sort((a, b) => a - b);
-          if (keys.length > 0) {
-            if (dist <= keys[0]) penMM = penetration[keys[0]];
-            else if (dist >= keys[keys.length - 1]) penMM = penetration[keys[keys.length - 1]];
-            else { for (let i = 0; i < keys.length - 1; i++) { if (dist >= keys[i] && dist <= keys[i + 1]) { penMM = Math.round(penetration[keys[i]] + (penetration[keys[i + 1]] - penetration[keys[i]]) * (dist - keys[i]) / (keys[i + 1] - keys[i])); break; } } }
-          }
-          if (penMM === undefined) penMM = 0;
-        }
+        let penMM = penetration[String(dist)] || 0;
         log(`${cw.name}: расчёт ${alive}, выстрелов ${shots}, пробитие ${penMM} мм`);
         for (let i = 0; i < shots; i++) {
           const roll = rollD10();
           if (roll >= hitTarget) {
-            const loc = rollD6(); const locName = ['Рикошет','Корпус','Гусеницы','Башня','Двигатель','Укладка/бак'][loc-1]; const eff = ['Без эффекта','Бросок d6 на экипаж','Обездвижена','Бросок d6 на экипаж','Машина горит','Детонация танка'][loc-1];
-            log(`✅ ${cw.name}: Попадание! (d10=${roll}) Локация: ${locName} → ${eff}. Пробитие ${penMM} мм.`);
+            const loc = rollD6(); const locName = ['Рикошет','Корпус','Гусеницы','Башня','Двигатель','Укладка/бак'][loc-1];
+            log(`✅ ${cw.name}: Попадание! (d10=${roll}) Локация: ${locName}. Пробитие ${penMM} мм.`);
           } else { log(`❌ ${cw.name}: Промах (d10=${roll})`); }
         }
       });
@@ -678,11 +748,11 @@
 
     // =================== ВКЛАДКА ШАБЛОНЫ ===================
     function renderTemplateSelection() { const container = document.getElementById('templateSelection'); const filterFaction = document.getElementById('battleFactionFilter')?.value || ''; const filterSelect = document.getElementById('battleFactionFilter'); if (filterSelect && filterSelect.options.length <= 1) { const currentVal = filterSelect.value; filterSelect.innerHTML = '<option value="">Все фракции</option>' + Object.keys(appData.factions).map(f => `<option value="${f}" ${f === currentVal ? 'selected' : ''}>${f}</option>`).join(''); } const filteredTemplates = filterFaction ? appData.templates.filter(t => t.faction === filterFaction) : appData.templates; if (!filteredTemplates.length) { container.innerHTML = 'Нет шаблонов для выбранной фракции.'; return; } container.innerHTML = filteredTemplates.map(t => { const origIdx = appData.templates.indexOf(t); return `<label><input type="checkbox" class="template-check" value="${origIdx}"> ${t.name} [${t.faction}] (${t.fighters.length} бойцов, дух ${t.baseMorale})</label><br>`; }).join(''); }
-    function addSelectedTemplatesToBattle() { const checks = document.querySelectorAll('.template-check:checked'); if (checks.length === 0) return; checks.forEach(cb => { const idx = parseInt(cb.value); const tmpl = JSON.parse(JSON.stringify(appData.templates[idx])); tmpl.currentMorale = tmpl.baseMorale; appData.squads.push(tmpl); }); if (appData.squads.length > 0) selectSquad(appData.squads.length - 1); saveData(); renderSquadSelector(); updateUI(); }
+    function addSelectedTemplatesToBattle() { const checks = document.querySelectorAll('.template-check:checked'); if (checks.length === 0) return; checks.forEach(cb => { const idx = parseInt(cb.value); const tmpl = JSON.parse(JSON.stringify(appData.templates[idx])); tmpl.currentMorale = tmpl.baseMorale; tmpl.hidden = false; appData.squads.push(tmpl); }); if (appData.squads.length > 0) selectSquad(appData.squads.length - 1); saveData(); renderSquadSelector(); updateUI(); }
     function clearAllSquads() { if (!confirm('Удалить ВСЕ отряды из боя?')) return; appData.squads = []; currentSquad = null; currentSquadIndex = -1; morale = 0; saveData(); renderSquadSelector(); updateUI(); }
     function renderTemplates() { const filterFaction = document.getElementById('templateFactionFilter')?.value || ''; const list = appData.templates.filter(t=>!filterFaction || t.faction===filterFaction); document.getElementById('templatesList').innerHTML = list.map((t,i)=>{ const origIdx = appData.templates.indexOf(t); return `<div><b>${t.name}</b> [${t.faction}] (${t.fighters.length} бойцов, дух ${t.baseMorale}) <button onclick="loadTemplateFromList(${origIdx})">Загрузить</button> <button onclick="deleteTemplate(${origIdx})">Удалить</button></div>`; }).join(''); const sel = document.getElementById('templateFactionFilter'); if (sel) { const cur = sel.value; sel.innerHTML = '<option value="">Все</option>' + Object.keys(appData.factions).map(f=>`<option value="${f}" ${f===cur?'selected':''}>${f}</option>`).join(''); } }
     function saveCurrentAsTemplate() { if(!currentSquad) return; const name = prompt('Имя шаблона:', currentSquad.name); if(!name) return; const tmpl = JSON.parse(JSON.stringify(currentSquad)); tmpl.name = name; appData.templates.push(tmpl); saveData(); renderTemplates(); }
-    function loadTemplateFromList(idx) { const tmpl = JSON.parse(JSON.stringify(appData.templates[idx])); tmpl.currentMorale = tmpl.baseMorale; const exists = appData.squads.find(s => s.name === tmpl.name && s.faction === tmpl.faction); if (exists) { if (!confirm(`Отряд "${tmpl.name}" уже есть в бою. Добавить ещё один?`)) return; } appData.squads.push(tmpl); selectSquad(appData.squads.length - 1); renderSquadSelector(); updateUI(); saveData(); }
+    function loadTemplateFromList(idx) { const tmpl = JSON.parse(JSON.stringify(appData.templates[idx])); tmpl.currentMorale = tmpl.baseMorale; tmpl.hidden = false; const exists = appData.squads.find(s => s.name === tmpl.name && s.faction === tmpl.faction); if (exists) { if (!confirm(`Отряд "${tmpl.name}" уже есть в бою. Добавить ещё один?`)) return; } appData.squads.push(tmpl); selectSquad(appData.squads.length - 1); renderSquadSelector(); updateUI(); saveData(); }
     function deleteTemplate(idx) { if(confirm('Удалить шаблон?')) { appData.templates.splice(idx,1); renderTemplates(); saveData(); } }
     function exportAllData() { const blob = new Blob([JSON.stringify(appData,null,2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='wargame_data.json'; a.click(); URL.revokeObjectURL(url); }
     function importAllData(event) { const file = event.target.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = e => { try { appData = JSON.parse(e.target.result); saveData(); location.reload(); } catch(ex) { alert('Ошибка импорта'); } }; reader.readAsText(file); }
@@ -699,7 +769,7 @@
       else if (tabName === 'cardsTab') { populateCardsFactionSelect(); renderCardLibrary(); }
       else if (tabName === 'activeEffectsTab') { renderActiveEffects(); }
       else if (tabName === 'saveTab') renderTemplates();
-      else if (tabName === 'battleTab') { renderSquadSelector(); renderTemplateSelection(); updateUI(); }
+      else if (tabName === 'battleTab') { renderSquadSelector(); renderTemplateSelection(); updateUI(); renderEmbarkPanel(); }
     }
 
     // Инициализация
