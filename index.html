@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v10.5 — десант и броня</title>
+  <title>Боевой модуль v10.6 — сброс </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -45,7 +45,7 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v10.5 — десант и броня</h2>
+  <h2>⚔️ Боевой модуль v10.6 — сброс </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -64,6 +64,7 @@
       <div id="templateSelection"></div>
       <button onclick="addSelectedTemplatesToBattle()">Добавить выбранные в бой</button>
       <button onclick="clearAllSquads()">Очистить все отряды</button>
+      <button onclick="resetAllData()" style="background:#e67e22;">🗑️ Сбросить данные</button>
     </div>
     <hr>
     <div id="activeSquadArea"></div>
@@ -280,7 +281,12 @@
     function saveData() { 
       safeLocalStorage('setItem', STORAGE_KEY, JSON.stringify(appData));
     }
-
+function resetAllData() {
+  if (confirm('Сбросить все сохранённые данные? Действие необратимо.')) {
+    safeLocalStorage('removeItem', STORAGE_KEY);
+    location.reload();
+  }
+}
     // =================== ВЫБОР ОТРЯДА ===================
     function selectSquad(idx) {
       if (currentSquad) currentSquad.currentMorale = morale;
