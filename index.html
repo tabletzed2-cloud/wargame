@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v10.12 — исправление1 </title>
+  <title>Боевой модуль v10.13 — исправление2 </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -45,7 +45,7 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v10.12 — исправление1 </h2>
+  <h2>⚔️ Боевой модуль v10.13 — исправление2 </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -87,7 +87,8 @@
     <button onclick="resetAll()">🔄 Сбросить</button>
     <hr>
     <label>Укрытие цели (d10 >= <input type="number" id="coverTarget" value="6" min="2" max="10" style="width:50px">)</label>
-    <button onclick="attack()">🎯 Атаковать</button>
+    <button onclick="attackSmallArms()">🔫 Стрелковое / Пулемёты</button>
+    <button onclick="attackOrdnance()">💥 Орудия / Миномёты</button>
     <button onclick="attackVehicle()">🚀 Атака ПТО по технике</button>
     <button onclick="throwGrenades()">💣 Бросок гранат</button>
     <button onclick="satchelCharge()">🧨 Связка гранат</button>
@@ -605,10 +606,9 @@ function attackVehicle() {
   });
 }   
 
-function attack() {
+function attackSmallArms() {
   if (!currentSquad) return;
   if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); updateUI(); return; }
-
   const activeMods = [...(appData.activeCards || []).filter(c => c.active), ...(appData.modifiers || []).filter(m => m.active)];
   const shotMod = activeMods.reduce((s, m) => s + (m.shotMod || 0), 0);
   const accMod = activeMods.reduce((s, m) => s + (m.accuracyMod || 0), 0);
@@ -619,15 +619,17 @@ function attack() {
   const isSuppressed = getEffectiveMorale() <= getSuppressionThreshold();
   const isVehicle = !!currentSquad.armor;
   const crewMemberIndices = new Set();
+  // собираем индексы занятых в расчётах (чтобы они не стреляли из личного оружия)
   if (currentSquad.crewInstances) {
-    currentSquad.crewInstances.forEach(ci => { if (ci.active !== false) ci.fighterIndices.forEach(idx => crewMemberIndices.add(idx)); });
+    currentSquad.crewInstances.forEach(ci => {
+      if (ci.active !== false) ci.fighterIndices.forEach(idx => crewMemberIndices.add(idx));
+    });
   }
 
-  log('=== АТАКА ===');
-  let smallArmsShots = 0, smallArmsHits = 0;
-  let ordnanceShots = 0, ordnanceHits = 0, ordnanceDamage = 0;
+  log('=== СТРЕЛКОВОЕ / ПУЛЕМЁТЫ ===');
+  let totalShots = 0, totalHits = 0;
 
-  // 1. Стрелковое оружие (только если не техника)
+  // Личное оружие пехоты (если отряд не техника)
   if (!isVehicle && currentSquad.ammoSmall > 0) {
     currentSquad.fighters.forEach((f, index) => {
       if (f.hp === 0 || crewMemberIndices.has(index)) return;
@@ -636,29 +638,27 @@ function attack() {
       let shots = Math.min(w.values[rollD6() - 1] + shotMod, currentSquad.ammoSmall);
       if (shots <= 0) return;
       currentSquad.ammoSmall -= shots;
-      smallArmsShots += shots;
+      totalShots += shots;
       for (let i = 0; i < shots; i++) {
         let roll = rollD10();
         let effRoll = roll + accMod;
         if (isSuppressed) effRoll -= 1;
         if (dist > (w.effectiveRange || 0)) effRoll -= Math.floor((dist - (w.effectiveRange || 0)) / 2);
-        if (effRoll >= cover) { smallArmsHits++; log(`${f.name}: d10=${roll} -> ${effRoll} Попал`); }
+        if (effRoll >= cover) { totalHits++; log(`${f.name}: d10=${roll} -> ${effRoll} Попал`); }
         else { log(`${f.name}: d10=${roll} -> ${effRoll} Мимо`); }
       }
     });
-  } else if (!isVehicle && currentSquad.ammoSmall <= 0) {
-    log('🔫 Кончились патроны для стрелкового оружия!');
   }
 
-  // 2. Орудия и пулемёты расчётов
-  if (currentSquad.crewInstances) {
+  // Пулемёты расчётов (только тип mg)
+  if (currentSquad.crewInstances && currentSquad.ammoSmall > 0) {
     currentSquad.crewInstances.forEach(ci => {
       if (ci.active === false) return;
       const cw = crewWeapons.find(w => w.name === ci.weaponName);
-      if (!cw) return;
+      if (!cw || cw.type !== 'mg') return;
       let alive = ci.fighterIndices.filter(idx => currentSquad.fighters[idx]?.hp > 0).length;
-      // БТР с десантом: пулемёт использует десант
-      if (isVehicle && currentSquad.embarkedSquadIndex !== null && cw.type === 'mg' && cw.name.includes('Станковый')) {
+      // БТР с десантом: если пулемёт на крыше, используем десант
+      if (isVehicle && currentSquad.embarkedSquadIndex !== null && cw.name.includes('Станковый')) {
         const emb = appData.squads[currentSquad.embarkedSquadIndex];
         alive = emb.fighters.filter(f => f.hp > 0).length > 0 ? 1 : 0;
       }
@@ -668,60 +668,102 @@ function attack() {
         let dice = cw.fullCrewDice || 3;
         if (alive < (cw.crewSize || 5)) dice = Math.max(cw.minCrewDice || 1, Math.floor(alive / ((cw.crewSize || 5) / (cw.fullCrewDice || 3))));
         for (let i = 0; i < dice; i++) shots += rollD6();
-      } else if (cw.shotRule === 'fixed_per_crew') {
-        if (alive >= (cw.crewSize || 3)) shots = cw.shotsFull || 3;
-        else if (alive >= 2) shots = cw.shotsReduced2 || 2;
-        else shots = cw.shotsReduced1 || 1;
-      }
+      } // для пулемётов обычно sum_d6, но на всякий случай fixed_per_crew не используется
       shots = Math.max(0, shots + shotMod);
       if (shots <= 0) return;
-
-      if (cw.type === 'mg') {
-        // Пулемёты тратят стрелковый боезапас
-        if (currentSquad.ammoSmall <= 0) { log(`${cw.name}: нет патронов!`); return; }
-        shots = Math.min(shots, currentSquad.ammoSmall);
-        currentSquad.ammoSmall -= shots;
-        smallArmsShots += shots;
-        for (let i = 0; i < shots; i++) {
-          let roll = rollD10();
-          let effRoll = roll + accMod;
-          if (isSuppressed) effRoll -= 1;
-          if (dist > (cw.effectiveRange || 0)) effRoll -= Math.floor((dist - (cw.effectiveRange || 0)) / 2);
-          if (effRoll >= cover) { smallArmsHits++; log(`${cw.name}: d10=${roll} -> ${effRoll} Попал`); }
-          else { log(`${cw.name}: d10=${roll} -> ${effRoll} Мимо`); }
-        }
-      } else {
-        // Орудия/миномёты тратят ordnance
-        if (currentSquad.ammoOrdnance <= 0) { log(`${cw.name}: нет снарядов!`); return; }
-        shots = Math.min(shots, currentSquad.ammoOrdnance);
-        currentSquad.ammoOrdnance -= shots;
-        ordnanceShots += shots;
-        for (let i = 0; i < shots; i++) {
-          let roll = rollD10();
-          if (roll >= 7) {
-            ordnanceHits++;
-            let splashDice = cw.splashDamageDice || 1;
-            let damage = 0;
-            for (let d = 0; d < splashDice; d++) damage += rollD6();
-            ordnanceDamage += damage;
-            log(`${cw.name}: попал (d10=${roll}) → урон ${damage} (${splashDice}d6)`);
-          } else { log(`${cw.name}: мимо (d10=${roll})`); }
-        }
+      shots = Math.min(shots, currentSquad.ammoSmall);
+      currentSquad.ammoSmall -= shots;
+      totalShots += shots;
+      for (let i = 0; i < shots; i++) {
+        let roll = rollD10();
+        let effRoll = roll + accMod;
+        if (isSuppressed) effRoll -= 1;
+        if (dist > (cw.effectiveRange || 0)) effRoll -= Math.floor((dist - (cw.effectiveRange || 0)) / 2);
+        if (effRoll >= cover) { totalHits++; log(`${cw.name}: d10=${roll} -> ${effRoll} Попал`); }
+        else { log(`${cw.name}: d10=${roll} -> ${effRoll} Мимо`); }
       }
     });
   }
 
-  // Итоговый вывод
-  if (smallArmsShots > 0 || ordnanceShots > 0) {
-    log(`───────────────`);
-    if (smallArmsShots > 0) log(`🔫 Стрелковое/пулемётное: выстрелов ${smallArmsShots}, попаданий ${smallArmsHits}`);
-    if (ordnanceShots > 0) log(`💥 Орудия/миномёты: выстрелов ${ordnanceShots}, попаданий ${ordnanceHits}, суммарный урон ${ordnanceDamage}`);
-    log(`───────────────`);
+  if (totalShots === 0) {
+    if (currentSquad.ammoSmall <= 0) log('🔫 Кончились патроны!');
+    else log('Нет доступного стрелкового оружия или пулемётов.');
   } else {
-    log('Отряд не сделал ни одного выстрела.');
+    log(`───────────────`);
+    log(`🔫 Всего выстрелов: ${totalShots}, попаданий: ${totalHits}`);
+    log(`───────────────`);
+  }
+  saveData();
+  updateUI();
+}
+
+function attackOrdnance() {
+  if (!currentSquad) return;
+  if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); updateUI(); return; }
+  const activeMods = [...(appData.activeCards || []).filter(c => c.active), ...(appData.modifiers || []).filter(m => m.active)];
+  const shotMod = activeMods.reduce((s, m) => s + (m.shotMod || 0), 0);
+  const dist = parseInt(document.getElementById('targetDistance').value) || 5;
+  const crewWeapons = getFactionCrewWeapons(currentSquad.faction);
+  const isSuppressed = getEffectiveMorale() <= getSuppressionThreshold();
+
+  log('=== ОРУДИЯ / МИНОМЁТЫ ===');
+  let totalShots = 0, totalHits = 0, totalDamage = 0;
+
+  if (!currentSquad.crewInstances) {
+    log('Нет орудийных расчётов.');
+    return;
   }
 
-  saveData();  // ← важно: сохраняем изменения боезапаса
+  currentSquad.crewInstances.forEach(ci => {
+    if (ci.active === false) return;
+    const cw = crewWeapons.find(w => w.name === ci.weaponName);
+    if (!cw || (cw.type !== 'at_gun' && cw.type !== 'mortar')) return;
+    const alive = ci.fighterIndices.filter(idx => currentSquad.fighters[idx]?.hp > 0).length;
+    if (alive === 0) return;
+    let shots = 0;
+    if (cw.shotRule === 'fixed_per_crew') {
+      if (alive >= (cw.crewSize || 3)) shots = cw.shotsFull || 3;
+      else if (alive >= 2) shots = cw.shotsReduced2 || 2;
+      else shots = cw.shotsReduced1 || 1;
+    } else if (cw.shotRule === 'sum_d6') {
+      // на случай если орудие использует d6 (маловероятно, но поддержим)
+      let dice = cw.fullCrewDice || 3;
+      if (alive < (cw.crewSize || 5)) dice = Math.max(cw.minCrewDice || 1, Math.floor(alive / ((cw.crewSize || 5) / (cw.fullCrewDice || 3))));
+      for (let i = 0; i < dice; i++) shots += rollD6();
+    }
+    shots = Math.max(0, shots + shotMod);
+    if (shots <= 0) return;
+    if (currentSquad.ammoOrdnance <= 0) {
+      log(`${cw.name}: нет снарядов!`);
+      return;
+    }
+    shots = Math.min(shots, currentSquad.ammoOrdnance);
+    currentSquad.ammoOrdnance -= shots;
+    totalShots += shots;
+    for (let i = 0; i < shots; i++) {
+      let roll = rollD10();
+      if (roll >= 7) {
+        totalHits++;
+        let splashDice = cw.splashDamageDice || 1;
+        let damage = 0;
+        for (let d = 0; d < splashDice; d++) damage += rollD6();
+        totalDamage += damage;
+        log(`${cw.name}: попал (d10=${roll}) → урон ${damage} (${splashDice}d6)`);
+      } else {
+        log(`${cw.name}: мимо (d10=${roll})`);
+      }
+    }
+  });
+
+  if (totalShots === 0) {
+    if (currentSquad.ammoOrdnance <= 0) log('🚀 Кончились снаряды!');
+    else log('Нет доступных орудий/миномётов.');
+  } else {
+    log(`───────────────`);
+    log(`💥 Всего выстрелов: ${totalShots}, попаданий: ${totalHits}, суммарный урон: ${totalDamage}`);
+    log(`───────────────`);
+  }
+  saveData();
   updateUI();
 }
     function receiveDamage() {
