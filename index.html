@@ -710,7 +710,12 @@ function resupply(type) {
     function isInfantrySquad(s) { return s.name.includes('Пехотное отделение'); }
 function isInfantryOrSupport(s) { return s.name.includes('Пехотное отделение') || s.name.includes('Отделение поддержки'); }
 function isInfantryOrHQ(s) { return s.name.includes('Пехотное отделение') || s.name.includes('Штаб взвода'); }
-    
+function isInfantryOrSupportOrMGOrHQ(s) { 
+  return s.name.includes('Пехотное отделение') || 
+         s.name.includes('Отделение поддержки') || 
+         s.name.includes('Пулеметный расчёт') || 
+         s.name.includes('Штаб');
+}    
 function throwGrenades() {
   if (!currentSquad || currentSquad.armor) { log('Техника не бросает гранаты.'); return; }
   if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); return; }
@@ -824,7 +829,7 @@ function attackSmallArms() {
   const shotMod = activeMods.reduce((s, m) => s + (m.shotMod || 0), 0);
   let accMod = activeMods.reduce((s, m) => s + (m.accuracyMod || 0), 0);
   // Бонус от карты "Кальвинистская эффективность"
-if (currentSquad.effects?.calvinistAccuracy &&) {
+if (currentSquad.effects?.calvinistAccuracy) {
   accMod += 1;
   log('Кальвинистская эффективность: +1 меткость (без движения)');
 }
