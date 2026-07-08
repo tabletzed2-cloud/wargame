@@ -314,6 +314,7 @@ appData.templates.forEach(t => {
       if (s.embarkedSquadIndex === undefined) s.embarkedSquadIndex = null;
       if (s.hidden === undefined) s.hidden = false;
       if (s.panzerblindeCharges === undefined) s.panzerblindeCharges = 0;
+      if (s.ammoRegenCounter === undefined) s.ammoRegenCounter = 0;
 if (s.atRifleGrenades === undefined) s.atRifleGrenades = 0;
 if (s.flemishFury === undefined) s.flemishFury = false;
 if (s.flemishFuryUsed === undefined) s.flemishFuryUsed = false;
@@ -775,13 +776,9 @@ function meleeAttack() {
     }
     let roll = rollD6() + bonus;
     // Фламандская фурия: переброс 1, если активирована и ещё не использована
-    if (currentSquad.flemishFuryUsed && (roll - bonus) === 1) {
-      log(`${f.name}: переброс d6=1 (Фламандская фурия)`);
-      roll = rollD6() + bonus;
-      const baseDie = roll - bonus;
-      currentSquad.lastMeleeRolls.push(baseDie);
-      currentSquad.flemishFuryUsed = false; // одноразово
-    }
+        let baseDie = roll - bonus;
+    currentSquad.lastMeleeRolls.push(baseDie);
+        }
     if (roll >= 5) {
       hits++;
       totalDamage += 3;
@@ -792,7 +789,6 @@ function meleeAttack() {
   });
   log(`Раунд: попаданий ${hits}, урон ${totalDamage}. Враг -1 дух.`);
   saveData();   // <-- добавить
-}
 }
 
 function attackVehicle() {
@@ -1104,8 +1100,11 @@ function attackOrdnance() {
 
     // =================== ВКЛАДКА КАРТЫ ===================
     function renderCardLibrary() { const faction = document.getElementById('cardsFactionSelect').value; let cards = getFactionCards(faction);
-    if (selectedFaction === 'BeVe' && selectedSubFaction) {
-  cards = cards.filter(c => !c.subfaction || c.subfaction === selectedSubFaction || c.subfaction === 'common');
+    if (card.faction === 'BeVe') {
+  if (card.subfaction && card.subfaction !== selectedSubFaction && card.subfaction !== 'common') return;
+} else if (selectedFaction !== 'test') {
+  return; // скрыть карты не-BeVe в режиме BeVe
+};
 } else if (selectedFaction !== 'test') {cards = cards.filter(c => c.faction === selectedFaction);
 }
     const container = document.getElementById('cardLibraryContainer'); if (cards.length === 0) { container.innerHTML = '<p>Нет карт для этой фракции.</p>'; } else { container.innerHTML = cards.map((c, i) => `<div class="card-item">${c.icon ? `<img src="${c.icon}" onerror="this.style.display='none'">` : ''}<div class="card-info"><h4>${c.name}</h4><div class="desc">${c.desc}</div><div class="effect">Эффект: ${c.effect}</div><small>Выстр: ${c.shotMod}, Точн: ${c.accuracyMod}, Дух: ${c.moraleMod}</small></div><button onclick="editCard('${faction}',${i})">✏️</button><button onclick="deleteCard('${faction}',${i})">❌</button></div>`).join(''); } renderCardSelectionForBattle(); }
@@ -1119,7 +1118,11 @@ function renderCardSelectionForBattle() {
     (data.cardLibrary || []).forEach(card => {
       // Проверка доступа по подфракции
       if (selectedFaction === 'BeVe' && selectedSubFaction) {
-        if (card.subfaction && card.subfaction !== selectedSubFaction && card.subfaction !== 'common') return;
+        if (card.faction === 'BeVe') {
+  if (card.subfaction && card.subfaction !== selectedSubFaction && card.subfaction !== 'common') return;
+} else if (selectedFaction !== 'test') {
+  return; // скрыть карты не-BeVe в режиме BeVe
+}
       } else if (selectedFaction !== 'test' && card.faction !== selectedFaction) return;
       allCards.push({ ...card, faction });
     });
@@ -1140,8 +1143,8 @@ function activateSelectedCards() {
     const card = appData.factions[faction].cardLibrary.find(c => c.name === name);
     if (!card) return;
 
-    // Карты, требующие указания конкретного отряда
-    const perSquad = ['Фламандская Фурия'];
+    const perSquad = ['Фламандская Фурия']; // только эта карта требует выбора отряда
+
     if (perSquad.includes(card.name)) {
       const list = appData.squads.map((s,i) => `${i}: ${s.name} [${s.faction}]`).join('\n');
       const choice = prompt(`Выберите отряд для "${card.name}":\n` + list);
@@ -1150,95 +1153,78 @@ function activateSelectedCards() {
       if (isNaN(idx) || idx < 0 || idx >= appData.squads.length) return;
       applyCardEffect(card, appData.squads[idx]);
     } else {
-      // Карты на все подходящие отряды
+      // Автоматическое применение на нужные отряды
       switch (card.name) {
         case 'Дисковый магазин к FN model D':
           appData.squads.filter(isInfantrySquad).forEach(s => s.fighters.forEach(f => {
             if (f.weapon === 'Ручной пулемет FN model D') f.weapon = 'Ручной пулемет FN model D-exp';
           }));
-          log('Все ручные пулемёты FN model D заменены на D-exp.');
+          log('Все ручные пулемёты FN model D заменены на D-exp в пехотных отделениях.');
           break;
-          case 'Кальвинистская эффективность':
-  appData.squads.filter(isInfantryOrSupportOrMGOrHQ).forEach(s => {
-    if (!s.effects) s.effects = {};
-    s.effects.calvinistAccuracy = true;
-  });
-  log('Пехота, поддержка, пулемёты и штаб получили +1 к меткости (без движения).');
-  break;
-
-case 'Кальвинистская сдержанность':
-  appData.squads.filter(s => s.faction === 'BeVe' && s.name !== 'ДОТ Bosh' && s.name !== 'САУ Brugge').forEach(s => {
-    if (!s.effects) s.effects = {};
-    s.effects.calvinistRestraint = true;
-  });
-  log('Голландские отряды (кроме ДОТ и САУ) получают -1 в рукопашной.');
-  break;
-
-case 'Кальвинистская бережливость':
-  appData.squads.filter(isInfantryOrSupportOrMGOrHQ).forEach(s => {
-    if (!s.effects) s.effects = {};
-    s.effects.ammoRegen = 3;
-    s.ammoRegenCounter = 0; // счётчик для восстановления
-  });
-  log('Пехота, поддержка, пулемёты и штаб будут восстанавливать 3 патрона каждые 3 выстрела.');
-  break;
-
-case 'Длинное дыхание':
-  appData.squads.filter(isInfantrySquad).forEach(s => {
-    if (!s.effects) s.effects = {};
-    s.effects.lastBreath = true;
-  });
-  log('Пехотные отделения получили "Длинное дыхание".');
-  break;
-       case 'Geen Duibreed Terug!':
-  const hq = appData.squads.find(s => 
-    s.faction === 'BeVe' && 
-    s.name.includes('Штаб взвода') && 
-    s.fighters.some(f => f.isCommander && f.hp > 0)
-  );
-  if (!hq) {
-    alert('Нет живого лейтенанта в штабе взвода!');
-    return;
-  }
-  appData.squads.forEach(s => {
-    if (s.faction === 'BeVe') {
-      if (!s.effects) s.effects = {};
-      s.effects.geenDuibreed = true;
-      s.canMove = false;
-    }
-  });
-  log('Все отряды BeVe получают +2 духу и не могут перемещаться до конца боя (приказ отдан).');
-  appData.activeCards.push({ ...card, faction: 'BeVe', active: true });
-  break;
-  }
-  appData.squads.forEach(s => {
-    if (s.faction === 'BeVe') {
-      if (!s.effects) s.effects = {};
-      s.effects.geenDuibreed = true;
-      s.canMove = false;
-    }
-  });
-  log('Все отряды BeVe получают +2 духу и не могут перемещаться до конца боя.');
-  appData.activeCards.push({ ...card, faction: 'BeVe', active: true });
-  break;
-          case 'Кальвинистская сдержанность':
-  appData.squads.filter(s => s.faction === 'BeVe' && s.name !== 'ДОТ Bosh' && s.name !== 'САУ Brugge').forEach(s => {
-    if (!s.effects) s.effects = {};
-    s.effects.calvinistRestraint = true;
-  });
-  log('Голландские отряды (кроме ДОТ и САУ) получают -1 в защите.');
-  break;
         case 'Ослепляющие гранаты Panzerblinde':
-          appData.squads.filter(isInfantrySquad).forEach(s => { if (!s.armor) s.panzerblindeCharges = 3; });
-          log('Пехотные отряды получили по 3 ослепляющие гранаты.');
+          appData.squads.filter(isInfantrySquad).forEach(s => { s.panzerblindeCharges = 3; });
+          log('Пехотные отделения получили по 3 ослепляющие гранаты.');
           break;
         case 'Кумулятивные винтовочные гранаты':
-          appData.squads.filter(isInfantrySquad).forEach(s => { if (!s.armor) s.atRifleGrenades = 2; });
-          log('Пехотные отряды получили по 2 кумулятивные гранаты.');
+          appData.squads.filter(isInfantrySquad).forEach(s => { s.atRifleGrenades = 2; });
+          log('Пехотные отделения получили по 2 кумулятивные гранаты.');
+          break;
+        case 'Кальвинистская эффективность':
+          appData.squads.filter(isInfantryOrSupportOrMGOrHQ).forEach(s => {
+            if (!s.effects) s.effects = {};
+            s.effects.calvinistAccuracy = true;
+          });
+          log('Пехота, поддержка, пулемёты и штаб получили +1 к меткости (без движения).');
+          break;
+        case 'Кальвинистская сдержанность':
+          appData.squads.filter(s => s.faction === 'BeVe' && s.name !== 'ДОТ Bosh' && s.name !== 'САУ Brugge').forEach(s => {
+            if (!s.effects) s.effects = {};
+            s.effects.calvinistRestraint = true;
+          });
+          log('Голландские отряды (кроме ДОТ и САУ) получают -1 в рукопашной.');
+          break;
+        case 'Кальвинистская бережливость':
+          appData.squads.filter(isInfantryOrSupportOrMGOrHQ).forEach(s => {
+            if (!s.effects) s.effects = {};
+            s.effects.ammoRegen = 3;
+            s.ammoRegenCounter = 0;
+          });
+          log('Пехота, поддержка, пулемёты и штаб будут восстанавливать 3 патрона каждые 3 выстрела.');
+          break;
+        case 'Длинное дыхание':
+          appData.squads.filter(isInfantrySquad).forEach(s => {
+            if (!s.effects) s.effects = {};
+            s.effects.lastBreath = true;
+          });
+          log('Пехотные отделения получили "Длинное дыхание".');
+          break;
+        case 'Geen Duibreed Terug!':
+          const hq = appData.squads.find(s => 
+            s.faction === 'BeVe' && 
+            s.name.includes('Штаб взвода') && 
+            s.fighters.some(f => f.isCommander && f.hp > 0)
+          );
+          if (!hq) {
+            alert('Нет живого лейтенанта в штабе взвода!');
+            return;
+          }
+          appData.squads.forEach(s => {
+            if (s.faction === 'BeVe') {
+              if (!s.effects) s.effects = {};
+              s.effects.geenDuibreed = true;
+              s.canMove = false;
+            }
+          });
+          log('Все отряды BeVe получают +2 духу и не могут перемещаться до конца боя.');
           break;
         default: break;
       }
-      appData.activeCards.push({ ...card, faction, active: true });
+      // Добавляем карту в список активных (общие карты без цели)
+      if (!['Geen Duibreed Terug!'].includes(card.name)) {
+        appData.activeCards.push({ ...card, faction, active: true });
+      } else {
+        appData.activeCards.push({ ...card, faction: 'BeVe', active: true });
+      }
     }
   });
 
@@ -1247,54 +1233,16 @@ case 'Длинное дыхание':
   updateUI();
   log('Карты активированы');
 }
-    function applyCardEffect(card, squad) {
+function applyCardEffect(card, squad) {
   if (!squad.effects) squad.effects = {};
   switch (card.name) {
-    case 'Кальвинистская эффективность':
-      squad.effects.calvinistAccuracy = true;
-      log(`"${squad.name}" получил +1 к меткости без движения.`);
-      break;
     case 'Фламандская Фурия':
       squad.flemishFury = true;
       squad.flemishFuryUsed = false;
       log(`"${squad.name}" может перебросить d6=1 в рукопашной.`);
       break;
-      case 'Кальвинистская эффективность':
-  appData.squads.filter(isInfantryOrSupportOrMGOrHQ).forEach(s => {
-    if (!s.effects) s.effects = {};
-    s.effects.calvinistAccuracy = true;
-  });
-  log('Пехотные и поддержки получают +1 к меткости без движения.');
-  break;
-    case 'Geen Duibreed Terug!':
-      squad.effects.geenDuibreed = true;
-      log(`"${squad.name}" +2 дух при живом лейтенанте.`);
-      break;
-    case 'Кальвинистская сдержанность':
-      squad.effects.calvinistRestraint = true;
-      log(`"${squad.name}" не может атаковать в рукопашной, -1 в защите.`);
-      break;
-    case 'Кальвинистская бережливость':
-      squad.effects.ammoRegen = 3;
-      log(`"${squad.name}" восстанавливает 3 патрона каждые 3 хода.`);
-      break;
-      case 'Кальвинистская эффективность':
-  appData.squads.filter(isInfantryOrSupportOrMGOrHQ).forEach(s => {
-    if (!s.effects) s.effects = {};
-    s.effects.calvinistAccuracy = true;
-  });
-  log('Пехотные и поддержки получают +1 к меткости без движения.');
-  break;
-case 'Кальвинистская бережливость':
-  appData.squads.filter(isInfantryOrSupportOrMGOrHQ).forEach(s => {
-    if (!s.effects) s.effects = {};
-    s.effects.ammoRegen = 3;
-  });
-  log('Пехотные и поддержки будут восстанавливать 3 патрона каждые 3 хода.');
-  break;
-    case 'Длинное дыхание':
-      squad.effects.lastBreath = true;
-      log(`"${squad.name}" активировал Длинное дыхание.`);
+    default:
+      // Для остальных карт эффекты уже применены в activateSelectedCards
       break;
   }
   appData.activeCards.push({ ...card, faction: squad.faction, active: true, targetId: appData.squads.indexOf(squad) });
