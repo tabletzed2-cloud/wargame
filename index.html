@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v10.15 — карточки1 </title>
+  <title>Боевой модуль v10.16 — карточки2 </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -45,7 +45,7 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v10.15 — карточки1 </h2>
+  <h2>⚔️ Боевой модуль v10.16 — карточки2 </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -569,10 +569,36 @@ const eff = morale + mod + extraMorale;
   }
   if (currentSquad.flemishFury && !currentSquad.flemishFuryUsed) {
     html += `<button onclick="activateFlemishFury()" style="background:#c0392b;">🔥 Фламандская фурия</button> `;
+    if (currentSquad.effects?.lastBreath && currentSquad.fighters.every(f => f.hp === 0)) {
+  html += `<button onclick="useLastBreath()" style="background:#8b0000;">💀 Длинное дыхание</button> `;
+}
   }
   container.innerHTML = html;
 }
-
+function useLastBreath() {
+  if (!currentSquad || !currentSquad.effects?.lastBreath) return;
+  if (!currentSquad.fighters.every(f => f.hp === 0)) {
+    log('Отряд ещё жив.');
+    return;
+  }
+  log('=== ДЛИННОЕ ДЫХАНИЕ ===');
+  let totalDamage = 0;
+  currentSquad.fighters.forEach(f => {
+    if (f.hp < f.maxHp) {
+      const roll = rollD6();
+      if (roll >= 5) {
+        totalDamage++;
+        log(`${f.name}: d6=${roll} — противник получает 1 урон`);
+      } else {
+        log(`${f.name}: d6=${roll} — без эффекта`);
+      }
+    }
+  });
+  log(`Суммарный урон противнику: ${totalDamage}`);
+  delete currentSquad.effects.lastBreath;
+  saveData();
+  updateUI();
+}
 function usePanzerblinde() {
   if (!currentSquad || currentSquad.panzerblindeCharges <= 0) return;
   currentSquad.panzerblindeCharges--;
@@ -608,8 +634,36 @@ function useATGrenade() {
 
 function activateFlemishFury() {
   if (!currentSquad || !currentSquad.flemishFury || currentSquad.flemishFuryUsed) return;
+  if (!currentSquad.lastMeleeRolls || currentSquad.lastMeleeRolls.length === 0) {
+    log('Сначала проведите рукопашную атаку.');
+    return;
+  }
+  const weapons = getFactionWeapons(currentSquad.faction);
+  const bonuses = currentSquad.fighters.map(f => {
+    const w = weapons.find(w => w.name === f.weapon);
+    let bonus = 0;
+    if (w) {
+      const nameLower = w.name.toLowerCase();
+      if (nameLower.includes('винтовка') || nameLower.includes('карабин')) bonus = 1;
+    }
+    if (currentSquad.effects?.calvinistRestraint) bonus -= 1;
+    return bonus;
+  });
+  let rerolled = 0, extraDamage = 0;
+  currentSquad.lastMeleeRolls.forEach((die, index) => {
+    if (die === 1) {
+      rerolled++;
+      const newRoll = rollD6() + bonuses[index];
+      if (newRoll >= 5) {
+        extraDamage += 3;
+        log(`${currentSquad.fighters[index].name}: переброс 1 → ${newRoll} попадание (3 урона)`);
+      } else {
+        log(`${currentSquad.fighters[index].name}: переброс 1 → ${newRoll} промах`);
+      }
+    }
+  });
+  log(`Фламандская фурия: переброшено ${rerolled} единиц, дополнительный урон ${extraDamage}.`);
   currentSquad.flemishFuryUsed = true;
-  log('🔥 Фламандская фурия: можно перебросить d6=1 в рукопашной.');
   saveData();
   updateUI();
 }
@@ -648,7 +702,9 @@ function resupply(type) {
     function healAll() { if (!currentSquad) return; currentSquad.fighters.forEach(f => f.hp = f.maxHp); morale = currentSquad.baseMorale; currentSquad.currentMorale = morale; suppressed = routed = false; updateUI(); saveData(); }
     function resetAll() { if (!currentSquad) return; currentSquad.fighters.forEach(f => f.hp = f.maxHp); morale = currentSquad.baseMorale; currentSquad.currentMorale = morale; suppressed = routed = false; updateUI(); saveData(); }
     function getEffectiveMorale() { return morale + (appData.activeCards || []).filter(c => c.active).reduce((s, c) => s + (c.moraleMod || 0), 0) + (appData.modifiers || []).filter(m => m.active).reduce((s, m) => s + (m.moraleMod || 0), 0); }
-
+    function isInfantrySquad(squad) { return squad.name.includes('Пехотное отделение') || squad.name.includes('Отделение поддержки');}
+    function isInfantryOrSupportOrMGOrHQ(s) {  return s.name.includes('Пехотное отделение') || s.name.includes('Отделение поддержки') || s.name.includes('Пулеметный расчёт') || s.name.includes('Штаб');}
+    
 function throwGrenades() {
   if (!currentSquad || currentSquad.armor) { log('Техника не бросает гранаты.'); return; }
   if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); return; }
@@ -698,6 +754,7 @@ function meleeAttack() {
   const weapons = getFactionWeapons(currentSquad.faction);
   log('=== РУКОПАШНАЯ ===');
   let hits = 0, totalDamage = 0;
+  currentSquad.lastMeleeRolls = [];
   currentSquad.fighters.forEach(f => {
     if (f.hp === 0) return;
     const w = weapons.find(w => w.name === f.weapon);
@@ -716,6 +773,8 @@ function meleeAttack() {
     if (currentSquad.flemishFuryUsed && (roll - bonus) === 1) {
       log(`${f.name}: переброс d6=1 (Фламандская фурия)`);
       roll = rollD6() + bonus;
+      const baseDie = roll - bonus;
+      currentSquad.lastMeleeRolls.push(baseDie);
       currentSquad.flemishFuryUsed = false; // одноразово
     }
     if (roll >= 5) {
@@ -1067,7 +1126,7 @@ function activateSelectedCards() {
     if (!card) return;
 
     // Карты, требующие указания конкретного отряда
-    const perSquad = ['Кальвинистская эффективность','Фламандская Фурия','Geen Duibreed Terug!','Кальвинистская сдержанность','Кальвинистская бережливость','Длинное дыхание'];
+    const perSquad = ['Кальвинистская эффективность','Фламандская Фурия','Кальвинистская сдержанность','Кальвинистская бережливость','Длинное дыхание'];
     if (perSquad.includes(card.name)) {
       const list = appData.squads.map((s,i) => `${i}: ${s.name} [${s.faction}]`).join('\n');
       const choice = prompt(`Выберите отряд для "${card.name}":\n` + list);
@@ -1079,17 +1138,40 @@ function activateSelectedCards() {
       // Карты на все подходящие отряды
       switch (card.name) {
         case 'Дисковый магазин к FN model D':
-          appData.squads.forEach(s => s.fighters.forEach(f => {
+          appData.squads.filter(isInfantrySquad).forEach(s => s.fighters.forEach(f => {
             if (f.weapon === 'Ручной пулемет FN model D') f.weapon = 'Ручной пулемет FN model D-exp';
           }));
           log('Все ручные пулемёты FN model D заменены на D-exp.');
           break;
+          case 'Geen Duibreed Terug!':
+  const commanderSquad = appData.squads.find(s => s.fighters.some(f => f.isCommander && f.hp > 0 && s.faction === 'BeVe'));
+  if (!commanderSquad) {
+    alert('Нет живого лейтенанта в штабе!');
+    return;
+  }
+  appData.squads.forEach(s => {
+    if (s.faction === 'BeVe') {
+      if (!s.effects) s.effects = {};
+      s.effects.geenDuibreed = true;
+      s.canMove = false;
+    }
+  });
+  log('Все отряды BeVe получают +2 духу и не могут перемещаться до конца боя.');
+  appData.activeCards.push({ ...card, faction: 'BeVe', active: true });
+  break;
+          case 'Кальвинистская сдержанность':
+  appData.squads.filter(s => s.faction === 'BeVe' && s.name !== 'ДОТ Bosh' && s.name !== 'САУ Brugge').forEach(s => {
+    if (!s.effects) s.effects = {};
+    s.effects.calvinistRestraint = true;
+  });
+  log('Голландские отряды (кроме ДОТ и САУ) получают -1 в защите.');
+  break;
         case 'Ослепляющие гранаты Panzerblinde':
-          appData.squads.forEach(s => { if (!s.armor) s.panzerblindeCharges = 3; });
+          appData.squads.filter(isInfantrySquad).forEach(s => { if (!s.armor) s.panzerblindeCharges = 3; });
           log('Пехотные отряды получили по 3 ослепляющие гранаты.');
           break;
         case 'Кумулятивные винтовочные гранаты':
-          appData.squads.forEach(s => { if (!s.armor) s.atRifleGrenades = 2; });
+          appData.squads.filter(isInfantrySquad).forEach(s => { if (!s.armor) s.atRifleGrenades = 2; });
           log('Пехотные отряды получили по 2 кумулятивные гранаты.');
           break;
         default: break;
@@ -1115,6 +1197,13 @@ function activateSelectedCards() {
       squad.flemishFuryUsed = false;
       log(`"${squad.name}" может перебросить d6=1 в рукопашной.`);
       break;
+      case 'Кальвинистская эффективность':
+  appData.squads.filter(isInfantryOrSupportOrMGOrHQ).forEach(s => {
+    if (!s.effects) s.effects = {};
+    s.effects.calvinistAccuracy = true;
+  });
+  log('Пехотные и поддержки получают +1 к меткости без движения.');
+  break;
     case 'Geen Duibreed Terug!':
       squad.effects.geenDuibreed = true;
       log(`"${squad.name}" +2 дух при живом лейтенанте.`);
@@ -1127,6 +1216,20 @@ function activateSelectedCards() {
       squad.effects.ammoRegen = 3;
       log(`"${squad.name}" восстанавливает 3 патрона каждые 3 хода.`);
       break;
+      case 'Кальвинистская эффективность':
+  appData.squads.filter(isInfantryOrSupportOrMGOrHQ).forEach(s => {
+    if (!s.effects) s.effects = {};
+    s.effects.calvinistAccuracy = true;
+  });
+  log('Пехотные и поддержки получают +1 к меткости без движения.');
+  break;
+case 'Кальвинистская бережливость':
+  appData.squads.filter(isInfantryOrSupportOrMGOrHQ).forEach(s => {
+    if (!s.effects) s.effects = {};
+    s.effects.ammoRegen = 3;
+  });
+  log('Пехотные и поддержки будут восстанавливать 3 патрона каждые 3 хода.');
+  break;
     case 'Длинное дыхание':
       squad.effects.lastBreath = true;
       log(`"${squad.name}" активировал Длинное дыхание.`);
