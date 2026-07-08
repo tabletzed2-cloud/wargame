@@ -1112,7 +1112,6 @@ function renderCardLibrary() {
   if (cards.length === 0) {
     container.innerHTML = '<p>Нет карт для этой фракции.</p>';
   } else {
-     } else {
     container.innerHTML = cards.map((c, i) => 
       `<div class="card-item">${c.icon ? `<img src="${c.icon}" onerror="this.style.display='none'">` : ''}<div class="card-info"><h4>${c.name}</h4><div class="desc">${c.desc}</div><div class="effect">Эффект: ${c.effect}</div><small>Выстр: ${c.shotMod}, Точн: ${c.accuracyMod}, Дух: ${c.moraleMod}</small></div><button onclick="editCard('${faction}',${i})">✏️</button><button onclick="deleteCard('${faction}',${i})">❌</button></div>`
     ).join('');
