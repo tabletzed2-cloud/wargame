@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v10.17 — карточки3 </title>
+  <title>Боевой модуль v10.18 — карточки3 </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -45,7 +45,7 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v10.17 — карточки3 </h2>
+  <h2>⚔️ Боевой модуль v10.18 — карточки3 </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -708,7 +708,8 @@ function resupply(type) {
     function resetAll() { if (!currentSquad) return; currentSquad.fighters.forEach(f => f.hp = f.maxHp); morale = currentSquad.baseMorale; currentSquad.currentMorale = morale; suppressed = routed = false; updateUI(); saveData(); }
     function getEffectiveMorale() { return morale + (appData.activeCards || []).filter(c => c.active).reduce((s, c) => s + (c.moraleMod || 0), 0) + (appData.modifiers || []).filter(m => m.active).reduce((s, m) => s + (m.moraleMod || 0), 0); }
     function isInfantrySquad(s) { return s.name.includes('Пехотное отделение'); }
-    function isInfantryOrSupportOrMGOrHQ(s) {  return s.name.includes('Пехотное отделение') || s.name.includes('Отделение поддержки') || s.name.includes('Пулеметный расчёт') || s.name.includes('Штаб');}
+function isInfantryOrSupport(s) { return s.name.includes('Пехотное отделение') || s.name.includes('Отделение поддержки'); }
+function isInfantryOrHQ(s) { return s.name.includes('Пехотное отделение') || s.name.includes('Штаб взвода'); }
     
 function throwGrenades() {
   if (!currentSquad || currentSquad.armor) { log('Техника не бросает гранаты.'); return; }
@@ -823,7 +824,7 @@ function attackSmallArms() {
   const shotMod = activeMods.reduce((s, m) => s + (m.shotMod || 0), 0);
   let accMod = activeMods.reduce((s, m) => s + (m.accuracyMod || 0), 0);
   // Бонус от карты "Кальвинистская эффективность"
-if (currentSquad.effects?.calvinistAccuracy && !currentSquad.hasMoved) {
+if (currentSquad.effects?.calvinistAccuracy &&) {
   accMod += 1;
   log('Кальвинистская эффективность: +1 меткость (без движения)');
 }
@@ -1163,17 +1164,17 @@ function activateSelectedCards() {
       // Автоматическое применение на нужные отряды
       switch (card.name) {
         case 'Дисковый магазин к FN model D':
-          appData.squads.filter(isInfantrySquad).forEach(s => s.fighters.forEach(f => {
+          appData.squads.filter(isInfantryOrSupport).forEach(s => s.fighters.forEach(f => {
             if (f.weapon === 'Ручной пулемет FN model D') f.weapon = 'Ручной пулемет FN model D-exp';
           }));
           log('Все ручные пулемёты FN model D заменены на D-exp в пехотных отделениях.');
           break;
         case 'Ослепляющие гранаты Panzerblinde':
-          appData.squads.filter(isInfantrySquad).forEach(s => { s.panzerblindeCharges = 3; });
+          appData.squads.filter(isInfantryOrSupport).forEach(s => { s.panzerblindeCharges = 3; });
           log('Пехотные отделения получили по 3 ослепляющие гранаты.');
           break;
         case 'Кумулятивные винтовочные гранаты':
-          appData.squads.filter(isInfantrySquad).forEach(s => { s.atRifleGrenades = 2; });
+          appData.squads.filter(isInfantryOrSupport).forEach(s => { s.atRifleGrenades = 2; });
           log('Пехотные отделения получили по 2 кумулятивные гранаты.');
           break;
         case 'Кальвинистская эффективность':
@@ -1199,7 +1200,7 @@ function activateSelectedCards() {
           log('Пехота, поддержка, пулемёты и штаб будут восстанавливать 3 патрона каждые 3 выстрела.');
           break;
         case 'Длинное дыхание':
-          appData.squads.filter(isInfantrySquad).forEach(s => {
+          appData.squads.filter(isInfantryOrSupportOrMGOrHQ).forEach(s => {
             if (!s.effects) s.effects = {};
             s.effects.lastBreath = true;
           });
