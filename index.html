@@ -1099,7 +1099,6 @@ function attackOrdnance() {
 function renderCardLibrary() { 
   const faction = document.getElementById('cardsFactionSelect').value; 
   let cards = getFactionCards(faction);
-  // Фильтр по выбранной фракции и подфракции
   if (selectedFaction === 'BeVe' && selectedSubFaction) {
     cards = cards.filter(c => {
       if (c.faction !== 'BeVe') return false;
@@ -1118,12 +1117,12 @@ function renderCardLibrary() {
   }
   renderCardSelectionForBattle();
 }
-    function renderCardSelectionForBattle() {
+
+function renderCardSelectionForBattle() {
   const container = document.getElementById('cardSelectionForBattle');
   const allCards = [];
   Object.entries(appData.factions).forEach(([faction, data]) => {
     (data.cardLibrary || []).forEach(card => {
-      // Проверка доступа по подфракции
       if (selectedFaction === 'BeVe' && selectedSubFaction) {
         if (card.faction !== 'BeVe') return;
         if (card.subfaction && card.subfaction !== selectedSubFaction && card.subfaction !== 'common') return;
@@ -1141,6 +1140,7 @@ function renderCardLibrary() {
     `<label><input type="checkbox" class="card-check" value="${i}" data-faction="${c.faction}" data-name="${c.name}"> ${c.name} [${c.faction}] — ${c.effect}</label><br>`
   ).join('');
 }
+
 function activateSelectedCards() {
   const checks = document.querySelectorAll('.card-check:checked');
   if (checks.length === 0) return;
