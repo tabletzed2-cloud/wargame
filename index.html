@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v10.16 — карточки2 </title>
+  <title>Боевой модуль v10.17 — карточки3 </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -45,7 +45,7 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v10.16 — карточки2 </h2>
+  <h2>⚔️ Боевой модуль v10.17 — карточки3 </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -314,7 +314,6 @@ appData.templates.forEach(t => {
       if (s.embarkedSquadIndex === undefined) s.embarkedSquadIndex = null;
       if (s.hidden === undefined) s.hidden = false;
       if (s.panzerblindeCharges === undefined) s.panzerblindeCharges = 0;
-      if (s.ammoRegenCounter === undefined) s.ammoRegenCounter = 0;
 if (s.atRifleGrenades === undefined) s.atRifleGrenades = 0;
 if (s.flemishFury === undefined) s.flemishFury = false;
 if (s.flemishFuryUsed === undefined) s.flemishFuryUsed = false;
@@ -330,7 +329,7 @@ if (t.atRifleGrenades === undefined) t.atRifleGrenades = 0;
 if (t.flemishFury === undefined) t.flemishFury = false;
 if (t.flemishFuryUsed === undefined) t.flemishFuryUsed = false;
 if (t.effects === undefined) t.effects = {};
-      if (s.lastMeleeRolls === undefined) s.lastMeleeRolls = [];
+            if (t.lastMeleeRolls === undefined) t.lastMeleeRolls = [];
     });
 
     appData.squads.forEach(squad => {
@@ -574,9 +573,9 @@ const eff = morale + mod + extraMorale;
   }
   if (currentSquad.flemishFury && !currentSquad.flemishFuryUsed) {
     html += `<button onclick="activateFlemishFury()" style="background:#c0392b;">🔥 Фламандская фурия</button> `;
-    if (currentSquad.effects?.lastBreath && currentSquad.fighters.every(f => f.hp === 0)) {
-  html += `<button onclick="useLastBreath()" style="background:#8b0000;">💀 Длинное дыхание</button> `;
-}
+  }
+  if (currentSquad.effects?.lastBreath && currentSquad.fighters.every(f => f.hp === 0)) {
+    html += `<button onclick="useLastBreath()" style="background:#8b0000;">💀 Длинное дыхание</button> `;
   }
   container.innerHTML = html;
 }
@@ -769,16 +768,13 @@ function meleeAttack() {
       const nameLower = w.name.toLowerCase();
       if (nameLower.includes('винтовка') || nameLower.includes('карабин')) bonus = 1;
     }
-    // Штраф для голландцев со сдержанностью
     if (currentSquad.effects?.calvinistRestraint) {
       bonus -= 1;
       log('Кальвинистская сдержанность: -1 в защите');
     }
     let roll = rollD6() + bonus;
-    // Фламандская фурия: переброс 1, если активирована и ещё не использована
-        let baseDie = roll - bonus;
+    let baseDie = roll - bonus;
     currentSquad.lastMeleeRolls.push(baseDie);
-        }
     if (roll >= 5) {
       hits++;
       totalDamage += 3;
@@ -788,7 +784,8 @@ function meleeAttack() {
     }
   });
   log(`Раунд: попаданий ${hits}, урон ${totalDamage}. Враг -1 дух.`);
-  saveData();   // <-- добавить
+  saveData();
+  updateUI();  // <-- добавим обновление интерфейса
 }
 
 function attackVehicle() {
@@ -1099,31 +1096,39 @@ function attackOrdnance() {
     function applyCrewChanges() { saveData(); }
 
     // =================== ВКЛАДКА КАРТЫ ===================
-    function renderCardLibrary() { const faction = document.getElementById('cardsFactionSelect').value; let cards = getFactionCards(faction);
-    if (card.faction === 'BeVe') {
-  if (card.subfaction && card.subfaction !== selectedSubFaction && card.subfaction !== 'common') return;
-} else if (selectedFaction !== 'test') {
-  return; // скрыть карты не-BeVe в режиме BeVe
-};
-} else if (selectedFaction !== 'test') {cards = cards.filter(c => c.faction === selectedFaction);
+function renderCardLibrary() { 
+  const faction = document.getElementById('cardsFactionSelect').value; 
+  let cards = getFactionCards(faction);
+  // Фильтр по выбранной фракции и подфракции
+  if (selectedFaction === 'BeVe' && selectedSubFaction) {
+    cards = cards.filter(c => {
+      if (c.faction !== 'BeVe') return false;
+      return !c.subfaction || c.subfaction === selectedSubFaction || c.subfaction === 'common';
+    });
+  } else if (selectedFaction !== 'test') {
+    cards = cards.filter(c => c.faction === selectedFaction);
+  }
+  const container = document.getElementById('cardLibraryContainer');
+  if (cards.length === 0) {
+    container.innerHTML = '<p>Нет карт для этой фракции.</p>';
+  } else {
+    container.innerHTML = cards.map((c, i) => 
+      `<div class="card-item">${c.icon ? `<img src="${c.icon}" onerror="this.style.display='none'">` : ''}<div class="card-info"><h4>${c.name}</h4><div class="desc">${c.desc}</div><div class="effect">Эффект: ${c.effect}</div><small>Выстр: ${c.shotMod}, Точн: ${c.accuracyMod}, Дух: ${c.moraleMod}</small></div><button onclick="editCard('${faction}',${i})">✏️</button><button onclick="deleteCard('${faction}',${i})">❌</button></div>`
+    ).join('');
+  }
 }
-    const container = document.getElementById('cardLibraryContainer'); if (cards.length === 0) { container.innerHTML = '<p>Нет карт для этой фракции.</p>'; } else { container.innerHTML = cards.map((c, i) => `<div class="card-item">${c.icon ? `<img src="${c.icon}" onerror="this.style.display='none'">` : ''}<div class="card-info"><h4>${c.name}</h4><div class="desc">${c.desc}</div><div class="effect">Эффект: ${c.effect}</div><small>Выстр: ${c.shotMod}, Точн: ${c.accuracyMod}, Дух: ${c.moraleMod}</small></div><button onclick="editCard('${faction}',${i})">✏️</button><button onclick="deleteCard('${faction}',${i})">❌</button></div>`).join(''); } renderCardSelectionForBattle(); }
-    function addCardToLibrary() { const faction = document.getElementById('cardsFactionSelect').value; const name = prompt('Название карты:', 'Новая карта'); if (!name) return; const desc = prompt('Описание:', ''); const effect = prompt('Эффект (текст):', ''); const shotMod = parseInt(prompt('Модификатор выстрелов:', '0')) || 0; const accMod = parseInt(prompt('Модификатор точности:', '0')) || 0; const moraleMod = parseInt(prompt('Модификатор духа:', '0')) || 0; const icon = prompt('URL иконки (или оставьте пустым):', ''); appData.factions[faction].cardLibrary.push({ name, desc: desc || '', effect: effect || '', shotMod, accuracyMod: accMod, moraleMod, icon: icon || '' }); saveData(); renderCardLibrary(); }
-    function editCard(faction, idx) { const c = appData.factions[faction].cardLibrary[idx]; const name = prompt('Название:', c.name); if (name === null) return; c.name = name; c.desc = prompt('Описание:', c.desc) || ''; c.effect = prompt('Эффект:', c.effect) || ''; c.shotMod = parseInt(prompt('Модификатор выстрелов:', c.shotMod)) || 0; c.accuracyMod = parseInt(prompt('Модификатор точности:', c.accuracyMod)) || 0; c.moraleMod = parseInt(prompt('Модификатор духа:', c.moraleMod)) || 0; c.icon = prompt('URL иконки:', c.icon) || ''; saveData(); renderCardLibrary(); }
-    function deleteCard(faction, idx) { if (confirm('Удалить карту?')) { appData.factions[faction].cardLibrary.splice(idx, 1); saveData(); renderCardLibrary(); } }
-function renderCardSelectionForBattle() {
+    function renderCardSelectionForBattle() {
   const container = document.getElementById('cardSelectionForBattle');
   const allCards = [];
   Object.entries(appData.factions).forEach(([faction, data]) => {
     (data.cardLibrary || []).forEach(card => {
       // Проверка доступа по подфракции
       if (selectedFaction === 'BeVe' && selectedSubFaction) {
-        if (card.faction === 'BeVe') {
-  if (card.subfaction && card.subfaction !== selectedSubFaction && card.subfaction !== 'common') return;
-} else if (selectedFaction !== 'test') {
-  return; // скрыть карты не-BeVe в режиме BeVe
-}
-      } else if (selectedFaction !== 'test' && card.faction !== selectedFaction) return;
+        if (card.faction !== 'BeVe') return;
+        if (card.subfaction && card.subfaction !== selectedSubFaction && card.subfaction !== 'common') return;
+      } else if (selectedFaction !== 'test' && card.faction !== selectedFaction) {
+        return;
+      }
       allCards.push({ ...card, faction });
     });
   });
@@ -1131,7 +1136,9 @@ function renderCardSelectionForBattle() {
     container.innerHTML = '<p>Нет карт в библиотеке.</p>';
     return;
   }
-  container.innerHTML = allCards.map((c, i) => `<label><input type="checkbox" class="card-check" value="${i}" data-faction="${c.faction}" data-name="${c.name}"> ${c.name} [${c.faction}] — ${c.effect}</label><br>`).join('');
+  container.innerHTML = allCards.map((c, i) => 
+    `<label><input type="checkbox" class="card-check" value="${i}" data-faction="${c.faction}" data-name="${c.name}"> ${c.name} [${c.faction}] — ${c.effect}</label><br>`
+  ).join('');
 }
 function activateSelectedCards() {
   const checks = document.querySelectorAll('.card-check:checked');
