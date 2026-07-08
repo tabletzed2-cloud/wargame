@@ -1116,6 +1116,7 @@ function renderCardLibrary() {
       `<div class="card-item">${c.icon ? `<img src="${c.icon}" onerror="this.style.display='none'">` : ''}<div class="card-info"><h4>${c.name}</h4><div class="desc">${c.desc}</div><div class="effect">Эффект: ${c.effect}</div><small>Выстр: ${c.shotMod}, Точн: ${c.accuracyMod}, Дух: ${c.moraleMod}</small></div><button onclick="editCard('${faction}',${i})">✏️</button><button onclick="deleteCard('${faction}',${i})">❌</button></div>`
     ).join('');
   }
+    renderCardSelectionForBattle();
 }
     function renderCardSelectionForBattle() {
   const container = document.getElementById('cardSelectionForBattle');
