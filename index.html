@@ -1134,19 +1134,25 @@ function attackOrdnance() {
 function renderCardLibrary() { 
   const faction = document.getElementById('cardsFactionSelect').value; 
   let cards = getFactionCards(faction);
-cards = cards.filter(c => !c.informational);
-  // Фильтр по подфракции, если выбрана BeVe
+  cards = cards.filter(c => !c.informational);
   if (selectedFaction === 'BeVe' && selectedSubFaction) {
     cards = cards.filter(c => {
       return !c.subfaction || c.subfaction === selectedSubFaction || c.subfaction === 'common';
     });
   }
-  const container.innerHTML = cards.map((c) => {
-  const origIdx = appData.factions[faction].cardLibrary.indexOf(c);
-  return `<div class="card-item">${c.icon ? `<img src="${c.icon}" onerror="this.style.display='none'">` : ''}
-  <div class="card-info"><h4>${c.name}</h4><div class="desc">${c.desc}</div><div class="effect">Эффект: ${c.effect}</div><small>Выстр: ${c.shotMod}, Точн: ${c.accuracyMod}, Дух: ${c.moraleMod}</small></div><button onclick="editCard('${faction}',${origIdx})">✏️</button><button onclick="deleteCard('${faction}',${origIdx})">❌</button></div>`;
-}).join('');
+  const container = document.getElementById('cardLibraryContainer');
+  if (cards.length === 0) {
+    container.innerHTML = '<p>Нет карт для этой фракции.</p>';
+  } else {
+    container.innerHTML = cards.map((c) => {
+      const origIdx = appData.factions[faction].cardLibrary.indexOf(c);
+      return `<div class="card-item">${c.icon ? `<img src="${c.icon}" onerror="this.style.display='none'">` : ''}
+      <div class="card-info"><h4>${c.name}</h4><div class="desc">${c.desc}</div><div class="effect">Эффект: ${c.effect}</div><small>Выстр: ${c.shotMod}, Точн: ${c.accuracyMod}, Дух: ${c.moraleMod}</small></div><button onclick="editCard('${faction}',${origIdx})">✏️</button><button onclick="deleteCard('${faction}',${origIdx})">❌</button></div>`;
+    }).join('');
   }
+  renderCardSelectionForBattle();
+  renderInfoCards();
+}
   renderCardSelectionForBattle();
   renderInfoCards();
 }
