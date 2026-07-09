@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v10.19 — карточки4 </title>
+  <title>Боевой модуль v10.20 — карточки5 </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -45,7 +45,7 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v10.19 — карточки4 </h2>
+  <h2>⚔️ Боевой модуль v10.20 — карточки5 </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -168,7 +168,7 @@ if (!selectedFaction) {
               { "name": "Пистолет Browning Hi-Power", "values": [0,1,1,2,2,3], "effectiveRange": 2, "meleeBonus": 0 },
               { "name": "Ручной пулемет FN model D", "values": [0,1,1,2,2,3], "effectiveRange": 5, "meleeBonus": 0 },
               { "name": "Ручной пулемет FN model D-exp", "values": [0,2,3,4,5,0], "effectiveRange": 5, "meleeBonus": 0 },
-              { "name": "Geweer OIP M.38", "values": [1,1,1,1,1,1], "effectiveRange": 10, "meleeBonus": 0, "sniper": true, "accuracyBonus": 3, "damagePerHit": 3 }
+              { "name": "Geweer OIP M.38", "values": [1,1,1,1,1,1], "effectiveRange": 5, "meleeBonus": 0, "sniper": true, "accuracyBonus": 3, "damagePerHit": 3 }
             ],
             "crewWeapons": [
               { "type": "mg", "name": "Станковый пулемет Schwarzlose M.08/15", "crewSize": 3, "shotRule": "sum_d6", "fullCrewDice": 3, "minCrewDice": 1, "effectiveRange": 5 },
@@ -883,7 +883,7 @@ if (currentSquad.effects?.calvinistAccuracy) {
       totalShots += shots;
       for (let i = 0; i < shots; i++) {
         let roll = rollD10();
-        let effRoll = roll + accMod + (isSniper && w.accuracyBonus ? w.accuracyBonus : 0);
+        let effRoll = roll + accMod + (w.sniper ? w.accuracyBonus : 0);
         if (isSuppressed) effRoll -= 1;
         if (dist > (w.effectiveRange || 0)) effRoll -= Math.floor((dist - (w.effectiveRange || 0)) / 2);
         if (effRoll >= cover) { totalHits++; log(`${f.name}: d10=${roll} -> ${effRoll} Попал`); }
@@ -1141,14 +1141,11 @@ cards = cards.filter(c => !c.informational);
       return !c.subfaction || c.subfaction === selectedSubFaction || c.subfaction === 'common';
     });
   }
-  const container = document.getElementById('cardLibraryContainer');
-  if (cards.length === 0) {
-    container.innerHTML = '<p>Нет карт для этой фракции.</p>';
-  } else {
-    container.innerHTML = cards.map((c, i) => 
-      `<div class="card-item">${c.icon ? `<img src="${c.icon}" onerror="this.style.display='none'">` : ''}
-      <div class="card-info"><h4>${c.name}</h4><div class="desc">${c.desc}</div><div class="effect">Эффект: ${c.effect}</div><small>Выстр: ${c.shotMod}, Точн: ${c.accuracyMod}, Дух: ${c.moraleMod}</small></div><button onclick="editCard('${faction}',${i})">✏️</button><button onclick="deleteCard('${faction}',${i})">❌</button></div>`                                  
- ).join('');
+  const container.innerHTML = cards.map((c) => {
+  const origIdx = appData.factions[faction].cardLibrary.indexOf(c);
+  return `<div class="card-item">${c.icon ? `<img src="${c.icon}" onerror="this.style.display='none'">` : ''}
+  <div class="card-info"><h4>${c.name}</h4><div class="desc">${c.desc}</div><div class="effect">Эффект: ${c.effect}</div><small>Выстр: ${c.shotMod}, Точн: ${c.accuracyMod}, Дух: ${c.moraleMod}</small></div><button onclick="editCard('${faction}',${origIdx})">✏️</button><button onclick="deleteCard('${faction}',${origIdx})">❌</button></div>`;
+}).join('');
   }
   renderCardSelectionForBattle();
   renderInfoCards();
@@ -1167,7 +1164,7 @@ cards = cards.filter(c => !c.informational);
     const imgSrc = c.icon || '';
     html += `<div style="background:#2a2a2a; border-radius:6px; padding:4px; display:flex; align-items:center; gap:4px;" title="${c.desc}">
       ${imgSrc ? `<img src="${imgSrc}" style="width:32px; height:32px; object-fit:cover; border-radius:4px;">` : ''}
-      <span style="font-size:0.8rem;">${c.name}</span>
+      <span style="font-size:0.8rem;">${c.name} — ${c.effect || c.desc || ''}</span>
     </div>`;
   });
   html += '</div>';
@@ -1308,13 +1305,51 @@ function applyCardEffect(card, squad) {
       log(`"${squad.name}" может перебросить d6=1 в рукопашной.`);
       break;
     default:
-      // Для остальных карт эффекты уже применены в activateSelectedCards
       break;
   }
   appData.activeCards.push({ ...card, faction: squad.faction, active: true, targetId: appData.squads.indexOf(squad) });
 }
     function populateCardsFactionSelect() { const sel = document.getElementById('cardsFactionSelect'); if (sel) sel.innerHTML = Object.keys(appData.factions).map(f=>`<option>${f}</option>`).join(''); }
+// =================== РЕДАКТИРОВАНИЕ КАРТ ===================
+function addCardToLibrary() {
+  const faction = document.getElementById('cardsFactionSelect').value;
+  const name = prompt('Название карты:');
+  if (!name) return;
+  const desc = prompt('Описание:');
+  const effect = prompt('Эффект:');
+  const subfaction = prompt('Подфракция (common, belgian, dutch или оставьте пустым):') || 'common';
+  appData.factions[faction].cardLibrary.push({
+    name, desc, effect,
+    shotMod: 0, accuracyMod: 0, moraleMod: 0,
+    icon: '',
+    subfaction: subfaction,
+    informational: false
+  });
+  saveData();
+  renderCardLibrary();
+}
 
+function deleteCard(faction, idx) {
+  if (!confirm('Удалить карту?')) return;
+  appData.factions[faction].cardLibrary.splice(idx, 1);
+  saveData();
+  renderCardLibrary();
+}
+
+function editCard(faction, idx) {
+  const card = appData.factions[faction].cardLibrary[idx];
+  if (!card) return;
+  const newName = prompt('Название:', card.name);
+  if (newName !== null && newName.trim() !== '') card.name = newName.trim();
+  const newDesc = prompt('Описание:', card.desc);
+  if (newDesc !== null) card.desc = newDesc;
+  const newEffect = prompt('Эффект:', card.effect);
+  if (newEffect !== null) card.effect = newEffect;
+  const newSub = prompt('Подфракция (common, belgian, dutch):', card.subfaction || 'common');
+  if (newSub !== null) card.subfaction = newSub;
+  saveData();
+  renderCardLibrary();
+}
     // =================== ВКЛАДКА ЭФФЕКТЫ ===================
     function renderActiveEffects() { const container = document.getElementById('activeCardsList'); if (appData.activeCards.length === 0) { container.innerHTML = '<p>Нет активных карт.</p>'; } else { container.innerHTML = appData.activeCards.map((c, i) => `<div class="card-item active-card">${c.icon ? `<img src="${c.icon}" onerror="this.style.display='none'">` : ''}<div class="card-info"><h4>${c.name} [${c.faction}]</h4><div class="effect">${c.effect}</div></div><button onclick="deactivateCard(${i})">🗑️</button></div>`).join(''); } renderModifiersList(); }
     function deactivateCard(idx) { appData.activeCards.splice(idx, 1); saveData(); renderActiveEffects(); updateUI(); }
@@ -1328,7 +1363,7 @@ function applyCardEffect(card, squad) {
 if (selectedFaction === 'BeVe' && selectedSubFaction) {
   filteredTemplates = filteredTemplates.filter(t => {
     if (t.faction !== 'BeVe') return false;
-    return !t.subfaction || t.subfaction === selectedSubFaction;
+    return !t.subfaction || t.subfaction === selectedSubFaction || t.subfaction === 'common';
   });
 } else if (selectedFaction !== 'test') {
   // Для других фракций показываем только их (например, A.I.R.F.)
