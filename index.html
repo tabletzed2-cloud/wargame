@@ -318,8 +318,8 @@ if (s.atRifleGrenades === undefined) s.atRifleGrenades = 0;
 if (s.flemishFury === undefined) s.flemishFury = false;
 if (s.flemishFuryUsed === undefined) s.flemishFuryUsed = false;
 if (s.effects === undefined) s.effects = {};
-      if (s.ammoRegenCounter === undefined) s.ammoRegenCounter = 0;
-    });
+     if (s.ammoRegenCounter === undefined) s.ammoRegenCounter = 0; 
+if (s.attackCounter === undefined) s.attackCounter = 0;});
     appData.templates.forEach(t => { 
       if (t.icon === undefined) t.icon = ""; 
       if (t.armor === undefined) t.armor = null;
@@ -916,11 +916,16 @@ if (currentSquad.effects?.calvinistAccuracy) {
   }
   if (currentSquad.effects?.ammoRegen) {
   currentSquad.ammoRegenCounter = (currentSquad.ammoRegenCounter || 0) + totalShots;
-  while (currentSquad.ammoRegenCounter >= 3) {
-    currentSquad.ammoRegenCounter -= 3;
-    currentSquad.ammoSmall += 3;
-    log('Кальвинистская бережливость: +3 патрона.');
+if (currentSquad.effects?.ammoRegen) {
+  if (totalShots > 0) {
+    currentSquad.attackCounter = (currentSquad.attackCounter || 0) + 1;
+    if (currentSquad.attackCounter >= 3) {
+      currentSquad.attackCounter = 0;
+      currentSquad.ammoSmall += 3;
+      log('Кальвинистская бережливость: +3 патрона (за 3 атаки).');
+    }
   }
+}
 }
   saveData();
   updateUI();
