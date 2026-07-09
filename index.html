@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v10.20 — карточки5 </title>
+  <title>Боевой модуль v10.21 — карточки6 </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -45,7 +45,7 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v10.20 — карточки5 </h2>
+  <h2>⚔️ Боевой модуль v10.21 — карточки6 </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -1187,7 +1187,7 @@ function renderCardSelectionForBattle() {
       } else if (selectedFaction !== 'test' && faction !== selectedFaction) {
         return;
       }
-      if (card.informational) return;
+      // Убираем фильтр по informational — теперь включаем все карты
       allCards.push({ ...card, faction });
     });
   });
@@ -1195,9 +1195,10 @@ function renderCardSelectionForBattle() {
     container.innerHTML = '<p>Нет карт в библиотеке.</p>';
     return;
   }
-  container.innerHTML = allCards.map((c, i) => 
-    `<label><input type="checkbox" class="card-check" value="${i}" data-faction="${c.faction}" data-name="${c.name}"> ${c.name} [${c.faction}] — ${c.effect}</label><br>`
-  ).join('');
+  container.innerHTML = allCards.map((c, i) => {
+    const label = c.informational ? '📋 Инфо' : '';
+    return `<label><input type="checkbox" class="card-check" value="${i}" data-faction="${c.faction}" data-name="${c.name}"> ${c.name} [${c.faction}] ${label} — ${c.effect || c.desc || ''}</label><br>`;
+  }).join('');
 }
 
 function activateSelectedCards() {
@@ -1209,6 +1210,13 @@ function activateSelectedCards() {
     const name = cb.dataset.name;
     const card = appData.factions[faction].cardLibrary.find(c => c.name === name);
     if (!card) return;
+
+    // Если карта информационная — просто добавляем в активные, без автоматических эффектов
+    if (card.informational) {
+      appData.activeCards.push({ ...card, faction, active: true });
+      log(`📋 Информационная карта "${card.name}" активирована. Эффект: ${card.effect || card.desc}`);
+      return;
+    }
 
     const perSquad = ['Фламандская Фурия']; // только эта карта требует выбора отряда
 
