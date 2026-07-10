@@ -933,7 +933,6 @@ if (hasDesperateSalvo) {
     const roll = rollD10();
     let effRoll = roll + accMod;
     if (isSuppressed) effRoll -= 1;
-    // Игнорируем дальность, так как это отчаянный залп
     if (effRoll >= cover) { totalHits++; log(`${f.name}: залп отчаяния d10=${roll} -> попал`); }
     else { log(`${f.name}: залп отчаяния d10=${roll} -> мимо`); }
   });
@@ -1278,237 +1277,237 @@ function activateSelectedCards() {
       applyCardEffect(card, appData.squads[idx]);
     } else {
       // Автоматическое применение на нужные отряды
-switch (card.name) {
-  case 'Дисковый магазин к FN model D':
-    appData.squads.filter(isInfantryOrSupport).forEach(s => s.fighters.forEach(f => {
-      if (f.weapon === 'Ручной пулемет FN model D') f.weapon = 'Ручной пулемет FN model D-exp';
-    }));
-    log('Все ручные пулемёты FN model D заменены на D-exp в пехотных отделениях.');
-    break;
-  case 'Ослепляющие гранаты Panzerblinde':
-    appData.squads.filter(isInfantryOrSupport).forEach(s => { s.panzerblindeCharges = 3; });
-    log('Пехотные отделения получили по 3 ослепляющие гранаты.');
-    break;
-  case 'Кумулятивные винтовочные гранаты':
-    appData.squads.filter(isInfantryOrSupport).forEach(s => { s.atRifleGrenades = 2; });
-    log('Пехотные отделения получили по 2 кумулятивные гранаты.');
-    break;
-  case 'Кальвинистская эффективность':
-    appData.squads.filter(isInfantryOrSupportOrMGOrHQ).forEach(s => {
-      if (!s.effects) s.effects = {};
-      s.effects.calvinistAccuracy = true;
-    });
-    log('Пехота, поддержка, пулемёты и штаб получили +1 к меткости (без движения).');
-    break;
-  case 'Кальвинистская сдержанность':
-    appData.squads.filter(s => s.faction === 'BeVe' && s.name !== 'ДОТ Bosh' && s.name !== 'САУ Brugge').forEach(s => {
-      if (!s.effects) s.effects = {};
-      s.effects.calvinistRestraint = true;
-    });
-    log('Голландские отряды (кроме ДОТ и САУ) получают -1 в рукопашной.');
-    break;
-  case 'Кальвинистская бережливость':
-    appData.squads.filter(isInfantryOrSupportOrMGOrHQ).forEach(s => {
-      if (!s.effects) s.effects = {};
-      s.effects.ammoRegen = 3;
-      s.ammoRegenCounter = 0;
-    });
-    log('Пехота, поддержка, пулемёты и штаб будут восстанавливать 3 патрона каждые 3 выстрела.');
-    break;
-  case 'Длинное дыхание':
-    appData.squads.filter(isInfantryOrSupportOrMGOrHQ).forEach(s => {
-      if (!s.effects) s.effects = {};
-      s.effects.lastBreath = true;
-    });
-    log('Пехотные отделения получили "Длинное дыхание".');
-    break;
-  case 'Geen Duibreed Terug!':
-    const hq = appData.squads.find(s => 
-      s.faction === 'BeVe' && 
-      s.name.includes('Штаб взвода') && 
-      s.fighters.some(f => f.isCommander && f.hp > 0)
-    );
-    if (!hq) {
-      alert('Нет живого лейтенанта в штабе взвода!');
-      return;
-    }
-    appData.squads.forEach(s => {
-      if (s.faction === 'BeVe') {
-        if (!s.effects) s.effects = {};
-        s.effects.geenDuibreed = true;
-        s.canMove = false;
+      switch (card.name) {
+        case 'Дисковый магазин к FN model D':
+          appData.squads.filter(isInfantryOrSupport).forEach(s => s.fighters.forEach(f => {
+            if (f.weapon === 'Ручной пулемет FN model D') f.weapon = 'Ручной пулемет FN model D-exp';
+          }));
+          log('Все ручные пулемёты FN model D заменены на D-exp в пехотных отделениях.');
+          break;
+        case 'Ослепляющие гранаты Panzerblinde':
+          appData.squads.filter(isInfantryOrSupport).forEach(s => { s.panzerblindeCharges = 3; });
+          log('Пехотные отделения получили по 3 ослепляющие гранаты.');
+          break;
+        case 'Кумулятивные винтовочные гранаты':
+          appData.squads.filter(isInfantryOrSupport).forEach(s => { s.atRifleGrenades = 2; });
+          log('Пехотные отделения получили по 2 кумулятивные гранаты.');
+          break;
+        case 'Кальвинистская эффективность':
+          appData.squads.filter(isInfantryOrSupportOrMGOrHQ).forEach(s => {
+            if (!s.effects) s.effects = {};
+            s.effects.calvinistAccuracy = true;
+          });
+          log('Пехота, поддержка, пулемёты и штаб получили +1 к меткости (без движения).');
+          break;
+        case 'Кальвинистская сдержанность':
+          appData.squads.filter(s => s.faction === 'BeVe' && s.name !== 'ДОТ Bosh' && s.name !== 'САУ Brugge').forEach(s => {
+            if (!s.effects) s.effects = {};
+            s.effects.calvinistRestraint = true;
+          });
+          log('Голландские отряды (кроме ДОТ и САУ) получают -1 в рукопашной.');
+          break;
+        case 'Кальвинистская бережливость':
+          appData.squads.filter(isInfantryOrSupportOrMGOrHQ).forEach(s => {
+            if (!s.effects) s.effects = {};
+            s.effects.ammoRegen = 3;
+            s.ammoRegenCounter = 0;
+          });
+          log('Пехота, поддержка, пулемёты и штаб будут восстанавливать 3 патрона каждые 3 выстрела.');
+          break;
+        case 'Длинное дыхание':
+          appData.squads.filter(isInfantryOrSupportOrMGOrHQ).forEach(s => {
+            if (!s.effects) s.effects = {};
+            s.effects.lastBreath = true;
+          });
+          log('Пехотные отделения получили "Длинное дыхание".');
+          break;
+        case 'Geen Duibreed Terug!':
+          const hq = appData.squads.find(s => 
+            s.faction === 'BeVe' && 
+            s.name.includes('Штаб взвода') && 
+            s.fighters.some(f => f.isCommander && f.hp > 0)
+          );
+          if (!hq) {
+            alert('Нет живого лейтенанта в штабе взвода!');
+            return;
+          }
+          appData.squads.forEach(s => {
+            if (s.faction === 'BeVe') {
+              if (!s.effects) s.effects = {};
+              s.effects.geenDuibreed = true;
+              s.canMove = false;
+            }
+          });
+          log('Все отряды BeVe получают +2 духу и не могут перемещаться до конца боя.');
+          break;
+        case 'Por la revolución!':
+          appData.squads.filter(s => s.faction === 'A.I.R.F.' && (s.name.includes('Стрелковое') || s.name.includes('Штурмовое') || s.name.includes('Саперное') || s.name.includes('Штаб'))).forEach(s => {
+            if (!s.effects) s.effects = {};
+            s.effects.porLaRevolucion = { active: true, used: false };
+            s.currentMorale = Math.min(s.baseMorale, (s.currentMorale || s.baseMorale) + 1);
+          });
+          log('Карта "Por la revolución!" активирована для всех подходящих отрядов (+1 дух, +1 рукопашная, -1 ОД на след.ход).');
+          break;
+        case '¡No pasarán!':
+          appData.squads.filter(s => s.faction === 'A.I.R.F.' && (s.name.includes('Стрелковое') || s.name.includes('Пулеметный'))).forEach(s => {
+            if (!s.effects) s.effects = {};
+            s.effects.noPasarán = { active: true, used: false };
+          });
+          log('Карта "¡No pasarán!" активирована для стрелковых и пулемётных отделений (+1 скорострельность, -1 меткость, игнор подавления на 1 атаку).');
+          break;
+        case 'Испанская ярость':
+          appData.squads.filter(s => s.faction === 'A.I.R.F.' && !s.armor).forEach(s => {
+            if (!s.effects) s.effects = {};
+            if (!s.effects.spanishFury) s.effects.spanishFury = { active: true, used: false };
+          });
+          log('Карта "Испанская ярость" активирована (все отряды AIRF, кроме техники, получают +1 в рукопашной один раз).');
+          break;
+        case 'Оружие солидарности': {
+          const hq2 = appData.squads.find(s => s.faction === 'A.I.R.F.' && s.name.includes('Штаб взвода'));
+          if (!hq2) { alert('Нет штаба взвода AIRF!'); return; }
+          const sovietWeapons = ['АВС-36', 'ППД-40', 'ДП-27'];
+          const chosen = sovietWeapons[Math.floor(Math.random() * sovietWeapons.length)];
+          const weapons = appData.factions['A.I.R.F.'].weapons;
+          if (!weapons.find(w => w.name === chosen)) {
+            const newWeapon = { name: chosen, values: [1,1,2,2,3,3], effectiveRange: 6, meleeBonus: 1 };
+            if (chosen === 'ППД-40') { newWeapon.values = [0,2,2,3,4,4]; newWeapon.effectiveRange = 3; newWeapon.meleeBonus = 0; }
+            if (chosen === 'ДП-27') { newWeapon.values = [0,1,2,3,4,4]; newWeapon.effectiveRange = 5; newWeapon.meleeBonus = 0; }
+            weapons.push(newWeapon);
+          }
+          const commander = hq2.fighters.find(f => f.isCommander);
+          if (commander) {
+            commander.weapon = chosen;
+            log(`Штаб получил оружие "${chosen}"`);
+          } else {
+            log('Командир штаба не найден, оружие добавлено в арсенал.');
+          }
+          break;
+        }
+        case 'Горные охотники': {
+          const list = appData.squads.filter(s => s.faction === 'A.I.R.F.' && s.name.includes('Пехотное отделение'));
+          if (list.length === 0) { alert('Нет пехотных отделений AIRF.'); return; }
+          const choice = prompt('Выберите отделение для "Горные охотники":\n' + list.map((s,i) => `${i}: ${s.name}`).join('\n'));
+          if (choice === null) return;
+          const idx = parseInt(choice);
+          if (isNaN(idx) || idx < 0 || idx >= list.length) return;
+          const squad = list[idx];
+          if (!squad.effects) squad.effects = {};
+          squad.effects.mountainHunters = { active: true, used: false };
+          log(`Отряд "${squad.name}" получил эффект "Горные охотники" (при стрельбе с высоты +1 меткость).`);
+          break;
+        }
+        case 'Реконкиста': {
+          const isUrban = confirm('Это городской бой?');
+          if (!isUrban) { log('Карта "Реконкиста" неактивна – бой не городской.'); return; }
+          const isAgainstBeVe = confirm('Противник – BeVe?');
+          if (!isAgainstBeVe) { log('Карта "Реконкиста" неактивна – противник не BeVe.'); return; }
+          appData.squads.filter(s => s.faction === 'A.I.R.F.').forEach(s => {
+            if (!s.effects) s.effects = {};
+            s.effects.reconquista = true;
+          });
+          log('Карта "Реконкиста" активирована: +1 рукопашная против BeVe в городском бою.');
+          break;
+        }
+        case 'Залп отчаяния': {
+          const zeroAmmo = appData.squads.filter(s => s.faction === 'A.I.R.F.' && s.ammoSmall === 0);
+          if (zeroAmmo.length === 0) { log('Нет отрядов с нулевым боезапасом.'); return; }
+          zeroAmmo.forEach(s => {
+            if (!s.effects) s.effects = {};
+            s.effects.desperateSalvo = true;
+          });
+          log('Карта "Залп отчаяния" активирована для отрядов без патронов (последний залп со скорострельностью 1).');
+          break;
+        }
+        case 'Шахтерский динамит': {
+          const list2 = appData.squads.filter(s => s.faction === 'A.I.R.F.' && !s.armor);
+          if (list2.length === 0) { alert('Нет пехотных отрядов AIRF.'); return; }
+          const choice2 = prompt('Выберите отряд для "Шахтерский динамит":\n' + list2.map((s,i) => `${i}: ${s.name}`).join('\n'));
+          if (choice2 === null) return;
+          const idx2 = parseInt(choice2);
+          if (isNaN(idx2) || idx2 < 0 || idx2 >= list2.length) return;
+          const squad2 = list2[idx2];
+          const fighters = squad2.fighters.filter(f => f.hp > 0).length;
+          squad2.grenades += fighters * 2;
+          if (!squad2.effects) squad2.effects = {};
+          squad2.effects.dynamic = { active: true, damageBonus: 1, selfDamage: true };
+          log(`Отряд "${squad2.name}" получил шахтерский динамит (+${fighters*2} гранат, урон d6+1, риск самоповреждения при 1).`);
+          break;
+        }
+        case 'Бутылки с зажигательной смесью': {
+          const list3 = appData.squads.filter(s => s.faction === 'A.I.R.F.' && !s.armor);
+          if (list3.length === 0) { alert('Нет пехотных отрядов AIRF.'); return; }
+          const choice3 = prompt('Выберите отряд для замены гранат на бутылки:\n' + list3.map((s,i) => `${i}: ${s.name}`).join('\n'));
+          if (choice3 === null) return;
+          const idx3 = parseInt(choice3);
+          if (isNaN(idx3) || idx3 < 0 || idx3 >= list3.length) return;
+          const squad3 = list3[idx3];
+          const fighters3 = squad3.fighters.filter(f => f.hp > 0).length;
+          squad3.grenades = fighters3;
+          if (!squad3.effects) squad3.effects = {};
+          squad3.effects.molotov = true;
+          log(`Отряд "${squad3.name}" получил бутылки с зажигательной смесью (${fighters3} шт.).`);
+          break;
+        }
+        case 'Бутылкомет Цукермана': {
+          // Создаём новый отряд "Расчёт бутылкомёта Цукермана" как отдельный отряд из двух человек
+          const newSquad = {
+            name: 'Расчёт бутылкомёта Цукермана',
+            faction: 'A.I.R.F.',
+            baseMorale: 5,
+            currentMorale: 5,
+            icon: '',
+            fighters: [
+              { name: 'Стрелок', weapon: 'Пистолет Star M1914', hp: 3, maxHp: 3 },
+              { name: 'Заряжающий', weapon: 'Пистолет Star M1914', hp: 3, maxHp: 3 }
+            ],
+            crewInstances: [
+              { weaponName: 'Бутылкомет Цукермана', fighterIndices: [0, 1], active: true }
+            ],
+            ammoSmall: 20,
+            ammoOrdnance: 10,
+            grenades: 0,
+            armor: null,
+            embarkedSquadIndex: null,
+            hidden: false
+          };
+          appData.squads.push(newSquad);
+          // Убедимся, что орудие есть в crewWeapons (уже добавлено в getDefaultData, но на всякий случай)
+          const crewW = appData.factions['A.I.R.F.'].crewWeapons.find(w => w.name === 'Бутылкомет Цукермана');
+          if (!crewW) {
+            appData.factions['A.I.R.F.'].crewWeapons.push({ 
+              type: 'mortar', 
+              name: 'Бутылкомет Цукермана', 
+              crewSize: 2, 
+              shotRule: 'fixed_per_crew', 
+              shotsFull: 2, 
+              shotsReduced2: 1, 
+              shotsReduced1: 1, 
+              effectiveRange: 3, 
+              splashDamageDice: 3,
+              isMolotov: true 
+            });
+          }
+          log('Создан отдельный отряд "Расчёт бутылкомёта Цукермана" (2 бойца).');
+          break;
+        }
+        case 'Плохой порох': {
+          appData.modifiers.push({ name: 'Плохой порох', shotMod: -1, accuracyMod: 0, moraleMod: 0, active: true });
+          log('Пассивный эффект "Плохой порох" активирован: -1 скорострельность случайному бойцу за атаку.');
+          break;
+        }
+        case '¡Huelga!': {
+          appData.squads.filter(s => s.faction === 'A.I.R.F.').forEach(s => {
+            s.ammoSmall = Math.floor(s.ammoSmall * 0.75);
+            s.ammoOrdnance = Math.floor(s.ammoOrdnance * 0.75);
+            s.grenades = Math.floor(s.grenades * 0.75);
+          });
+          log('Карта "¡Huelga!" активирована: боезапас всех отрядов AIRF уменьшен на 25%.');
+          break;
+        }
+        default:
+          break;
       }
-    });
-    log('Все отряды BeVe получают +2 духу и не могут перемещаться до конца боя.');
-    break;
-  case 'Por la revolución!':
-    appData.squads.filter(s => s.faction === 'A.I.R.F.' && (s.name.includes('Стрелковое') || s.name.includes('Штурмовое') || s.name.includes('Саперное') || s.name.includes('Штаб'))).forEach(s => {
-      if (!s.effects) s.effects = {};
-      s.effects.porLaRevolucion = { active: true, used: false };
-      s.currentMorale = Math.min(s.baseMorale, (s.currentMorale || s.baseMorale) + 1);
-    });
-    log('Карта "Por la revolución!" активирована для всех подходящих отрядов (+1 дух, +1 рукопашная, -1 ОД на след.ход).');
-    break;
-  case '¡No pasarán!':
-    appData.squads.filter(s => s.faction === 'A.I.R.F.' && (s.name.includes('Стрелковое') || s.name.includes('Пулеметный'))).forEach(s => {
-      if (!s.effects) s.effects = {};
-      s.effects.noPasarán = { active: true, used: false };
-    });
-    log('Карта "¡No pasarán!" активирована для стрелковых и пулемётных отделений (+1 скорострельность, -1 меткость, игнор подавления на 1 атаку).');
-    break;
-  case 'Испанская ярость':
-    appData.squads.filter(s => s.faction === 'A.I.R.F.' && !s.armor).forEach(s => {
-      if (!s.effects) s.effects = {};
-      if (!s.effects.spanishFury) s.effects.spanishFury = { active: true, used: false };
-    });
-    log('Карта "Испанская ярость" активирована (все отряды AIRF, кроме техники, получают +1 в рукопашной один раз).');
-    break;
-  case 'Оружие солидарности': {
-    const hq2 = appData.squads.find(s => s.faction === 'A.I.R.F.' && s.name.includes('Штаб взвода'));
-    if (!hq2) { alert('Нет штаба взвода AIRF!'); return; }
-    const sovietWeapons = ['АВС-36', 'ППД-40', 'ДП-27'];
-    const chosen = sovietWeapons[Math.floor(Math.random() * sovietWeapons.length)];
-    const weapons = appData.factions['A.I.R.F.'].weapons;
-    if (!weapons.find(w => w.name === chosen)) {
-      const newWeapon = { name: chosen, values: [1,1,2,2,3,3], effectiveRange: 6, meleeBonus: 1 };
-      if (chosen === 'ППД-40') { newWeapon.values = [0,2,2,3,4,4]; newWeapon.effectiveRange = 3; newWeapon.meleeBonus = 0; }
-      if (chosen === 'ДП-27') { newWeapon.values = [0,1,2,3,4,4]; newWeapon.effectiveRange = 5; newWeapon.meleeBonus = 0; }
-      weapons.push(newWeapon);
-    }
-    const commander = hq2.fighters.find(f => f.isCommander);
-    if (commander) {
-      commander.weapon = chosen;
-      log(`Штаб получил оружие "${chosen}"`);
-    } else {
-      log('Командир штаба не найден, оружие добавлено в арсенал.');
-    }
-    break;
-  }
-  case 'Горные охотники': {
-    const list = appData.squads.filter(s => s.faction === 'A.I.R.F.' && s.name.includes('Пехотное отделение'));
-    if (list.length === 0) { alert('Нет пехотных отделений AIRF.'); return; }
-    const choice = prompt('Выберите отделение для "Горные охотники":\n' + list.map((s,i) => `${i}: ${s.name}`).join('\n'));
-    if (choice === null) return;
-    const idx = parseInt(choice);
-    if (isNaN(idx) || idx < 0 || idx >= list.length) return;
-    const squad = list[idx];
-    if (!squad.effects) squad.effects = {};
-    squad.effects.mountainHunters = { active: true, used: false };
-    log(`Отряд "${squad.name}" получил эффект "Горные охотники" (при стрельбе с высоты +1 меткость).`);
-    break;
-  }
-  case 'Реконкиста': {
-    const isUrban = confirm('Это городской бой?');
-    if (!isUrban) { log('Карта "Реконкиста" неактивна – бой не городской.'); return; }
-    const isAgainstBeVe = confirm('Противник – BeVe?');
-    if (!isAgainstBeVe) { log('Карта "Реконкиста" неактивна – противник не BeVe.'); return; }
-    appData.squads.filter(s => s.faction === 'A.I.R.F.').forEach(s => {
-      if (!s.effects) s.effects = {};
-      s.effects.reconquista = true;
-    });
-    log('Карта "Реконкиста" активирована: +1 рукопашная против BeVe в городском бою.');
-    break;
-  }
-  case 'Залп отчаяния': {
-    const zeroAmmo = appData.squads.filter(s => s.faction === 'A.I.R.F.' && s.ammoSmall === 0);
-    if (zeroAmmo.length === 0) { log('Нет отрядов с нулевым боезапасом.'); return; }
-    zeroAmmo.forEach(s => {
-      if (!s.effects) s.effects = {};
-      s.effects.desperateSalvo = true;
-    });
-    log('Карта "Залп отчаяния" активирована для отрядов без патронов (последний залп со скорострельностью 1).');
-    break;
-  }
-  case 'Шахтерский динамит': {
-    const list2 = appData.squads.filter(s => s.faction === 'A.I.R.F.' && !s.armor);
-    if (list2.length === 0) { alert('Нет пехотных отрядов AIRF.'); return; }
-    const choice2 = prompt('Выберите отряд для "Шахтерский динамит":\n' + list2.map((s,i) => `${i}: ${s.name}`).join('\n'));
-    if (choice2 === null) return;
-    const idx2 = parseInt(choice2);
-    if (isNaN(idx2) || idx2 < 0 || idx2 >= list2.length) return;
-    const squad2 = list2[idx2];
-    const fighters = squad2.fighters.filter(f => f.hp > 0).length;
-    squad2.grenades += fighters * 2;
-    if (!squad2.effects) squad2.effects = {};
-    squad2.effects.dynamic = { active: true, damageBonus: 1, selfDamage: true };
-    log(`Отряд "${squad2.name}" получил шахтерский динамит (+${fighters*2} гранат, урон d6+1, риск самоповреждения при 1).`);
-    break;
-  }
-  case 'Бутылки с зажигательной смесью': {
-    const list3 = appData.squads.filter(s => s.faction === 'A.I.R.F.' && !s.armor);
-    if (list3.length === 0) { alert('Нет пехотных отрядов AIRF.'); return; }
-    const choice3 = prompt('Выберите отряд для замены гранат на бутылки:\n' + list3.map((s,i) => `${i}: ${s.name}`).join('\n'));
-    if (choice3 === null) return;
-    const idx3 = parseInt(choice3);
-    if (isNaN(idx3) || idx3 < 0 || idx3 >= list3.length) return;
-    const squad3 = list3[idx3];
-    const fighters3 = squad3.fighters.filter(f => f.hp > 0).length;
-    squad3.grenades = fighters3;
-    if (!squad3.effects) squad3.effects = {};
-    squad3.effects.molotov = true;
-    log(`Отряд "${squad3.name}" получил бутылки с зажигательной смесью (${fighters3} шт.).`);
-    break;
-  }
-  case 'Бутылкомет Цукермана': {
-    // Создаём новый отряд "Расчёт бутылкомёта Цукермана" как отдельный отряд из двух человек
-    const newSquad = {
-      name: 'Расчёт бутылкомёта Цукермана',
-      faction: 'A.I.R.F.',
-      baseMorale: 5,
-      currentMorale: 5,
-      icon: '',
-      fighters: [
-        { name: 'Стрелок', weapon: 'Пистолет Star M1914', hp: 3, maxHp: 3 },
-        { name: 'Заряжающий', weapon: 'Пистолет Star M1914', hp: 3, maxHp: 3 }
-      ],
-      crewInstances: [
-        { weaponName: 'Бутылкомет Цукермана', fighterIndices: [0, 1], active: true }
-      ],
-      ammoSmall: 20,
-      ammoOrdnance: 10,
-      grenades: 0,
-      armor: null,
-      embarkedSquadIndex: null,
-      hidden: false
-    };
-    appData.squads.push(newSquad);
-    // Убедимся, что орудие есть в crewWeapons (уже добавлено в getDefaultData, но на всякий случай)
-    const crewW = appData.factions['A.I.R.F.'].crewWeapons.find(w => w.name === 'Бутылкомет Цукермана');
-    if (!crewW) {
-      appData.factions['A.I.R.F.'].crewWeapons.push({ 
-        type: 'mortar', 
-        name: 'Бутылкомет Цукермана', 
-        crewSize: 2, 
-        shotRule: 'fixed_per_crew', 
-        shotsFull: 2, 
-        shotsReduced2: 1, 
-        shotsReduced1: 1, 
-        effectiveRange: 3, 
-        splashDamageDice: 3,
-        isMolotov: true 
-      });
-    }
-    log('Создан отдельный отряд "Расчёт бутылкомёта Цукермана" (2 бойца).');
-    break;
-  }
-  case 'Плохой порох': {
-    appData.modifiers.push({ name: 'Плохой порох', shotMod: -1, accuracyMod: 0, moraleMod: 0, active: true });
-    log('Пассивный эффект "Плохой порох" активирован: -1 скорострельность случайному бойцу за атаку.');
-    break;
-  }
-  case '¡Huelga!': {
-    appData.squads.filter(s => s.faction === 'A.I.R.F.').forEach(s => {
-      s.ammoSmall = Math.floor(s.ammoSmall * 0.75);
-      s.ammoOrdnance = Math.floor(s.ammoOrdnance * 0.75);
-      s.grenades = Math.floor(s.grenades * 0.75);
-    });
-    log('Карта "¡Huelga!" активирована: боезапас всех отрядов AIRF уменьшен на 25%.');
-    break;
-  }
-  default:
-    break;
-}
-      }
+
       // Добавляем карту в список активных (общие карты без цели)
       if (!['Geen Duibreed Terug!'].includes(card.name)) {
         appData.activeCards.push({ ...card, faction, active: true });
@@ -1523,19 +1522,7 @@ switch (card.name) {
   updateUI();
   log('Карты активированы');
 }
-function applyCardEffect(card, squad) {
-  if (!squad.effects) squad.effects = {};
-  switch (card.name) {
-    case 'Фламандская Фурия':
-      squad.flemishFury = true;
-      squad.flemishFuryUsed = false;
-      log(`"${squad.name}" может перебросить d6=1 в рукопашной.`);
-      break;
-    default:
-      break;
-  }
-  appData.activeCards.push({ ...card, faction: squad.faction, active: true, targetId: appData.squads.indexOf(squad) });
-}
+
     function populateCardsFactionSelect() { const sel = document.getElementById('cardsFactionSelect'); if (sel) sel.innerHTML = Object.keys(appData.factions).map(f=>`<option>${f}</option>`).join(''); }
 // =================== РЕДАКТИРОВАНИЕ КАРТ ===================
 function addCardToLibrary() {
