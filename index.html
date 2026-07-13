@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v10.25 — БТР </title>
+  <title>Боевой модуль v10.26 — молотов </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -45,7 +45,7 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v10.25 — БТР </h2>
+  <h2>⚔️ Боевой модуль v10.26 — молотов </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -97,6 +97,7 @@
     <button onclick="attackSmallArms()">🔫 Стрелковое / Пулемёты</button>
     <button onclick="attackOrdnance()">💥 Орудия / Миномёты</button>
     <button onclick="attackVehicle()">🚀 Атака ПТО по технике</button>
+    <button onclick="attackMolotovCrew()" id="btnMolotovCrew" style="display:none; background:#e67e22;">🔥 Бутылкомет по технике</button>
     <button onclick="throwGrenades()">💣 Бросок гранат</button>
     <button onclick="satchelCharge()">🧨 Связка гранат</button>
     <button onclick="meleeAttack()">⚔️ Рукопашная</button>
@@ -308,7 +309,7 @@ if (!selectedFaction) {
             {"weaponName": "Пулемёт SAU Brugge", "fighterIndices": [1], "active": true }
           ],
           "armor": { "front": 20, "side": 20, "rear": 40, "turret": 40 }},
-            {"name":"БТР Llanero №1","faction":"A.I.R.F.","baseMorale":8,"currentMorale":8,"icon":"","ammoSmall":8,"ammoOrdnance":0,"grenades":0,"fighters":[
+            {"name":"БТР Llanero №1","faction":"A.I.R.F.","baseMorale":8,"currentMorale":8,"icon":"","ammoSmall":40,"ammoOrdnance":0,"grenades":0,"fighters":[
             {"name":"Механик-водитель","weapon":"Пистолет Star M1914","hp":3,"maxHp":3}
           ],
           "crewInstances":[
@@ -316,7 +317,7 @@ if (!selectedFaction) {
           ],
           "armor": { "front": 25, "side": 15, "rear": 10, "turret": null },
           "embarkedSquadIndex": null},
-           {"name":"БТР Llanero №2","faction":"A.I.R.F.","baseMorale":8,"currentMorale":8,"icon":"","ammoSmall":8,"ammoOrdnance":0,"grenades":0,"fighters":[
+           {"name":"БТР Llanero №2","faction":"A.I.R.F.","baseMorale":8,"currentMorale":8,"icon":"","ammoSmall":40,"ammoOrdnance":0,"grenades":0,"fighters":[
             {"name":"Механик-водитель","weapon":"Пистолет Star M1914","hp":3,"maxHp":3}
           ],
           "crewInstances":[
@@ -324,7 +325,7 @@ if (!selectedFaction) {
           ],
           "armor": { "front": 25, "side": 15, "rear": 10, "turret": null },
           "embarkedSquadIndex": null},
-           {"name":"БТР Llanero №3","faction":"A.I.R.F.","baseMorale":8,"currentMorale":8,"icon":"","ammoSmall":8,"ammoOrdnance":0,"grenades":0,"fighters":[
+           {"name":"БТР Llanero №3","faction":"A.I.R.F.","baseMorale":8,"currentMorale":8,"icon":"","ammoSmall":40,"ammoOrdnance":0,"grenades":0,"fighters":[
             {"name":"Механик-водитель","weapon":"Пистолет Star M1914","hp":3,"maxHp":3}
           ],
           "crewInstances":[
@@ -627,6 +628,16 @@ const eff = morale + mod + extraMorale;
       document.getElementById('moraleContainer').innerHTML = `<div>Дух: ${morale}/${base} ${mod !== 0 ? `(эфф. ${eff})` : ''}</div><div class="morale-bar" style="width:${pct}%; background:${eff <= 0 ? '#c0392b' : eff <= base/2 ? '#f39c12' : '#27ae60'}"></div>`;
       updateActiveCardsBattle();
       document.getElementById('statusContainer').innerHTML = ` 🔫 Патроны: ${currentSquad.ammoSmall} | 💣 Гранаты: ${currentSquad.grenades} | 🚀 Снаряды: ${currentSquad.ammoOrdnance}`;
+      // Проверяем наличие активного расчёта бутылкомёта
+const hasMolotovCrew = currentSquad && currentSquad.crewInstances && currentSquad.crewInstances.some(ci => {
+  if (ci.active === false) return false;
+  const cw = getFactionCrewWeapons(currentSquad.faction).find(w => w.name === ci.weaponName);
+  return cw && cw.isMolotov;
+});
+const btn = document.getElementById('btnMolotovCrew');
+if (btn) {
+  btn.style.display = hasMolotovCrew ? 'inline-block' : 'none';
+}
       renderActiveCardButtons();
     }
     function renderActiveCardButtons() {
@@ -932,7 +943,87 @@ function attackVehicle() {
       } else { log(`❌ ${cw.name}: Промах (d10=${roll})`); }
     }
   });
-}   
+}  
+    function attackMolotovCrew() {
+  if (!currentSquad) return;
+  if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); updateUI(); return; }
+
+  const crewWeapons = getFactionCrewWeapons(currentSquad.faction);
+  const dist = parseInt(document.getElementById('targetDistance').value) || 5;
+  const cover = parseInt(document.getElementById('coverTarget').value) || 6;
+  const isSuppressed = getEffectiveMorale() <= getSuppressionThreshold();
+  const activeMods = [...(appData.activeCards || []).filter(c => c.active), ...(appData.modifiers || []).filter(m => m.active)];
+  const shotMod = activeMods.reduce((s, m) => s + (m.shotMod || 0), 0);
+  const accMod = activeMods.reduce((s, m) => s + (m.accuracyMod || 0), 0);
+
+  const molotovCrews = (currentSquad.crewInstances || []).filter(ci => {
+    if (ci.active === false) return false;
+    const cw = crewWeapons.find(w => w.name === ci.weaponName);
+    return cw && cw.isMolotov;
+  });
+
+  if (molotovCrews.length === 0) {
+    log('Нет активных расчётов бутылкомёта.');
+    return;
+  }
+
+  log('=== БУТЫЛКОМЕТ ПО ТЕХНИКЕ ===');
+  let totalShots = 0, totalHits = 0;
+  let fireCount = 0, blindCount = 0;
+
+  molotovCrews.forEach(ci => {
+    const cw = crewWeapons.find(w => w.name === ci.weaponName);
+    if (!cw) return;
+    const alive = ci.fighterIndices.filter(idx => currentSquad.fighters[idx]?.hp > 0).length;
+    if (alive === 0) return;
+    let shots = 0;
+    if (cw.shotRule === 'fixed_per_crew') {
+      if (alive >= (cw.crewSize || 2)) shots = cw.shotsFull || 3;
+      else if (alive >= 2) shots = cw.shotsReduced2 || 2;
+      else shots = cw.shotsReduced1 || 1;
+    } else {
+      shots = 1;
+    }
+    shots = Math.max(0, shots + shotMod);
+    if (shots <= 0) return;
+    if (currentSquad.ammoOrdnance <= 0) {
+      log(`${cw.name}: нет снарядов!`);
+      return;
+    }
+    shots = Math.min(shots, currentSquad.ammoOrdnance);
+    currentSquad.ammoOrdnance -= shots;
+    totalShots += shots;
+
+    const effectiveRange = cw.effectiveRange || 3;
+    for (let i = 0; i < shots; i++) {
+      let roll = rollD10();
+      let rangePenalty = 0;
+      if (dist > effectiveRange) rangePenalty = dist - effectiveRange;
+      let effRoll = roll + accMod - rangePenalty - (isSuppressed ? 1 : 0);
+      if (effRoll >= 5) {
+        totalHits++;
+        const effectRoll = rollD10();
+        if (effectRoll >= 7) {
+          fireCount++;
+          log(`🔥 Попадание! Техника загорелась (d10=${effectRoll}).`);
+        } else if (effectRoll >= 5) {
+          blindCount++;
+          log(`👁️ Попадание! Техника ослеплена на 1 ход (d10=${effectRoll}).`);
+        } else {
+          log(`💥 Попадание, но без дополнительного эффекта (d10=${effectRoll}).`);
+        }
+      } else {
+        log(`❌ Промах (d10=${roll}, эффективно ${effRoll}).`);
+      }
+    }
+  });
+
+  log(`───────────────`);
+  log(`🔥 Всего выстрелов: ${totalShots}, попаданий: ${totalHits}, возгораний: ${fireCount}, ослеплений: ${blindCount}`);
+  log(`───────────────`);
+  saveData();
+  updateUI();
+}
 function throwMolotovAtVehicle() {
   if (!currentSquad) return;
   if (currentSquad.armor) { log('Техника не бросает бутылки.'); return; }
@@ -1576,7 +1667,7 @@ case 'Горные охотники': {
       { weaponName: 'Бутылкомет Цукермана', fighterIndices: [0, 1], active: true }
     ],
     ammoSmall: 20,
-    ammoOrdnance: 10,
+    ammoOrdnance: 12,
     grenades: 0,
     armor: null,
     embarkedSquadIndex: null,
