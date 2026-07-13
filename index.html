@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v10.23 — карточки аирф1 </title>
+  <title>Боевой модуль v10.24 — молотов </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -45,7 +45,7 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v10.23 — карточки аирф1 </h2>
+  <h2>⚔️ Боевой модуль v10.24 — молотов </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -644,6 +644,9 @@ const eff = morale + mod + extraMorale;
   if (currentSquad.effects?.lastBreath && currentSquad.fighters.every(f => f.hp === 0)) {
     html += `<button onclick="useLastBreath()" style="background:#8b0000;">💀 Длинное дыхание</button> `;
   }
+  if (currentSquad.effects?.molotov && currentSquad.grenades > 0) {
+  html += `<button onclick="throwMolotovAtVehicle()" style="background:#e67e22;">🔥 Бутылка по технике</button> `;
+  }   
   container.innerHTML = html;
 }
 function useLastBreath() {
@@ -929,7 +932,47 @@ function attackVehicle() {
     }
   });
 }   
+function throwMolotovAtVehicle() {
+  if (!currentSquad) return;
+  if (currentSquad.armor) { log('Техника не бросает бутылки.'); return; }
+  if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); return; }
+  if (!currentSquad.effects?.molotov) { log('У отряда нет бутылок с зажигательной смесью.'); return; }
+  if (currentSquad.grenades <= 0) { log('Нет бутылок!'); return; }
 
+  const dist = parseInt(document.getElementById('targetDistance').value) || 5;
+  const cover = parseInt(document.getElementById('coverTarget').value) || 6;
+  const activeMods = [...(appData.activeCards || []).filter(c => c.active), ...(appData.modifiers || []).filter(m => m.active)];
+  const accMod = activeMods.reduce((s, m) => s + (m.accuracyMod || 0), 0);
+  const isSuppressed = getEffectiveMorale() <= getSuppressionThreshold();
+
+  log('=== БРОСОК БУТЫЛКИ ПО БРОНЕТЕХНИКЕ ===');
+  
+  // Выбираем одного живого бойца для броска (берём первого живого)
+  const thrower = currentSquad.fighters.find(f => f.hp > 0);
+  if (!thrower) { log('Нет живых бойцов.'); return; }
+
+  currentSquad.grenades--; // тратим бутылку
+
+  let roll = rollD10();
+  let effRoll = roll + accMod - (isSuppressed ? 1 : 0);
+  if (dist > 3) effRoll -= Math.floor((dist - 3) / 2); // бутылка имеет эффективную дальность 3 (как у гранат? по логике — дальность броска)
+
+  if (effRoll >= cover) {
+    log(`${thrower.name}: бутылка попала! (d10=${roll}, эффективно ${effRoll})`);
+    // Вероятность возгорания 40% → d10 >= 7 (4 значения из 10)
+    const fireRoll = rollD10();
+    if (fireRoll >= 7) {
+      log('🔥 ТЕХНИКА ЗАГОРЕЛАСЬ! Бутылка подожгла бронетехнику.');
+    } else {
+      log(`❌ Возгорания не произошло (d10=${fireRoll}).`);
+    }
+  } else {
+    log(`${thrower.name}: бутылка не попала (d10=${roll}, эффективно ${effRoll}).`);
+  }
+
+  saveData();
+  updateUI();
+}
 function attackSmallArms() {
   if (!currentSquad) return;
   if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); updateUI(); return; }
