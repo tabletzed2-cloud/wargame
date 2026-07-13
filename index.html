@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v10.24 — молотов </title>
+  <title>Боевой модуль v10.25 — БТР </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -45,7 +45,7 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v10.24 — молотов </h2>
+  <h2>⚔️ Боевой модуль v10.25 — БТР </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -521,11 +521,12 @@ function resetAllData() {
 
     // =================== ПОСАДКА ДЕСАНТА ===================
     function renderEmbarkPanel() {
-      const panel = document.getElementById('embarkPanel');
-      if (!currentSquad || !currentSquad.armor || currentSquad.name !== 'БТР Llanero') {
-        panel.style.display = 'none';
-        return;
-      }
+  const panel = document.getElementById('embarkPanel');
+  // Показываем панель только если текущий отряд — БТР (есть броня и в названии есть "БТР")
+  if (!currentSquad || !currentSquad.armor || !currentSquad.name.includes('БТР')) {
+    panel.style.display = 'none';
+    return;
+  }
       panel.style.display = 'block';
       const available = appData.squads.filter((s, i) => 
         i !== currentSquadIndex && !s.armor && !s.hidden && s.fighters.length <= 10
@@ -957,16 +958,21 @@ function throwMolotovAtVehicle() {
   let effRoll = roll + accMod - (isSuppressed ? 1 : 0);
   if (dist > 3) effRoll -= Math.floor((dist - 3) / 2); // бутылка имеет эффективную дальность 3 (как у гранат? по логике — дальность броска)
 
-  if (effRoll >= cover) {
-    log(`${thrower.name}: бутылка попала! (d10=${roll}, эффективно ${effRoll})`);
-    // Вероятность возгорания 40% → d10 >= 7 (4 значения из 10)
-    const fireRoll = rollD10();
-    if (fireRoll >= 7) {
-      log('🔥 ТЕХНИКА ЗАГОРЕЛАСЬ! Бутылка подожгла бронетехнику.');
-    } else {
-      log(`❌ Возгорания не произошло (d10=${fireRoll}).`);
-    }
-  } else {
+if (effRoll >= cover) {
+  log(`${thrower.name}: бутылка попала! (d10=${roll}, эффективно ${effRoll})`);
+  // Ослепление при 5-6
+  if (roll >= 5 && roll <= 6) {
+    log('👁️ Техника ослеплена на 1 ход!');
+  }
+  // Возгорание при 7-10
+  if (roll >= 7) {
+    log('🔥 ТЕХНИКА ЗАГОРЕЛАСЬ! Бутылка подожгла бронетехнику.');
+  } else if (roll < 5) {
+    // Если roll < 5 – ничего не происходит, но мы уже залогировали попадание
+    // Можно оставить просто попадание без эффекта
+    log('💥 Попадание, но возгорания не произошло.');
+  }
+} else {
     log(`${thrower.name}: бутылка не попала (d10=${roll}, эффективно ${effRoll}).`);
   }
 
@@ -1598,12 +1604,14 @@ case 'Горные охотники': {
 }
 
 case 'Плохой порох': {
+  // Удаляем старый модификатор, если он есть
+  appData.modifiers = appData.modifiers.filter(m => m.name !== 'Плохой порох');
   appData.squads.filter(s => s.faction === 'A.I.R.F.').forEach(s => {
     if (!s.effects) s.effects = {};
     s.effects.badPowder = true;
   });
   log('Пассивный эффект "Плохой порох" активирован: один случайный боец за атаку получает -1 к скорострельности.');
-  break;   // <-- обязательно добавьте break
+  break;
 }
         case '¡Huelga!': {
           appData.squads.filter(s => s.faction === 'A.I.R.F.').forEach(s => {
