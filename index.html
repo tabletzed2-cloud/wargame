@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v10.22 — карточки аирф </title>
+  <title>Боевой модуль v10.23 — карточки аирф1 </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -45,7 +45,7 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v10.22 — карточки аирф </h2>
+  <h2>⚔️ Боевой модуль v10.23 — карточки аирф1 </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -211,7 +211,7 @@ if (!selectedFaction) {
             ],
             "crewWeapons": [
               { "type": "mg", "name": "Станковый пулемет Hotchkiss Mle 1914", "crewSize": 3, "shotRule": "sum_d6", "fullCrewDice": 3, "minCrewDice": 1, "effectiveRange": 6 },
-              { "type": "mortar", "name": "Бутылкомет Цукермана", "crewSize": 2, "shotRule": "fixed_per_crew", "shotsFull": 2, "shotsReduced2": 1, "shotsReduced1": 1, "effectiveRange": 3, "splashDamageDice": 3, "isMolotov": true }
+              { "type": "mortar", "name": "Бутылкомет Цукермана", "crewSize": 2, "shotRule": "fixed_per_crew", "shotsFull": 3, "shotsReduced2": 2, "shotsReduced1": 1, "effectiveRange": 3, "splashDamageDice": 3, "isMolotov": true }
             ],
             "cardLibrary": [
               { "name": "Интербригада", "desc": "Бойцы воодушевлены идеей.", "effect": "Дух +3", "shotMod": 0, "accuracyMod": 0, "moraleMod": 3, "icon": "" },
@@ -920,7 +920,16 @@ if (currentSquad.effects?.calvinistAccuracy) {
       if (ci.active !== false) ci.fighterIndices.forEach(idx => crewMemberIndices.add(idx));
     });
   }
-
+// Обработка "Плохой порох" – выбираем одного случайного живого бойца, который получит штраф
+let badPowderTarget = null;
+if (currentSquad.effects?.badPowder) {
+  const aliveFighters = currentSquad.fighters.map((f, idx) => f.hp > 0 ? idx : -1).filter(i => i >= 0);
+  if (aliveFighters.length > 0) {
+    badPowderTarget = aliveFighters[Math.floor(Math.random() * aliveFighters.length)];
+    // Эффект срабатывает один раз за атаку, после чего убираем флаг (одноразово)
+    delete currentSquad.effects.badPowder;
+  }
+}
   log('=== СТРЕЛКОВОЕ / ПУЛЕМЁТЫ ===');
   let totalShots = 0, totalHits = 0;
   let sniperHits = 0, sniperDamage = 0;   // <-- добавить
@@ -947,7 +956,8 @@ if (hasDesperateSalvo) {
       if (f.hp === 0 || crewMemberIndices.has(index)) return;
       const w = weapons.find(w => w.name === f.weapon);
       if (!w) return;
-      let shots = Math.min(w.values[rollD6() - 1] + shotMod, currentSquad.ammoSmall);
+      let penalty = (badPowderTarget === index) ? 1 : 0;
+let shots = Math.min(w.values[rollD6() - 1] + shotMod - penalty, currentSquad.ammoSmall);
       if (shots <= 0) return;
       currentSquad.ammoSmall -= shots;
       totalShots += shots;
@@ -1374,28 +1384,41 @@ function activateSelectedCards() {
             if (chosen === 'ДП-27') { newWeapon.values = [0,1,2,3,4,4]; newWeapon.effectiveRange = 5; newWeapon.meleeBonus = 0; }
             weapons.push(newWeapon);
           }
-          const commander = hq2.fighters.find(f => f.isCommander);
-          if (commander) {
-            commander.weapon = chosen;
-            log(`Штаб получил оружие "${chosen}"`);
-          } else {
-            log('Командир штаба не найден, оружие добавлено в арсенал.');
-          }
+          // Находим заместителя (по имени)
+const deputy = hq2.fighters.find(f => f.name.includes('Заместитель'));
+if (deputy) {
+  deputy.weapon = chosen;
+  log(`Заместитель командира штаба получил оружие "${chosen}"`);
+} else {
+  // Если заместитель не найден, выдаём командиру
+  const commander = hq2.fighters.find(f => f.isCommander);
+  if (commander) {
+    commander.weapon = chosen;
+    log(`Командир штаба получил оружие "${chosen}" (заместитель не найден)`);
+  } else {
+    log('Нет подходящего бойца в штабе для выдачи оружия.');
+  }
+}
           break;
         }
-        case 'Горные охотники': {
-          const list = appData.squads.filter(s => s.faction === 'A.I.R.F.' && s.name.includes('Пехотное отделение'));
-          if (list.length === 0) { alert('Нет пехотных отделений AIRF.'); return; }
-          const choice = prompt('Выберите отделение для "Горные охотники":\n' + list.map((s,i) => `${i}: ${s.name}`).join('\n'));
-          if (choice === null) return;
-          const idx = parseInt(choice);
-          if (isNaN(idx) || idx < 0 || idx >= list.length) return;
-          const squad = list[idx];
-          if (!squad.effects) squad.effects = {};
-          squad.effects.mountainHunters = { active: true, used: false };
-          log(`Отряд "${squad.name}" получил эффект "Горные охотники" (при стрельбе с высоты +1 меткость).`);
-          break;
-        }
+case 'Горные охотники': {
+  const list = appData.squads.filter(s => 
+    s.faction === 'A.I.R.F.' && 
+    (s.name.includes('Стрелковое отделение') || 
+     s.name.includes('Штурмовое отделение') || 
+     s.name.includes('Саперное отделение'))
+  );
+  if (list.length === 0) { alert('Нет пехотных отделений AIRF.'); return; }
+  const choice = prompt('Выберите отделение для "Горные охотники":\n' + list.map((s,i) => `${i}: ${s.name}`).join('\n'));
+  if (choice === null) return;
+  const idx = parseInt(choice);
+  if (isNaN(idx) || idx < 0 || idx >= list.length) return;
+  const squad = list[idx];
+  if (!squad.effects) squad.effects = {};
+  squad.effects.mountainHunters = { active: true, used: false };
+  log(`Отряд "${squad.name}" получил эффект "Горные охотники" (при стрельбе с высоты +1 меткость).`);
+  break;
+}
         case 'Реконкиста': {
           const isUrban = confirm('Это городской бой?');
           if (!isUrban) { log('Карта "Реконкиста" неактивна – бой не городской.'); return; }
@@ -1449,52 +1472,56 @@ function activateSelectedCards() {
           break;
         }
         case 'Бутылкомет Цукермана': {
-          // Создаём новый отряд "Расчёт бутылкомёта Цукермана" как отдельный отряд из двух человек
-          const newSquad = {
-            name: 'Расчёт бутылкомёта Цукермана',
-            faction: 'A.I.R.F.',
-            baseMorale: 5,
-            currentMorale: 5,
-            icon: '',
-            fighters: [
-              { name: 'Стрелок', weapon: 'Пистолет Star M1914', hp: 3, maxHp: 3 },
-              { name: 'Заряжающий', weapon: 'Пистолет Star M1914', hp: 3, maxHp: 3 }
-            ],
-            crewInstances: [
-              { weaponName: 'Бутылкомет Цукермана', fighterIndices: [0, 1], active: true }
-            ],
-            ammoSmall: 20,
-            ammoOrdnance: 10,
-            grenades: 0,
-            armor: null,
-            embarkedSquadIndex: null,
-            hidden: false
-          };
-          appData.squads.push(newSquad);
-          // Убедимся, что орудие есть в crewWeapons (уже добавлено в getDefaultData, но на всякий случай)
-          const crewW = appData.factions['A.I.R.F.'].crewWeapons.find(w => w.name === 'Бутылкомет Цукермана');
-          if (!crewW) {
-            appData.factions['A.I.R.F.'].crewWeapons.push({ 
-              type: 'mortar', 
-              name: 'Бутылкомет Цукермана', 
-              crewSize: 2, 
-              shotRule: 'fixed_per_crew', 
-              shotsFull: 2, 
-              shotsReduced2: 1, 
-              shotsReduced1: 1, 
-              effectiveRange: 3, 
-              splashDamageDice: 3,
-              isMolotov: true 
-            });
-          }
-          log('Создан отдельный отряд "Расчёт бутылкомёта Цукермана" (2 бойца).');
-          break;
-        }
-        case 'Плохой порох': {
-          appData.modifiers.push({ name: 'Плохой порох', shotMod: -1, accuracyMod: 0, moraleMod: 0, active: true });
-          log('Пассивный эффект "Плохой порох" активирован: -1 скорострельность случайному бойцу за атаку.');
-          break;
-        }
+  // Создаём новый отряд "Расчёт бутылкомёта Цукермана" как отдельный отряд из двух человек
+  const newSquad = {
+    name: 'Расчёт бутылкомёта Цукермана',
+    faction: 'A.I.R.F.',
+    baseMorale: 5,
+    currentMorale: 5,
+    icon: '',
+    fighters: [
+      { name: 'Стрелок', weapon: 'Пистолет Star M1914', hp: 3, maxHp: 3 },
+      { name: 'Заряжающий', weapon: 'Пистолет Star M1914', hp: 3, maxHp: 3 }
+    ],
+    crewInstances: [
+      { weaponName: 'Бутылкомет Цукермана', fighterIndices: [0, 1], active: true }
+    ],
+    ammoSmall: 20,
+    ammoOrdnance: 10,
+    grenades: 0,
+    armor: null,
+    embarkedSquadIndex: null,
+    hidden: false
+  };
+  appData.squads.push(newSquad);
+  // Убедимся, что орудие есть в crewWeapons
+  const crewW = appData.factions['A.I.R.F.'].crewWeapons.find(w => w.name === 'Бутылкомет Цукермана');
+  if (!crewW) {
+    appData.factions['A.I.R.F.'].crewWeapons.push({ 
+      type: 'mortar', 
+      name: 'Бутылкомет Цукермана', 
+      crewSize: 2, 
+      shotRule: 'fixed_per_crew', 
+      shotsFull: 3, 
+      shotsReduced2: 2, 
+      shotsReduced1: 1, 
+      effectiveRange: 3, 
+      splashDamageDice: 3,
+      isMolotov: true 
+    });
+  }
+  log('Создан отдельный отряд "Расчёт бутылкомёта Цукермана" (2 бойца).');
+  break;
+}
+
+case 'Плохой порох': {
+  appData.squads.filter(s => s.faction === 'A.I.R.F.').forEach(s => {
+    if (!s.effects) s.effects = {};
+    s.effects.badPowder = true;
+  });
+  log('Пассивный эффект "Плохой порох" активирован: один случайный боец за атаку получает -1 к скорострельности.');
+  break;   // <-- обязательно добавьте break
+}
         case '¡Huelga!': {
           appData.squads.filter(s => s.faction === 'A.I.R.F.').forEach(s => {
             s.ammoSmall = Math.floor(s.ammoSmall * 0.75);
