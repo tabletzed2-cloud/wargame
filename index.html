@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v10.28 — Огонь1 </title>
+  <title>Боевой модуль v10.29 — Огонь2 </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -45,7 +45,7 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v10.28 — Огонь1 </h2>
+  <h2>⚔️ Боевой модуль v10.29 — Огонь2 </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -666,6 +666,15 @@ if (btn) {
   if (currentSquad.effects?.molotov && currentSquad.grenades > 0) {
   html += `<button onclick="throwMolotovAtVehicle()" style="background:#e67e22;">🔥 Бутылка по технике</button> `;
   }   
+ // Проверяем наличие активного расчёта ампуломёта
+const hasAmpulomet = currentSquad && currentSquad.crewInstances && currentSquad.crewInstances.some(ci => {
+  if (ci.active === false) return false;
+  const cw = getFactionCrewWeapons(currentSquad.faction).find(w => w.name === ci.weaponName);
+  return cw && cw.isAmpulomet;
+});
+if (hasAmpulomet && currentSquad.ammoOrdnance > 0) {
+  html += `<button onclick="attackAmpulometAtVehicle()" style="background:#8e44ad;">💥 Ампуломёт по технике</button> `;
+}     
  // Термитный заряд
   if (currentSquad.thermiteCharges && currentSquad.thermiteCharges > 0) {
   html += `<button onclick="useThermiteCharge()" style="background:#8b0000;">🧨 Термитный заряд (${currentSquad.thermiteCharges})</button> `;
@@ -965,6 +974,85 @@ function attackVehicle() {
     }
   });
 }  
+    function attackAmpulometAtVehicle() {
+  if (!currentSquad) return;
+  if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); updateUI(); return; }
+
+  const crewWeapons = getFactionCrewWeapons(currentSquad.faction);
+  const dist = parseInt(document.getElementById('targetDistance').value) || 5;
+  const cover = parseInt(document.getElementById('coverTarget').value) || 6;
+  const isSuppressed = getEffectiveMorale() <= getSuppressionThreshold();
+  const activeMods = [...(appData.activeCards || []).filter(c => c.active), ...(appData.modifiers || []).filter(m => m.active)];
+  const shotMod = activeMods.reduce((s, m) => s + (m.shotMod || 0), 0);
+  const accMod = activeMods.reduce((s, m) => s + (m.accuracyMod || 0), 0);
+
+  const ampulometCrews = (currentSquad.crewInstances || []).filter(ci => {
+    if (ci.active === false) return false;
+    const cw = crewWeapons.find(w => w.name === ci.weaponName);
+    return cw && cw.isAmpulomet;
+  });
+
+  if (ampulometCrews.length === 0) {
+    log('Нет активных расчётов ампуломёта.');
+    return;
+  }
+
+  log('=== АМПУЛОМЁТ ПО ТЕХНИКЕ ===');
+  let totalShots = 0, totalHits = 0;
+  let fireCount = 0;
+
+  ampulometCrews.forEach(ci => {
+    const cw = crewWeapons.find(w => w.name === ci.weaponName);
+    if (!cw) return;
+    const alive = ci.fighterIndices.filter(idx => currentSquad.fighters[idx]?.hp > 0).length;
+    if (alive === 0) return;
+    let shots = 0;
+    if (cw.shotRule === 'fixed_per_crew') {
+      if (alive >= (cw.crewSize || 3)) shots = cw.shotsFull || 3;
+      else if (alive >= 2) shots = cw.shotsReduced2 || 2;
+      else shots = cw.shotsReduced1 || 1;
+    } else {
+      shots = 1;
+    }
+    shots = Math.max(0, shots + shotMod);
+    if (shots <= 0) return;
+    if (currentSquad.ammoOrdnance <= 0) {
+      log(`${cw.name}: нет снарядов!`);
+      return;
+    }
+    shots = Math.min(shots, currentSquad.ammoOrdnance);
+    currentSquad.ammoOrdnance -= shots;
+    totalShots += shots;
+
+    const effectiveRange = cw.effectiveRange || 8;
+    for (let i = 0; i < shots; i++) {
+      let roll = rollD10();
+      let rangePenalty = 0;
+      if (dist > effectiveRange) rangePenalty = dist - effectiveRange;
+      let effRoll = roll + accMod - rangePenalty - (isSuppressed ? 1 : 0);
+      // Для ампуломёта порог попадания 6 (как у миномёта)
+      if (effRoll >= 6) {
+        totalHits++;
+        // Урон d4
+        const damage = rollD4();
+        log(`💥 Попадание! Урон ${damage} (d4).`);
+        // Поджог техники при 9-10
+        if (roll >= 9) {
+          fireCount++;
+          log(`🔥 Техника загорелась! (d10=${roll})`);
+        }
+      } else {
+        log(`❌ Промах (d10=${roll}, эффективно ${effRoll}).`);
+      }
+    }
+  });
+
+  log(`───────────────`);
+  log(`💥 Выстрелов: ${totalShots}, попаданий: ${totalHits}, поджогов: ${fireCount}`);
+  log(`───────────────`);
+  saveData();
+  updateUI();
+}
     // ===================== ТЕРМИТНЫЙ ЗАРЯД =====================
 function useThermiteCharge() {
   if (!currentSquad || !currentSquad.thermiteCharges || currentSquad.thermiteCharges <= 0) {
