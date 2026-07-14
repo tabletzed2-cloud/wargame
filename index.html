@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v10.26 — молотов </title>
+  <title>Боевой модуль v10.27 — Огонь </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -45,7 +45,7 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v10.26 — молотов </h2>
+  <h2>⚔️ Боевой модуль v10.27 — Огонь </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -208,11 +208,13 @@ if (!selectedFaction) {
               { "name": "АВС-36", "values": [1,1,2,2,3,3], "effectiveRange": 6, "meleeBonus": 1 },
               { "name": "ППД-40", "values": [0,2,2,3,4,4], "effectiveRange": 3, "meleeBonus": 0 },
               { "name": "ДП-27", "values": [0,1,2,3,4,4], "effectiveRange": 5, "meleeBonus": 0 },
-              { "name": "Ручной пулемет Zb.26", "values": [0,1,1,2,2,3], "effectiveRange": 5, "meleeBonus": 0 }
+              { "name": "Ручной пулемет Zb.26", "values": [0,1,1,2,2,3], "effectiveRange": 5, "meleeBonus": 0 },
+              { "name": "РОКС-3", "values": [0,0,0,0,0,0], "effectiveRange": 1, "meleeBonus": 0, "flamethrower": true, "maxShots": 3 }
             ],
             "crewWeapons": [
               { "type": "mg", "name": "Станковый пулемет Hotchkiss Mle 1914", "crewSize": 3, "shotRule": "sum_d6", "fullCrewDice": 3, "minCrewDice": 1, "effectiveRange": 6 },
-              { "type": "mortar", "name": "Бутылкомет Цукермана", "crewSize": 2, "shotRule": "fixed_per_crew", "shotsFull": 3, "shotsReduced2": 2, "shotsReduced1": 1, "effectiveRange": 3, "splashDamageDice": 3, "isMolotov": true }
+              { "type": "mortar", "name": "Бутылкомет Цукермана", "crewSize": 2, "shotRule": "fixed_per_crew", "shotsFull": 3, "shotsReduced2": 2, "shotsReduced1": 1, "effectiveRange": 3, "splashDamageDice": 3, "isMolotov": true },
+              { "type": "mortar", "name": "Ампуломёт АМ-1", "crewSize": 3, "shotRule": "fixed_per_crew", "shotsFull": 3, "shotsReduced2": 2, "shotsReduced1": 1, "effectiveRange": 8, "splashDamageDice": 4, "isAmpulomet": true, "damageType": "d4" }
             ],
             "cardLibrary": [
               { "name": "Интербригада", "desc": "Бойцы воодушевлены идеей.", "effect": "Дух +3", "shotMod": 0, "accuracyMod": 0, "moraleMod": 3, "icon": "" },
@@ -227,7 +229,12 @@ if (!selectedFaction) {
               { "name": "Бутылки с зажигательной смесью", "desc": "Все гранаты отряда заменяются на бутылки с зажигательной смесью (1/бойца). Попадание как у гранаты, по танку загорание на 4-6, по пехоте 3 урона.", "effect": "Замена гранат на коктейли Молотова", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
               { "name": "Бутылкомет Цукермана", "desc": "Взводу добавляется расчёт бутылкомёта. Попадание d10 5-10, дальность 3 гекса, эффект как у бутылок.", "effect": "Добавляет орудие «Бутылкомет Цукермана»", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
               { "name": "Плохой порох", "desc": "1 случайный боец за атаку получает -1 к скорострельности (пассивный эффект для всех отрядов).", "effect": "-1 скорострельность одному бойцу за атаку", "shotMod": -1, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
-              { "name": "¡Huelga!", "desc": "Все отряды получают боезапас на 25% меньше (патроны, гранаты, снаряды).", "effect": "-25% боезапаса всем отрядам", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" }
+              { "name": "¡Huelga!", "desc": "Все отряды получают боезапас на 25% меньше (патроны, гранаты, снаряды).", "effect": "-25% боезапаса всем отрядам", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
+              { "name": "Термитный заряд", "desc": "Сапёрное отделение или штаб сапёров получает 3 термитных заряда для уничтожения техники или амбразур ДОТ.", "effect": "3 заряда (d6=2-6 успех, при 4-6 гибель бойца)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
+              { "name": "Фосфорные гранаты", "desc": "Выбранный отряд получает 7 фосфорных гранат вместо обычных. При попадании 4+ бойцов создаётся дымовая завеса.", "effect": "7 фосфорных гранат, дымовая завеса при попадании 4+ бойцов", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
+              { "name": "Ампуломёт АМ-1", "desc": "Добавляет расчёт ампуломёта из 3 человек. Дальность 8 гексов, 3 выстрела, урон d4. При 3 попаданиях в гекс – он загорается.", "effect": "Создаёт отряд «Расчёт ампуломёта АМ-1»", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
+              { "name": "Ранцевый огнемёт РОКС-3", "desc": "Сапёрное отделение или штаб сапёров получает огнемёт (3 струи). Струя поражает всех в гексе (d6=2-6, урон 2).", "effect": "Заменяет оружие одного бойца на РОКС-3 (3 заряда)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
+              { "name": "Огненное поле", "desc": "Перед игрой отметьте гекс в 2 гексах от стартовых позиций. В любой момент подожгите его, нанеся d6 урона врагу и заставив отступить.", "effect": "Информационная – позволяет поджечь выбранный гекс", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "informational": true }
             ]
           }
         },
@@ -659,6 +666,20 @@ if (btn) {
   if (currentSquad.effects?.molotov && currentSquad.grenades > 0) {
   html += `<button onclick="throwMolotovAtVehicle()" style="background:#e67e22;">🔥 Бутылка по технике</button> `;
   }   
+ // Термитный заряд
+  if (currentSquad.thermiteCharges && currentSquad.thermiteCharges > 0) {
+  html += `<button onclick="useThermiteCharge()" style="background:#8b0000;">🧨 Термитный заряд (${currentSquad.thermiteCharges})</button> `;
+}
+// Фосфорные гранаты – кнопка не нужна, они работают через бросок гранат
+// Огнемёт
+if (currentSquad.effects?.flamethrower?.charges > 0) {
+  html += `<button onclick="useFlamethrower()" style="background:#d35400;">🔥 Огнемёт (${currentSquad.effects.flamethrower.charges} струй)</button> `;
+}
+// Огненное поле
+if (appData.fireFieldHex) {
+  html += `<button onclick="useFireField()" style="background:#e67e22;">🔥 Поджечь огненное поле (${appData.fireFieldHex})</button> `;
+}
+// Ампуломёт – используем существующую кнопку "Орудия / Миномёты" для стрельбы, дополнительная кнопка не нужна.
   container.innerHTML = html;
 }
 function useLastBreath() {
@@ -944,6 +965,278 @@ function attackVehicle() {
     }
   });
 }  
+    // ===================== ТЕРМИТНЫЙ ЗАРЯД =====================
+function useThermiteCharge() {
+  if (!currentSquad || !currentSquad.thermiteCharges || currentSquad.thermiteCharges <= 0) {
+    log('Нет термитных зарядов.');
+    return;
+  }
+  if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); return; }
+  
+  // Выбор цели (спрашиваем у игрока)
+  const target = prompt('Выберите цель:\n1 - Техника (танк/САУ)\n2 - Амбразура ДОТ');
+  if (target !== '1' && target !== '2') { log('Отмена.'); return; }
+  
+  currentSquad.thermiteCharges--;
+  log(`=== ПРИМЕНЕНИЕ ТЕРМИТНОГО ЗАРЯДА (осталось ${currentSquad.thermiteCharges}) ===`);
+  
+  // Бросок на успех
+  const successRoll = rollD6();
+  if (successRoll >= 2 && successRoll <= 6) {
+    log(`✅ Заряд сработал! (d6=${successRoll}) Цель уничтожена.`);
+  } else {
+    log(`❌ Заряд не сработал (d6=${successRoll}).`);
+  }
+  
+  // Бросок на гибель бойца
+  const deathRoll = rollD6();
+  if (deathRoll >= 4 && deathRoll <= 6) {
+    // Выбираем случайного живого бойца (кроме командира)
+    const candidates = currentSquad.fighters.map((f, i) => f.hp > 0 && !f.isCommander ? i : -1).filter(i => i >= 0);
+    if (candidates.length > 0) {
+      const idx = candidates[Math.floor(Math.random() * candidates.length)];
+      currentSquad.fighters[idx].hp = 0;
+      log(`💀 Боец ${currentSquad.fighters[idx].name} погиб от взрыва!`);
+      // Понижаем мораль
+      morale = Math.max(0, morale - 1);
+      currentSquad.currentMorale = morale;
+    }
+  } else {
+    log(`Бойцы не пострадали (d6=${deathRoll}).`);
+  }
+  
+  saveData();
+  updateUI();
+}
+
+// ===================== ФОСФОРНЫЕ ГРАНАТЫ (модификация throwGrenades) =====================
+// ВАЖНО: нужно изменить функцию throwGrenades, добавив проверку на phosphorusGrenades.
+// Я дам изменённую версию функции полностью, чтобы вы заменили старую.
+
+function throwGrenades() {
+  if (!currentSquad || currentSquad.armor) { log('Техника не бросает гранаты.'); return; }
+  if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); return; }
+  if (currentSquad.grenades <= 0) { log('Нет гранат!'); return; }
+  const activeMods = [...(appData.activeCards || []).filter(c => c.active), ...(appData.modifiers || []).filter(m => m.active)];
+  let accMod = activeMods.reduce((s, m) => s + (m.accuracyMod || 0), 0);
+  const isSuppressed = getEffectiveMorale() <= getSuppressionThreshold();
+  
+  const hasDynamic = currentSquad.effects?.dynamic?.active;
+  const hasMolotov = currentSquad.effects?.molotov;
+  const hasPhosphorus = currentSquad.effects?.phosphorusGrenades;
+  
+  log('=== БРОСОК ГРАНАТ ===');
+  let totalHits = 0, totalDamage = 0;
+  let throwersCount = 0;
+  
+  currentSquad.fighters.forEach(f => {
+    if (f.hp === 0 || currentSquad.grenades <= 0) return;
+    throwersCount++;
+    currentSquad.grenades--;
+    const roll = rollD10();
+    let effRoll = roll + accMod - (isSuppressed ? 1 : 0);
+    if (effRoll >= 6) {
+      totalHits++;
+      let dmg;
+      if (hasDynamic) {
+        dmg = rollD6() + 1;
+        const d6 = rollD6();
+        if (d6 === 1) {
+          f.hp -= 3;
+          log(`${f.name} получил 3 урона от динамита!`);
+          if (f.hp <= 0) { f.hp = 0; log(`${f.name} погиб от взрыва!`); }
+        }
+        totalDamage += dmg;
+        log(`${f.name}: бросок гранаты d10=${roll} -> попадание, урон ${dmg} (динамит)`);
+      } else if (hasMolotov) {
+        dmg = 3;
+        totalDamage += dmg;
+        log(`${f.name}: бросок бутылки d10=${roll} -> попадание, урон ${dmg} (зажигательная смесь)`);
+      } else if (hasPhosphorus) {
+        dmg = rollD6();
+        totalDamage += dmg;
+        log(`${f.name}: бросок фосфорной гранаты d10=${roll} -> попадание, урон ${dmg}`);
+      } else {
+        dmg = rollD6();
+        totalDamage += dmg;
+        log(`${f.name}: бросок гранаты d10=${roll} -> попадание, урон ${dmg}`);
+      }
+    } else {
+      log(`${f.name}: бросок гранаты d10=${roll} -> мимо`);
+    }
+  });
+  
+  // Проверка для фосфорных гранат: если бросили минимум 4 и есть попадания
+  if (hasPhosphorus && throwersCount >= 4 && totalHits > 0) {
+    log('💨 Дымовая завеса создана в целевом гексе!');
+  }
+  
+  log(`Всего попаданий: ${totalHits}, суммарный урон: ${totalDamage}.`);
+  saveData();
+  updateUI();
+}
+
+// ===================== ОГНЕМЁТ РОКС-3 =====================
+function useFlamethrower() {
+  if (!currentSquad) return;
+  if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); return; }
+  if (!currentSquad.effects?.flamethrower || currentSquad.effects.flamethrower.charges <= 0) {
+    log('Нет зарядов огнемёта.');
+    return;
+  }
+  
+  // Выбор гекса (спрашиваем у игрока)
+  const targetHex = prompt('Введите координаты гекса для атаки огнемётом (например, "B4"):');
+  if (!targetHex) { log('Отмена.'); return; }
+  
+  currentSquad.effects.flamethrower.charges--;
+  log(`=== ОГНЕМЁТНАЯ СТРУЯ (осталось ${currentSquad.effects.flamethrower.charges}) ===`);
+  
+  const roll = rollD6();
+  if (roll >= 2 && roll <= 6) {
+    log(`✅ Струя поразила гекс ${targetHex}! (d6=${roll})`);
+    log(`🔥 Все вражеские бойцы в гексе получают 2 урона.`);
+    // Здесь по логике нужно было бы применить урон к вражеским отрядам в этом гексе,
+    // но так как у нас нет привязки к позициям, просто логируем.
+  } else {
+    log(`❌ Струя не попала (d6=${roll}).`);
+  }
+  
+  // Если заряды кончились, удаляем эффект
+  if (currentSquad.effects.flamethrower.charges <= 0) {
+    delete currentSquad.effects.flamethrower;
+    log('Огнемёт израсходован.');
+  }
+  saveData();
+  updateUI();
+}
+
+// ===================== ОГНЕННОЕ ПОЛЕ =====================
+function useFireField() {
+  if (!appData.fireFieldHex) {
+    log('Огненное поле не отмечено.');
+    return;
+  }
+  log(`=== ПОДЖИГ ОГНЕННОГО ПОЛЯ (${appData.fireFieldHex}) ===`);
+  // Спрашиваем, есть ли враг в этом гексе
+  const enemy = confirm(`В гексе ${appData.fireFieldHex} есть вражеский отряд?`);
+  if (enemy) {
+    const damage = rollD6();
+    log(`🔥 Враг получает ${damage} урона и вынужден отступить.`);
+  } else {
+    log('Гекс пуст, эффекта нет.');
+  }
+  // Удаляем метку после использования (одноразово)
+  delete appData.fireFieldHex;
+  saveData();
+  updateUI();
+}
+
+// ===================== АМПУЛОМЁТ АМ-1 (модификация attackOrdnance) =====================
+// Нужно изменить функцию attackOrdnance, чтобы она обрабатывала ампуломёт.
+// В существующем коде есть цикл по crewInstances. Добавим проверку на isAmpulomet.
+// В блоке, где вычисляется damage, изменим логику для ампуломёта.
+
+// Ниже я даю изменённую версию функции attackOrdnance – замените старую.
+
+function attackOrdnance() {
+  if (!currentSquad) return;
+  if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); updateUI(); return; }
+  const activeMods = [...(appData.activeCards || []).filter(c => c.active), ...(appData.modifiers || []).filter(m => m.active)];
+  const shotMod = activeMods.reduce((s, m) => s + (m.shotMod || 0), 0);
+  const dist = parseInt(document.getElementById('targetDistance').value) || 5;
+  const crewWeapons = getFactionCrewWeapons(currentSquad.faction);
+  const isSuppressed = getEffectiveMorale() <= getSuppressionThreshold();
+
+  log('=== ОРУДИЯ / МИНОМЁТЫ ===');
+  let totalShots = 0, totalHits = 0, totalDamage = 0;
+  let ampulometHits = 0;
+
+  if (!currentSquad.crewInstances) {
+    log('Нет орудийных расчётов.');
+    return;
+  }
+
+  currentSquad.crewInstances.forEach(ci => {
+    if (ci.active === false) return;
+    const cw = crewWeapons.find(w => w.name === ci.weaponName);
+    if (!cw || (cw.type !== 'at_gun' && cw.type !== 'mortar')) return;
+    const alive = ci.fighterIndices.filter(idx => currentSquad.fighters[idx]?.hp > 0).length;
+    if (alive === 0) return;
+    let shots = 0;
+    if (cw.shotRule === 'fixed_per_crew') {
+      if (alive >= (cw.crewSize || 3)) shots = cw.shotsFull || 3;
+      else if (alive >= 2) shots = cw.shotsReduced2 || 2;
+      else shots = cw.shotsReduced1 || 1;
+    } else if (cw.shotRule === 'sum_d6') {
+      let dice = cw.fullCrewDice || 3;
+      if (alive < (cw.crewSize || 5)) dice = Math.max(cw.minCrewDice || 1, Math.floor(alive / ((cw.crewSize || 5) / (cw.fullCrewDice || 3))));
+      for (let i = 0; i < dice; i++) shots += rollD6();
+    }
+    shots = Math.max(0, shots + shotMod);
+    if (shots <= 0) return;
+    if (currentSquad.ammoOrdnance <= 0) {
+      log(`${cw.name}: нет снарядов!`);
+      return;
+    }
+    shots = Math.min(shots, currentSquad.ammoOrdnance);
+    currentSquad.ammoOrdnance -= shots;
+    totalShots += shots;
+
+    // Определяем урон для каждого выстрела
+    const isAmpulomet = cw.isAmpulomet || false;
+    const damageDice = cw.splashDamageDice || 1;
+    const damageType = cw.damageType || 'd6'; // может быть 'd4' или 'd6'
+
+    for (let i = 0; i < shots; i++) {
+      let roll = rollD10();
+      // Для ампуломёта попадание при 6-10 (по аналогии с миномётом, но можно оставить 7)
+      let hitThreshold = 7;
+      if (isAmpulomet) hitThreshold = 6; // чуть легче
+      if (roll >= hitThreshold) {
+        totalHits++;
+        let damage = 0;
+        if (damageType === 'd4') {
+          for (let d = 0; d < damageDice; d++) damage += rollD4();
+        } else {
+          for (let d = 0; d < damageDice; d++) damage += rollD6();
+        }
+        totalDamage += damage;
+        log(`${cw.name}: попал (d10=${roll}) → урон ${damage} (${damageDice}${damageType})`);
+        // Если ампуломёт – запоминаем попадание в гекс (для поджога)
+        if (isAmpulomet) {
+          // Увеличиваем счётчик попаданий в гекс (используем дистанцию как идентификатор гекса)
+          const hexKey = `hex_${dist}`;
+          if (!currentSquad.ampulometHits) currentSquad.ampulometHits = {};
+          currentSquad.ampulometHits[hexKey] = (currentSquad.ampulometHits[hexKey] || 0) + 1;
+          const hits = currentSquad.ampulometHits[hexKey];
+          if (hits >= 3) {
+            log(`🔥 Гекс на дистанции ${dist} загорается и становится непроходимым!`);
+            delete currentSquad.ampulometHits[hexKey]; // сброс после поджога
+          }
+        }
+      } else {
+        log(`${cw.name}: мимо (d10=${roll})`);
+      }
+    }
+  });
+
+  if (totalShots === 0) {
+    if (currentSquad.ammoOrdnance <= 0) log('🚀 Кончились снаряды!');
+    else log('Нет доступных орудий/миномётов.');
+  } else {
+    log(`───────────────`);
+    log(`💥 Всего выстрелов: ${totalShots}, попаданий: ${totalHits}, суммарный урон: ${totalDamage}`);
+    log(`───────────────`);
+  }
+  saveData();
+  updateUI();
+}
+
+// ===================== ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ =====================
+function rollD4() {
+  return Math.floor(Math.random() * 4) + 1;
+}
     function attackMolotovCrew() {
   if (!currentSquad) return;
   if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); updateUI(); return; }
@@ -1300,7 +1593,23 @@ function attackOrdnance() {
           morale = Math.max(0, morale - (target.isCommander ? 2 : 1));
           currentSquad.currentMorale = morale;
           if (getEffectiveMorale() <= 1) { log('💔 Бегство!'); break; }
+          if (target.weapon === 'РОКС-3' && target.hp === 0) {
+  const explodeRoll = rollD6();
+  if (explodeRoll >= 4 && explodeRoll <= 6) {
+    const dmg = rollD4();
+    log(`💥 Бак огнемёта взорвался! Отряд получает ${dmg} урона.`);
+    // Наносим урон случайным живым бойцам
+    const alive = currentSquad.fighters.filter(f => f.hp > 0);
+    for (let i = 0; i < dmg && alive.length > 0; i++) {
+      const victim = alive[Math.floor(Math.random() * alive.length)];
+      victim.hp--;
+      log(`${victim.name} ранен осколками.`);
+      if (victim.hp === 0) log(`☠️ ${victim.name} погиб!`);
+    }
+  }
         }
+
+}
       }
       updateUI(); saveData();
     }
@@ -1713,6 +2022,106 @@ case 'Плохой порох': {
           log('Карта "¡Huelga!" активирована: боезапас всех отрядов AIRF уменьшен на 25%.');
           break;
         }
+          case 'Термитный заряд': {
+  const list = appData.squads.filter(s => s.faction === 'A.I.R.F.' && (s.name.includes('Саперное отделение') || s.name.includes('Штаб саперного взвода')));
+  if (list.length === 0) { alert('Нет сапёрных отделений или штаба сапёров AIRF.'); return; }
+  const choice = prompt('Выберите отряд для термитных зарядов:\n' + list.map((s,i) => `${i}: ${s.name}`).join('\n'));
+  if (choice === null) return;
+  const idx = parseInt(choice);
+  if (isNaN(idx) || idx < 0 || idx >= list.length) return;
+  const squad = list[idx];
+  squad.thermiteCharges = 3;
+  log(`Отряд "${squad.name}" получил 3 термитных заряда.`);
+  break;
+}
+case 'Фосфорные гранаты': {
+  const list = appData.squads.filter(s => s.faction === 'A.I.R.F.' && !s.armor);
+  if (list.length === 0) { alert('Нет пехотных отрядов AIRF.'); return; }
+  const choice = prompt('Выберите отряд для фосфорных гранат:\n' + list.map((s,i) => `${i}: ${s.name}`).join('\n'));
+  if (choice === null) return;
+  const idx = parseInt(choice);
+  if (isNaN(idx) || idx < 0 || idx >= list.length) return;
+  const squad = list[idx];
+  squad.grenades = 7;
+  squad.effects = squad.effects || {};
+  squad.effects.phosphorusGrenades = true;
+  log(`Отряд "${squad.name}" получил 7 фосфорных гранат.`);
+  break;
+}
+case 'Ампуломёт АМ-1': {
+  // Создаём новый отряд "Расчёт ампуломёта АМ-1" из 3 человек
+  const newSquad = {
+    name: 'Расчёт ампуломёта АМ-1',
+    faction: 'A.I.R.F.',
+    baseMorale: 5,
+    currentMorale: 5,
+    icon: '',
+    fighters: [
+      { name: 'Командир расчёта', weapon: 'Пистолет Star M1914', hp: 3, maxHp: 3, isCommander: true },
+      { name: 'Наводчик', weapon: 'Пистолет Star M1914', hp: 3, maxHp: 3 },
+      { name: 'Заряжающий', weapon: 'Пистолет Star M1914', hp: 3, maxHp: 3 }
+    ],
+    crewInstances: [
+      { weaponName: 'Ампуломёт АМ-1', fighterIndices: [0, 1, 2], active: true }
+    ],
+    ammoSmall: 30,
+    ammoOrdnance: 20,
+    grenades: 0,
+    armor: null,
+    embarkedSquadIndex: null,
+    hidden: false,
+    // для отслеживания попаданий по гексам (будем хранить объект)
+    ampulometHits: {}
+  };
+  appData.squads.push(newSquad);
+  // Убедимся, что орудие есть в crewWeapons (уже добавлено в getDefaultData)
+  const crewW = appData.factions['A.I.R.F.'].crewWeapons.find(w => w.name === 'Ампуломёт АМ-1');
+  if (!crewW) {
+    appData.factions['A.I.R.F.'].crewWeapons.push({ 
+      type: 'mortar', 
+      name: 'Ампуломёт АМ-1', 
+      crewSize: 3, 
+      shotRule: 'fixed_per_crew', 
+      shotsFull: 3, 
+      shotsReduced2: 2, 
+      shotsReduced1: 1, 
+      effectiveRange: 8, 
+      splashDamageDice: 4,
+      isAmpulomet: true,
+      damageType: 'd4'
+    });
+  }
+  log('Создан отдельный отряд "Расчёт ампуломёта АМ-1" (3 бойца).');
+  break;
+}
+case 'Ранцевый огнемёт РОКС-3': {
+  const list = appData.squads.filter(s => s.faction === 'A.I.R.F.' && (s.name.includes('Саперное отделение') || s.name.includes('Штаб саперного взвода')));
+  if (list.length === 0) { alert('Нет сапёрных отделений или штаба сапёров AIRF.'); return; }
+  const choice = prompt('Выберите отряд для ранцевого огнемёта:\n' + list.map((s,i) => `${i}: ${s.name}`).join('\n'));
+  if (choice === null) return;
+  const idx = parseInt(choice);
+  if (isNaN(idx) || idx < 0 || idx >= list.length) return;
+  const squad = list[idx];
+  // Найти живого бойца не-командира
+  const candidates = squad.fighters.map((f, i) => f.hp > 0 && !f.isCommander ? i : -1).filter(i => i >= 0);
+  if (candidates.length === 0) { alert('Нет живых бойцов для замены оружия.'); return; }
+  const chosenIndex = candidates[Math.floor(Math.random() * candidates.length)];
+  squad.fighters[chosenIndex].weapon = 'РОКС-3';
+  squad.effects = squad.effects || {};
+  squad.effects.flamethrower = { charges: 3 };
+  log(`Боец "${squad.fighters[chosenIndex].name}" получил огнемёт РОКС-3 (3 струи).`);
+  break;
+}
+case 'Огненное поле': {
+  // Информационная карта – просто запрашиваем координаты гекса
+  const hex = prompt('Введите координаты гекса для огненного поля (например, "A3" или "5,7"):');
+  if (hex) {
+    // Сохраняем в глобальную переменную (например, в appData)
+    appData.fireFieldHex = hex;
+    log(`Огненное поле отмечено на гексе ${hex}.`);
+  }
+  break;
+}
         default:
           break;
       }
