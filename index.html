@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.02 — Ход </title>
+  <title>Боевой модуль v11.03 — Ход </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -46,7 +46,7 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v11.02 — Ход </h2>
+  <h2>⚔️ Боевой модуль v11.03 — Ход </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -450,9 +450,9 @@ function resetAllData() {
     const crewCount = squad.fighters.length;
     return 4 + crewCount; // например, БТР: 5, САУ: 9
   } else if (squad.name.includes('Пулеметный расчёт') || squad.name.includes('Станковый')) {
-    return 4; // станковые пулемёты
+    return 6; // станковые пулемёты
   } else if (squad.name.includes('Минометный') || squad.name.includes('ПТО') || squad.name.includes('Расчёт')) {
-    return 3; // миномёты и ПТО
+    return 6; // миномёты и ПТО
   } else {
     return 6; // пехота
   }
@@ -794,11 +794,6 @@ const eff = morale + mod + extraMorale;
       const pct = Math.max(0, eff / base * 100);
       document.getElementById('moraleContainer').innerHTML = `<div>Дух: ${morale}/${base} ${mod !== 0 ? `(эфф. ${eff})` : ''}</div><div class="morale-bar" style="width:${pct}%; background:${eff <= 0 ? '#c0392b' : eff <= base/2 ? '#f39c12' : '#27ae60'}"></div>`;
       // Обновляем отображение ОД
-const ap = getAP(currentSquadIndex);
-const maxAp = actionPoints[currentSquadIndex] ? actionPoints[currentSquadIndex].maxAp : 0;
-document.getElementById('apDisplay').innerText = getAP(currentSquadIndex);
-document.getElementById('maxApDisplay').innerText = actionPoints[currentSquadIndex] ? actionPoints[currentSquadIndex].maxAp : 0;
-document.getElementById('turnCounter').innerText = currentTurn;
       updateActiveCardsBattle();
       const maxShots = getMaxShots(currentSquad);
       const shotsUsed = getShotsUsed(currentSquad);
@@ -966,10 +961,7 @@ if (!terrainKey) {
   return;
 }
     const costPerHex = getActionCost(currentSquad, 'move', terrainKey);
-    if (!terrainKey) {
-  log('Неверный тип местности.');
-  return;
-}    if (costPerHex === undefined) {
+        if (costPerHex === undefined) {
       log('Перемещение невозможно для данного типа местности.');
       return;
     }
@@ -1096,8 +1088,9 @@ function useLastBreath() {
   updateUI();
 }
 function usePanzerblinde() {
+  if (!currentSquad || currentSquad.panzerblindeCharges <= 0) return;
   if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'special'))) {
-    log('Недостаточно ОД для действия.');
+    log('Недостаточно ОД.');
     return;
   }
   if (!currentSquad || currentSquad.panzerblindeCharges <= 0) return;
@@ -1307,7 +1300,7 @@ function satchelCharge() {
       if (isCrouch) return 4;   // переползание 2 ОД = 4 полу-ОД
       if (terrain === 'open') return 2;
       if (terrain === 'forest') return 3;
-      if (terrain === 'road') return 1.5 * 2; // 3 полу-ОД? Но 0.75 ОД = 1.5 полу-ОД за гекс, можно округлить до 2
+      if (terrain === 'road') return 1.5; // 3 полу-ОД? Но 0.75 ОД = 1.5 полу-ОД за гекс, можно округлить до 2
       if (terrain === 'bad') return 4;
     }
     return 2; // по умолчанию
@@ -1406,6 +1399,10 @@ currentSquad.ammoOrdnance -= shots;
       } else { log(`❌ ${cw.name}: Промах (d10=${roll})`); }
     }
   });
+  if (currentSquad.actionsThisTurn) {
+  currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
+}
+   saveData();
 }  
     function attackAmpulometAtVehicle() {
   if (!currentSquad) return;
@@ -1491,10 +1488,11 @@ if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'special'))) {
 }
     // ===================== ТЕРМИТНЫЙ ЗАРЯД =====================
 function useThermiteCharge() {
+  if (!currentSquad || currentSquad.useThermiteCharge <= 0) return;
   if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'special'))) {
-  log('Недостаточно ОД для действия.');
-  return;
-}
+    log('Недостаточно ОД.');
+    return;
+  }
   if (currentSquad.fighters.every(f => f.isAway || f.hp === 0)) {
   log('Нет доступных бойцов.');
   return;
@@ -1689,6 +1687,14 @@ function rollD4() {
   return Math.floor(Math.random() * 4) + 1;
 }
     function attackMolotovCrew() {
+      if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'shoot'))) {
+  log('Недостаточно ОД для выстрела из бутылкомёта.');
+  return;
+}
+if (!canShoot(currentSquad)) {
+  log('Достигнут лимит выстрелов за ход.');
+  return;
+}
   if (!currentSquad) return;
   if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); updateUI(); return; }
 
@@ -1963,13 +1969,14 @@ if (sniperHits > 0) {
     }
   }
 }
-}
+
   if (currentSquad.actionsThisTurn) {
   currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
 }
-  saveData();
+  
+    saveData();
   updateUI();
-
+}
 function attackOrdnance() {
   if (!currentSquad) return;
   if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); updateUI(); return; }
