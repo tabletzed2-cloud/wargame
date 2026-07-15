@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.00 — Ход </title>
+  <title>Боевой модуль v11.01 — Ход </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -46,7 +46,7 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v11.00 — Ход </h2>
+  <h2>⚔️ Боевой модуль v11.01 — Ход </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -69,6 +69,13 @@
     </div>
     <hr>
     <div id="activeSquadArea"></div>
+    <div style="margin:8px 0; background:#2a2a2a; padding:8px; border-radius:6px;">
+  <strong>Ход: <span id="turnCounter">1</span></strong> |
+  ОД: <strong id="apDisplay">0</strong>/<strong id="maxApDisplay">0</strong>
+  <button onclick="nextTurn()" style="background:#2980b9;">⏭️ Завершить ход</button>
+  <button onclick="moveToNextSquad()">→ Следующий отряд</button>
+  <button onclick="skipSquad()">⏩ Пропустить отряд</button>
+</div>
     <div id="embarkPanel" style="display:none; margin:8px 0; background:#2a2a2a; padding:8px; border-radius:6px;"></div>
     <div class="section">
       <label>Дистанция до цели (гексы): <input type="number" id="targetDistance" value="5" min="1" style="width:60px"></label>
@@ -651,6 +658,7 @@ if (awayCount > 0) status = ` (${awayCount} в отлучке)`;
         hidden: false
       };
       appData.squads.push(newSquad);
+      ensureAP(appData.squads.length - 1);
       selectSquad(appData.squads.length - 1);
       saveData();
       updateUI();
@@ -680,52 +688,55 @@ if (awayCount > 0) status = ` (${awayCount} в отлучке)`;
       }
     }
 
-    function embarkSelectedSquad() {
-      const sel = document.getElementById('embarkSelect');
-      if (!sel || !currentSquad) return;
-      const targetIdx = parseInt(sel.value);
-      if (isNaN(targetIdx)) return;
-      const targetSquad = appData.squads[targetIdx];
-      if (targetSquad.fighters.length > 10) {
-        alert('Отряд слишком большой (макс. 10 человек).');
-        return;
-      // Списываем 1 ОД за загрузку
-if (!spendAP(currentSquadIndex, 1)) {
-  log('Недостаточно ОД для загрузки десанта.');
-  // откатываем изменения
-  currentSquad.embarkedSquadIndex = null;
-  targetSquad.hidden = false;
-  return;
-}
-log(`Отряд "${targetSquad.name}" погрузился в ${currentSquad.name} (потрачено 1 ОД).`);
-      }
-      currentSquad.embarkedSquadIndex = targetIdx;
-      targetSquad.hidden = true;
-      saveData();
-      renderSquadSelector();
-      renderEmbarkPanel();
-      updateUI();
-      log(`Отряд "${targetSquad.name}" погрузился в ${currentSquad.name}.`);
-    }
+ function embarkSelectedSquad() {
+  const sel = document.getElementById('embarkSelect');
+  if (!sel || !currentSquad) return;
+  const targetIdx = parseInt(sel.value);
+  if (isNaN(targetIdx)) return;
+  const targetSquad = appData.squads[targetIdx];
+  if (targetSquad.fighters.length > 10) {
+    alert('Отряд слишком большой (макс. 10 человек).');
+    return;
+  }
 
-    function disembarkSquad() {
-      if (!currentSquad || currentSquad.embarkedSquadIndex === null) return;
-      const embIdx = currentSquad.embarkedSquadIndex;
-      const embSquad = appData.squads[embIdx];
-      embSquad.hidden = false;
-      currentSquad.embarkedSquadIndex = null;
-      // Списываем 1 ОД за выгрузку
-if (!spendAP(currentSquadIndex, 1)) {
-  log('Недостаточно ОД для выгрузки десанта.');
-  return;
+  // 1. Проверяем ОД
+  if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'load'))) {
+    log('Недостаточно ОД для загрузки десанта.');
+    return;
+  }
+
+  // 2. Если ОД хватило — выполняем погрузку
+  currentSquad.embarkedSquadIndex = targetIdx;
+  targetSquad.hidden = true;
+  log(`Отряд "${targetSquad.name}" погрузился в ${currentSquad.name} (потрачено 1 ОД).`);
+
+  saveData();
+  renderSquadSelector();
+  renderEmbarkPanel();
+  updateUI();
 }
-log(`Отряд "${embSquad.name}" высадился из ${currentSquad.name} (потрачено 1 ОД).`);
-      saveData();
-      renderSquadSelector();
-      renderEmbarkPanel();
-      updateUI();
-      log(`Отряд "${embSquad.name}" высадился из ${currentSquad.name}.`);
-    }
+
+function disembarkSquad() {
+  if (!currentSquad || currentSquad.embarkedSquadIndex === null) return;
+
+  // 1. Проверяем ОД
+  if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'load'))) {
+    log('Недостаточно ОД для выгрузки десанта.');
+    return;
+  }
+
+  // 2. Высаживаем
+  const embIdx = currentSquad.embarkedSquadIndex;
+  const embSquad = appData.squads[embIdx];
+  embSquad.hidden = false;
+  currentSquad.embarkedSquadIndex = null;
+  log(`Отряд "${embSquad.name}" высадился из ${currentSquad.name} (потрачено 1 ОД).`);
+
+  saveData();
+  renderSquadSelector();
+  renderEmbarkPanel();
+  updateUI();
+}
 
     // =================== ПОРОГИ ПОДАВЛЕНИЯ ===================
     function getSuppressionThreshold() {
@@ -785,11 +796,13 @@ const eff = morale + mod + extraMorale;
       // Обновляем отображение ОД
 const ap = getAP(currentSquadIndex);
 const maxAp = actionPoints[currentSquadIndex] ? actionPoints[currentSquadIndex].maxAp : 0;
-document.getElementById('apDisplay').innerText = ap;
-document.getElementById('maxApDisplay').innerText = maxAp;
+document.getElementById('apDisplay').innerText = getAP(currentSquadIndex);
+document.getElementById('maxApDisplay').innerText = actionPoints[currentSquadIndex] ? actionPoints[currentSquadIndex].maxAp : 0;
 document.getElementById('turnCounter').innerText = currentTurn;
       updateActiveCardsBattle();
       const maxShots = getMaxShots(currentSquad);
+      const shotsUsed = getShotsUsed(currentSquad);
+const maxShots = getMaxShots(currentSquad);
 document.getElementById('statusContainer').innerHTML = ` 🔫 Патроны: ${currentSquad.ammoSmall} | 💣 Гранаты: ${currentSquad.grenades} | 🚀 Снаряды: ${currentSquad.ammoOrdnance} | 🎯 Выстрелов: ${shotsUsed}/${maxShots}`;
 const hasMolotovCrew = currentSquad && currentSquad.crewInstances && currentSquad.crewInstances.some(ci => {
   if (ci.active === false) return false;
@@ -898,7 +911,6 @@ function moveSquad() {
 
   // Проверка возможности перемещения для расчётов и техники
   if (currentSquad.crewInstances) {
-    // Для расчётов миномётов/ПТО: если погибло более половины, перемещение невозможно
     let isHeavyWeapon = false;
     const crewWeapons = getFactionCrewWeapons(currentSquad.faction);
     for (let ci of currentSquad.crewInstances) {
@@ -919,7 +931,6 @@ function moveSquad() {
     }
   }
 
-  // Для техники: проверяем живого механика-водителя
   if (currentSquad.armor) {
     const driver = currentSquad.fighters.find(f => f.name.includes('Механик-водитель'));
     if (!driver || driver.hp <= 0) {
@@ -928,47 +939,41 @@ function moveSquad() {
     }
   }
 
-  // Запрашиваем направление и количество гексов
+  // Запрос направления и гексов
   const dir = prompt('Направление:\n1 - Вверх\n2 - Вниз\n3 - Влево\n4 - Вправо', '1');
   if (!dir) return;
   const dirMap = { '1': 'вверх', '2': 'вниз', '3': 'влево', '4': 'вправо' };
   const dirName = dirMap[dir];
-  if (!dirName) { log('Некорректное направление.'); return; }
+  if (!dirName) return;
 
-  const hexes = parseInt(prompt('Количество гексов (целое число):', '1'));
-  if (isNaN(hexes) || hexes <= 0) { log('Некорректное количество гексов.'); return; }
+  const hexes = parseInt(prompt('Количество гексов:', '1'));
+  if (isNaN(hexes) || hexes <= 0) return;
 
-  // Запрашиваем тип местности (по умолчанию открытая)
-  const terrain = prompt('Тип местности:\n1 - Открытая\n2 - Лес\n3 - Дорога\n4 - Болото/Бурелом/Кусты/В гору/Глубокий сугроб/Руины\n5 - Переползание/Скрытое (для пехоты и расчётов)', '1');
+  const terrain = prompt('Тип местности:\n1 - Открытая\n2 - Лес\n3 - Дорога\n4 - Болото/Бурелом/...\n5 - Переползание/Скрытое', '1');
   if (!terrain) return;
-  const terrainMap = {
-    '1': 'open',
-    '2': 'forest',
-    '3': 'road',
-    '4': 'bad',
-    '5': 'crouch'
-  };
+  const terrainMap = { '1': 'open', '2': 'forest', '3': 'road', '4': 'bad', '5': 'crouch' };
   const terrainKey = terrainMap[terrain];
-  if (!terrainKey) { log('Некорректный тип местности.'); return; }
+  if (!terrainKey) return;
 
-  // Определяем тип отряда для выбора правильной стоимости
-  let actionType = 'move_' + terrainKey;
-  // Для crouch (переползание) используется move_crouch
-  // Для остальных – move_*
-
-  // Получаем стоимость за 1 гекс
-  const costPerHex = getActionCost(currentSquad, 'move', terrainKey);
-  if (costPerHex === undefined || costPerHex === null) {
-    log('Ошибка: стоимость перемещения не определена.');
-    return;
+  let totalCost = 0;
+  if (currentSquad.armor) {
+    // Для техники стоимость рассчитывается блоками
+    // У каждой техники своя скорость: для простоты будем считать, что базовая скорость 3 гекса за 1 ОД (2 полу-ОД)
+    // Но вы можете задать скорость в характеристиках отряда (пока нет). Используем 3 гекса за 2 полу-ОД.
+    const hexPerBlock = 3; // можно сделать параметром отряда
+    const costPerBlock = 2; // 2 полу-ОД за блок
+    totalCost = Math.ceil(hexes / hexPerBlock) * costPerBlock;
+  } else {
+    const costPerHex = getActionCost(currentSquad, 'move', terrainKey);
+    if (costPerHex === undefined) {
+      log('Перемещение невозможно для данного типа местности.');
+      return;
+    }
+    totalCost = costPerHex * hexes;
   }
 
-  // Общая стоимость = costPerHex * hexes (округляем до 0.5)
-  const totalCost = Math.ceil(costPerHex * hexes * 2) / 2; // округление до 0.5
-
-  // Проверяем ОД
   if (!spendAP(currentSquadIndex, totalCost)) {
-    log(`Недостаточно ОД для перемещения (требуется ${totalCost}).`);
+    log(`Недостаточно ОД (требуется ${totalCost}).`);
     return;
   }
 
@@ -1087,7 +1092,15 @@ function useLastBreath() {
   updateUI();
 }
 function usePanzerblinde() {
+  if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'special'))) {
+    log('Недостаточно ОД для действия.');
+    return;
+  }
   if (!currentSquad || currentSquad.panzerblindeCharges <= 0) return;
+    if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'special'))) {
+    log('Недостаточно ОД для действия.');
+    return;
+  }
   currentSquad.panzerblindeCharges--;
   log('=== ОСЛЕПЛЯЮЩАЯ ГРАНАТА ===');
   const roll = rollD10();
@@ -1264,15 +1277,15 @@ function throwGrenades() {
     
 function satchelCharge() {
   if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'special'))) {
-  log('Недостаточно ОД для действия.');
-  return;
-}
+    log('Недостаточно ОД для действия.');
+    return;
+  }
   if (currentSquad.fighters.every(f => f.isAway || f.hp === 0)) {
-  log('Нет доступных бойцов.');
-  return;
-}
-  if (!currentSquad || currentSquad.armor) { log('Техника не бросает связки гранат.'); return; }
-  if (currentSquad.grenades <= 0) { log('Нет гранат!'); return; }
+    log('Нет доступных бойцов.');
+    return;
+  }
+  if (!currentSquad || currentSquad.armor) { ... }
+  if (currentSquad.grenades <= 0) { ... }
   const count = parseInt(prompt('Сколько гранат в связке?', '1'));
   if (isNaN(count) || count < 1 || count > currentSquad.grenades) {
     log('Некорректное число гранат.');
@@ -1290,6 +1303,86 @@ function satchelCharge() {
   }
   saveData();
   updateUI();
+}
+    function getActionCost(squad, action, terrain) {
+  // action: 'shoot', 'move', 'special', 'deploy', 'turn', 'load'
+  // terrain: 'open', 'forest', 'road', 'bad', 'crouch' (только для move)
+  if (action === 'shoot') {
+    if (squad.armor) {
+      // Бронетехника: пулемёт 1 ОД, орудие 2 ОД (в полу-ОД: 2 и 4)
+      // Упростим: если есть орудие – 4, иначе 2 (пулемёт)
+      const hasGun = squad.crewInstances && squad.crewInstances.some(ci => {
+        const cw = getFactionCrewWeapons(squad.faction).find(w => w.name === ci.weaponName);
+        return cw && (cw.type === 'at_gun' || cw.type === 'mortar' || cw.type === 'tank_gun');
+      });
+      return hasGun ? 4 : 2;
+    } else if (squad.crewInstances && squad.crewInstances.some(ci => {
+      const cw = getFactionCrewWeapons(squad.faction).find(w => w.name === ci.weaponName);
+      return cw && (cw.type === 'mortar' || cw.type === 'at_gun');
+    })) {
+      return 6; // миномёт/ПТО: 3 ОД = 6 полу-ОД
+    } else {
+      // пехота и станковый пулемёт: 1 ОД = 2 полу-ОД
+      return 2;
+    }
+  }
+
+  if (action === 'move') {
+    // Возвращает стоимость в полу-ОД за 1 гекс
+    const isCrouch = terrain === 'crouch';
+    if (squad.armor) {
+      // Бронетехника: используем свою скорость (за 1 ОД N гексов)
+      // Упрощение: будем считать цену за 1 гекс как (2 / N), но проще обработать в moveSquad
+      // Пока вернём undefined, а в moveSquad реализуем особую логику.
+      return undefined; 
+    } else if (squad.name.includes('Пулеметный расчёт') || squad.name.includes('Станковый')) {
+      if (isCrouch) return 6; // переползание 3 ОД = 6 полу-ОД
+      if (terrain === 'open') return 3;   // 1.5 ОД = 3 полу-ОД
+      if (terrain === 'forest') return 4; // 2 ОД = 4 полу-ОД
+      if (terrain === 'road') return 2;   // 1 ОД = 2 полу-ОД
+      if (terrain === 'bad') return 6;    // 3 ОД = 6 полу-ОД
+    } else if (squad.crewInstances && squad.crewInstances.some(ci => {
+      const cw = getFactionCrewWeapons(squad.faction).find(w => w.name === ci.weaponName);
+      return cw && (cw.type === 'mortar' || cw.type === 'at_gun');
+    })) {
+      // Миномёты/ПТО
+      if (isCrouch) return 6;   // переползание 3 ОД (ПТО не доступно, но пока разрешим)
+      if (terrain === 'open') return 3;
+      if (terrain === 'forest') return 5;
+      if (terrain === 'road') return 3;
+      if (terrain === 'bad') return 6;
+    } else {
+      // Пехота
+      if (isCrouch) return 4;   // переползание 2 ОД = 4 полу-ОД
+      if (terrain === 'open') return 2;
+      if (terrain === 'forest') return 3;
+      if (terrain === 'road') return 1.5 * 2; // 3 полу-ОД? Но 0.75 ОД = 1.5 полу-ОД за гекс, можно округлить до 2
+      if (terrain === 'bad') return 4;
+    }
+    return 2; // по умолчанию
+  }
+
+  if (action === 'special') {
+    // Бросок гранат, связка, термит, бутылка и т.п. – 0.5 ОД = 1 полу-ОД
+    return 1;
+  }
+
+  if (action === 'deploy') {
+    // Развёртывание/свёртывание – 0.5 ОД
+    return 1;
+  }
+
+  if (action === 'load') {
+    // Загрузка/выгрузка десанта – 1 ОД = 2 полу-ОД
+    return 2;
+  }
+
+  if (action === 'turn') {
+    // Разворот техники – 0.5 ОД = 1 полу-ОД
+    return 1;
+  }
+
+  return 0;
 }
 function meleeAttack() {
   if (!currentSquad || currentSquad.armor) { log('Техника не участвует в рукопашной.'); return; }
@@ -1328,6 +1421,14 @@ function meleeAttack() {
 
 function attackVehicle() {
   if (!currentSquad) return;
+  if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'shoot'))) {
+  log('Недостаточно ОД для стрельбы из ПТО.');
+  return;
+}
+if (!canShoot(currentSquad)) {
+  log('Достигнут лимит выстрелов за ход (1).');
+  return;
+}
   const crewWeapons = getFactionCrewWeapons(currentSquad.faction);
   const dist = parseInt(document.getElementById('targetDistance').value) || 5;
   const atGuns = (currentSquad.crewInstances || []).filter(ci => { if (ci.active === false) return false; const cw = crewWeapons.find(w => w.name === ci.weaponName); return cw && (cw.type === 'at_gun' || cw.type === 'tank_gun'); });
@@ -1356,7 +1457,10 @@ function attackVehicle() {
     function attackAmpulometAtVehicle() {
   if (!currentSquad) return;
   if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); updateUI(); return; }
-
+if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'special'))) {
+    log('Недостаточно ОД для действия.');
+    return;
+  }
   const crewWeapons = getFactionCrewWeapons(currentSquad.faction);
   const dist = parseInt(document.getElementById('targetDistance').value) || 5;
   const cover = parseInt(document.getElementById('coverTarget').value) || 6;
@@ -1493,6 +1597,10 @@ function useThermiteCharge() {
 function throwGrenades() {
   if (!currentSquad || currentSquad.armor) { log('Техника не бросает гранаты.'); return; }
   if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); return; }
+  if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'special'))) {
+  log('Недостаточно ОД для броска гранат.');
+  return;
+}
   if (currentSquad.grenades <= 0) { log('Нет гранат!'); return; }
   const activeMods = [...(appData.activeCards || []).filter(c => c.active), ...(appData.modifiers || []).filter(m => m.active)];
   let accMod = activeMods.reduce((s, m) => s + (m.accuracyMod || 0), 0);
@@ -1853,10 +1961,19 @@ if (effRoll >= cover) {
 function attackSmallArms() {
   if (!currentSquad) return;
   if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); updateUI(); return; }
+   // Проверка ОД и лимита выстрелов
+if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'shoot'))) {
+  log('Недостаточно ОД для стрельбы.');
+  return;
+}
+if (!canShoot(currentSquad)) {
+  log('Достигнут лимит выстрелов за ход (максимум 2).');
+  return;
+}
   const activeMods = [...(appData.activeCards || []).filter(c => c.active), ...(appData.modifiers || []).filter(m => m.active)];
   const shotMod = activeMods.reduce((s, m) => s + (m.shotMod || 0), 0);
   let accMod = activeMods.reduce((s, m) => s + (m.accuracyMod || 0), 0);
-  // В начале функции после получения shotMod и accMod
+     // В начале функции после получения shotMod и accMod
 // Проверяем, есть ли у отряда эффект "Залп отчаяния"
 if (currentSquad.effects?.desperateSalvo && currentSquad.ammoSmall === 0) {
   log('Залп отчаяния! Все живые бойцы стреляют с скорострельностью 1.');
@@ -1991,6 +2108,9 @@ if (currentSquad.effects?.ammoRegen) {
   }
 }
 }
+  if (currentSquad.actionsThisTurn) {
+  currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
+}
   saveData();
   updateUI();
 }
@@ -1998,6 +2118,14 @@ if (currentSquad.effects?.ammoRegen) {
 function attackOrdnance() {
   if (!currentSquad) return;
   if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); updateUI(); return; }
+  if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'shoot'))) {
+  log('Недостаточно ОД для стрельбы из орудий.');
+  return;
+}
+if (!canShoot(currentSquad)) {
+  log('Достигнут лимит выстрелов за ход (1).');
+  return;
+}
   const activeMods = [...(appData.activeCards || []).filter(c => c.active), ...(appData.modifiers || []).filter(m => m.active)];
   const shotMod = activeMods.reduce((s, m) => s + (m.shotMod || 0), 0);
   const dist = parseInt(document.getElementById('targetDistance').value) || 5;
@@ -2061,6 +2189,9 @@ function attackOrdnance() {
     log(`💥 Всего выстрелов: ${totalShots}, попаданий: ${totalHits}, суммарный урон: ${totalDamage}`);
     log(`───────────────`);
   }
+  if (currentSquad.actionsThisTurn) {
+  currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
+}
   saveData();
   updateUI();
 }
@@ -2697,7 +2828,24 @@ container.innerHTML = filteredTemplates.map(t => {
   return `<label><input type="checkbox" class="template-check" value="${origIdx}"> ${t.name} [${t.faction}] (${t.fighters.length} бойцов, дух ${t.baseMorale})</label><br>`;
 }).join('');
 }                                        
-    function addSelectedTemplatesToBattle() { const checks = document.querySelectorAll('.template-check:checked'); if (checks.length === 0) return; checks.forEach(cb => { const idx = parseInt(cb.value); const tmpl = JSON.parse(JSON.stringify(appData.templates[idx])); tmpl.currentMorale = tmpl.baseMorale; tmpl.hidden = false; appData.squads.push(tmpl); }); if (appData.squads.length > 0) selectSquad(appData.squads.length - 1); saveData(); renderSquadSelector(); updateUI(); }
+    function addSelectedTemplatesToBattle() {
+  const checks = document.querySelectorAll('.template-check:checked');
+  if (checks.length === 0) return;
+  checks.forEach(cb => {
+    const idx = parseInt(cb.value);
+    const tmpl = JSON.parse(JSON.stringify(appData.templates[idx]));
+    tmpl.currentMorale = tmpl.baseMorale;
+    tmpl.hidden = false;
+    appData.squads.push(tmpl);
+  });
+  // Обновляем ОД для всех отрядов (на случай, если индексы сдвинулись)
+  appData.squads.forEach((_, i) => ensureAP(i));
+  
+  if (appData.squads.length > 0) selectSquad(appData.squads.length - 1);
+  saveData();
+  renderSquadSelector();
+  updateUI();
+}
     function clearAllSquads() { if (!confirm('Удалить ВСЕ отряды из боя?')) return; appData.squads = []; currentSquad = null; currentSquadIndex = -1; morale = 0; saveData(); renderSquadSelector(); updateUI(); }
     function renderTemplates() { const filterFaction = document.getElementById('templateFactionFilter')?.value || ''; const list = appData.templates.filter(t=>!filterFaction || t.faction===filterFaction); document.getElementById('templatesList').innerHTML = list.map((t,i)=>{ const origIdx = appData.templates.indexOf(t); return `<div><b>${t.name}</b> [${t.faction}] (${t.fighters.length} бойцов, дух ${t.baseMorale}) <button onclick="loadTemplateFromList(${origIdx})">Загрузить</button> <button onclick="deleteTemplate(${origIdx})">Удалить</button></div>`; }).join(''); const sel = document.getElementById('templateFactionFilter'); if (sel) { const cur = sel.value; sel.innerHTML = '<option value="">Все</option>' + Object.keys(appData.factions).map(f=>`<option value="${f}" ${f===cur?'selected':''}>${f}</option>`).join(''); } }
     function saveCurrentAsTemplate() { if(!currentSquad) return; const name = prompt('Имя шаблона:', currentSquad.name); if(!name) return; const tmpl = JSON.parse(JSON.stringify(currentSquad)); tmpl.name = name; appData.templates.push(tmpl); saveData(); renderTemplates(); }
