@@ -951,9 +951,6 @@ function moveSquad() {
   const terrain = prompt('Тип местности:\n1 - Открытая\n2 - Лес\n3 - Дорога\n4 - Болото/Бурелом/...\n5 - Переползание/Скрытое', '1');
   if (!terrain) return;
   const terrainMap = { '1': 'open', '2': 'forest', '3': 'road', '4': 'bad', '5': 'crouch' };
-  const terrainKey = terrainMap[terrain];
-  if (!terrainKey) return;
-
   let totalCost = 0;
   if (currentSquad.armor) {
     // Для техники стоимость рассчитывается блоками
@@ -963,6 +960,11 @@ function moveSquad() {
     const costPerBlock = 2; // 2 полу-ОД за блок
     totalCost = Math.ceil(hexes / hexPerBlock) * costPerBlock;
   } else {
+    const terrainKey = terrainMap[terrain];
+if (!terrainKey) {
+  log('Неверный тип местности.');
+  return;
+}
     const costPerHex = getActionCost(currentSquad, 'move', terrainKey);
     if (!terrainKey) {
   log('Неверный тип местности.');
@@ -1099,7 +1101,6 @@ function usePanzerblinde() {
     return;
   }
   if (!currentSquad || currentSquad.panzerblindeCharges <= 0) return;
-   }
   currentSquad.panzerblindeCharges--;
   log('=== ОСЛЕПЛЯЮЩАЯ ГРАНАТА ===');
   const roll = rollD10();
@@ -1220,59 +1221,6 @@ function isInfantryOrSupportOrMGOrHQ(s) {
          s.name.includes('Пулеметный расчёт') || 
          s.name.includes('Штаб');
 }    
-function throwGrenades() {
-  if (!currentSquad || currentSquad.armor) { log('Техника не бросает гранаты.'); return; }
-  if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); return; }
-  if (currentSquad.grenades <= 0) { log('Нет гранат!'); return; }
-  const activeMods = [(appData.activeCards || []).filter(c => c.active), ...(appData.modifiers || []).filter(m => m.active)];
-  let accMod = activeMods.reduce((s, m) => s + (m.accuracyMod || 0), 0);
-  const isSuppressed = getEffectiveMorale() <= getSuppressionThreshold();
-  
-  // Проверяем, есть ли эффект динамита
-  const hasDynamic = currentSquad.effects?.dynamic?.active;
-  const hasMolotov = currentSquad.effects?.molotov;
-  
-  log('=== БРОСОК ГРАНАТ ===');
-  let totalHits = 0, totalDamage = 0;
-  
-  currentSquad.fighters.forEach(f => {
-    if (f.hp === 0 || currentSquad.grenades <= 0) return;
-    currentSquad.grenades--;
-    const roll = rollD10();
-    let effRoll = roll + accMod - (isSuppressed ? 1 : 0);
-    if (effRoll >= 6) {
-      totalHits++;
-      let dmg;
-      if (hasDynamic) {
-        // Урон d6+1
-        dmg = rollD6() + 1;
-        // Риск самоповреждения: если на d6 выпало 1
-        const d6 = rollD6(); // используем отдельный бросок для определения самоповреждения
-        if (d6 === 1) {
-          f.hp -= 3;
-          log(`${f.name} получил 3 урона от динамита!`);
-          if (f.hp <= 0) { f.hp = 0; log(`${f.name} погиб от взрыва!`); }
-        }
-        totalDamage += dmg;
-        log(`${f.name}: бросок гранаты d10=${roll} -> попадание, урон ${dmg} (динамит)`);
-      } else if (hasMolotov) {
-        // Бутылка: по пехоте 3 урона
-        dmg = 3;
-        totalDamage += dmg;
-        log(`${f.name}: бросок бутылки d10=${roll} -> попадание, урон ${dmg} (зажигательная смесь)`);
-      } else {
-        dmg = rollD6();
-        totalDamage += dmg;
-        log(`${f.name}: бросок гранаты d10=${roll} -> попадание, урон ${dmg}`);
-      }
-    } else {
-      log(`${f.name}: бросок гранаты d10=${roll} -> мимо`);
-    }
-  });
-  log(`Всего попаданий: ${totalHits}, суммарный урон: ${totalDamage}.`);
-  saveData();
-  updateUI();
-}
     
 function satchelCharge() {
   if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'special'))) {
@@ -1448,10 +1396,10 @@ if (!canShoot(currentSquad)) {
     const penetration = cw.penetration || {};
     let penMM = penetration[String(dist)] || 0;
     log(`${cw.name}: расчёт ${alive}, выстрелов ${shots}, пробитие ${penMM} мм`);
+    shots = Math.min(shots, currentSquad.ammoOrdnance);
+currentSquad.ammoOrdnance -= shots;
     for (let i = 0; i < shots; i++) {
       const roll = rollD10();
-      if (shots > currentSquad.ammoOrdnance) shots = currentSquad.ammoOrdnance;
-currentSquad.ammoOrdnance -= shots;
       if (roll >= hitTarget) {
         const loc = rollD6(); const locName = ['Рикошет','Корпус','Гусеницы','Башня','Двигатель','Укладка/бак'][loc-1];
         log(`✅ ${cw.name}: Попадание! (d10=${roll}) Локация: ${locName}. Пробитие ${penMM} мм.`);
@@ -1735,102 +1683,6 @@ function useFireField() {
 
 // Ниже я даю изменённую версию функции attackOrdnance – замените старую.
 
-function attackOrdnance() {
-  if (!currentSquad) return;
-  if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); updateUI(); return; }
-  const activeMods = [(appData.activeCards || []).filter(c => c.active), (appData.modifiers || []).filter(m => m.active)];
-  const shotMod = activeMods.reduce((s, m) => s + (m.shotMod || 0), 0);
-  const dist = parseInt(document.getElementById('targetDistance').value) || 5;
-  const crewWeapons = getFactionCrewWeapons(currentSquad.faction);
-  const isSuppressed = getEffectiveMorale() <= getSuppressionThreshold();
-
-  log('=== ОРУДИЯ / МИНОМЁТЫ ===');
-  let totalShots = 0, totalHits = 0, totalDamage = 0;
-  let ampulometHits = 0;
-
-  if (!currentSquad.crewInstances) {
-    log('Нет орудийных расчётов.');
-    return;
-  }
-
-  currentSquad.crewInstances.forEach(ci => {
-    if (ci.active === false) return;
-    const cw = crewWeapons.find(w => w.name === ci.weaponName);
-    if (!cw || (cw.type !== 'at_gun' && cw.type !== 'mortar')) return;
-    const alive = ci.fighterIndices.filter(idx => currentSquad.fighters[idx]?.hp > 0).length;
-    if (alive === 0) return;
-    let shots = 0;
-    if (cw.shotRule === 'fixed_per_crew') {
-      if (alive >= (cw.crewSize || 3)) shots = cw.shotsFull || 3;
-      else if (alive >= 2) shots = cw.shotsReduced2 || 2;
-      else shots = cw.shotsReduced1 || 1;
-    } else if (cw.shotRule === 'sum_d6') {
-      let dice = cw.fullCrewDice || 3;
-      if (alive < (cw.crewSize || 5)) dice = Math.max(cw.minCrewDice || 1, Math.floor(alive / ((cw.crewSize || 5) / (cw.fullCrewDice || 3))));
-      for (let i = 0; i < dice; i++) shots += rollD6();
-    }
-    shots = Math.max(0, shots + shotMod);
-    if (shots <= 0) return;
-    if (currentSquad.ammoOrdnance <= 0) {
-      log(`${cw.name}: нет снарядов!`);
-      return;
-    }
-    shots = Math.min(shots, currentSquad.ammoOrdnance);
-    currentSquad.ammoOrdnance -= shots;
-    totalShots += shots;
-
-    // Определяем урон для каждого выстрела
-    const isAmpulomet = cw.isAmpulomet || false;
-    const damageDice = cw.splashDamageDice || 1;
-    const damageType = cw.damageType || 'd6'; // может быть 'd4' или 'd6'
-
-    for (let i = 0; i < shots; i++) {
-      let roll = rollD10();
-      // Для ампуломёта попадание при 6-10 (по аналогии с миномётом, но можно оставить 7)
-      let hitThreshold = 7;
-      if (isAmpulomet) hitThreshold = 6; // чуть легче
-      if (roll >= hitThreshold) {
-        totalHits++;
-        let damage = 0;
-        if (damageType === 'd4') {
-          for (let d = 0; d < damageDice; d++) damage += rollD4();
-        } else {
-          for (let d = 0; d < damageDice; d++) damage += rollD6();
-        }
-        totalDamage += damage;
-        log(`${cw.name}: попал (d10=${roll}) → урон ${damage} (${damageDice}${damageType})`);
-        if (isAmpulomet && roll >= 9) {
-  log(`🔥 Ампуломёт поджёг технику! (d10=${roll})`);
-}
-        // Если ампуломёт – запоминаем попадание в гекс (для поджога)
-        if (isAmpulomet) {
-          // Увеличиваем счётчик попаданий в гекс (используем дистанцию как идентификатор гекса)
-          const hexKey = `hex_${dist}`;
-          if (!currentSquad.ampulometHits) currentSquad.ampulometHits = {};
-          currentSquad.ampulometHits[hexKey] = (currentSquad.ampulometHits[hexKey] || 0) + 1;
-          const hits = currentSquad.ampulometHits[hexKey];
-          if (hits >= 3) {
-            log(`🔥 Гекс на дистанции ${dist} загорается и становится непроходимым!`);
-            delete currentSquad.ampulometHits[hexKey]; // сброс после поджога
-          }
-        }
-      } else {
-        log(`${cw.name}: мимо (d10=${roll})`);
-      }
-    }
-  });
-
-  if (totalShots === 0) {
-    if (currentSquad.ammoOrdnance <= 0) log('🚀 Кончились снаряды!');
-    else log('Нет доступных орудий/миномётов.');
-  } else {
-    log(`───────────────`);
-    log(`💥 Всего выстрелов: ${totalShots}, попаданий: ${totalHits}, суммарный урон: ${totalDamage}`);
-    log(`───────────────`);
-  }
-  saveData();
-  updateUI();
-}
 
 // ===================== ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ =====================
 function rollD4() {
@@ -2102,7 +1954,6 @@ if (sniperHits > 0) {
   }
   if (currentSquad.effects?.ammoRegen) {
   currentSquad.ammoRegenCounter = (currentSquad.ammoRegenCounter || 0) + totalShots;
-if (currentSquad.effects?.ammoRegen) {
   if (totalShots > 0) {
     currentSquad.attackCounter = (currentSquad.attackCounter || 0) + 1;
     if (currentSquad.attackCounter >= 3) {
@@ -2762,7 +2613,12 @@ case 'Огненное поле': {
   updateUI();
   log('Карты активированы');
 }
-
+function applyCardEffect(card, squad) {
+  // Логика применения эффекта (сейчас только для "Фламандская Фурия")
+  if (card.name === 'Фламандская Фурия') {
+    squad.flemishFury = true;
+  }
+}
     function populateCardsFactionSelect() { const sel = document.getElementById('cardsFactionSelect'); if (sel) sel.innerHTML = Object.keys(appData.factions).map(f=>`<option>${f}</option>`).join(''); }
 // =================== РЕДАКТИРОВАНИЕ КАРТ ===================
 function addCardToLibrary() {
