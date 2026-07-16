@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.04 — Ход </title>
+  <title>Боевой модуль v11.06 — Ход </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -46,7 +46,7 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v11.04 — Ход </h2>
+  <h2>⚔️ Боевой модуль v11.06 — Ход </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -108,7 +108,7 @@
     <button onclick="attackMolotovCrew()" id="btnMolotovCrew" style="display:none; background:#e67e22;">🔥 Бутылкомет по технике</button>
     <button id="throwGrenades" onclick="throwGrenades()">💣 Бросок гранат</button>
     <button id="satchelCharge" onclick="satchelCharge()">🧨 Связка гранат</button>
-    <button id="meleeAttack" onclick="meleeAttack()">⚔️ Рукопашная</button>
+    <button id="meleeAttack" onclick="">⚔️ Рукопашная</button>
     <hr>
     <label>Входящий урон: <input type="number" id="incomingDamage" value="0" min="0" style="width:60px"></label>
     <button onclick="receiveDamage()">💥 Получить урон</button>
@@ -456,6 +456,9 @@ function resetAllData() {
   } else {
     return 6; // пехота
   }
+      if (squad.name.includes('ДОТ')) {
+  return 12; // 6 ОД = 12 полу-ОД (позволяет выстрелить из ПТО (6) и двух пулемётов по 2 выстрела (4+4=8) – но нужно следить за лимитами)
+}
 }
     function ensureAP(idx) {
   if (!actionPoints[idx]) {
@@ -491,9 +494,12 @@ function spendAP(squadIndex, cost) {
 
 function getMaxShots(squad) {
   if (squad.armor) {
-    // Для техники максимум 2 (пулемёт) или 1 (орудие), но для простоты вернём 2
-    // Можно уточнить по crewInstances, но пока 2
-    return 2;
+    // Если есть орудие – лимит 1, иначе 2 (для пулемётов)
+    const hasGun = squad.crewInstances && squad.crewInstances.some(ci => {
+      const cw = getFactionCrewWeapons(squad.faction).find(w => w.name === ci.weaponName);
+      return cw && (cw.type === 'at_gun' || cw.type === 'mortar' || cw.type === 'tank_gun');
+    });
+    return hasGun ? 1 : 2;
   } else if (squad.crewInstances && squad.crewInstances.some(ci => {
     const cw = getFactionCrewWeapons(squad.faction).find(w => w.name === ci.weaponName);
     return cw && (cw.type === 'mortar' || cw.type === 'at_gun');
@@ -516,20 +522,24 @@ function nextTurn() {
       if (f.isAway && f.turnsToReturn > 0) {
         f.turnsToReturn--;
         if (f.turnsToReturn === 0) {
-          f.isAway = false;
-          const ammoType = f.ammoType || '1';
-          if (ammoType === '1') {
-            s.ammoSmall += 30;
-            log(`${f.name} вернулся с патронами (+30).`);
-          } else if (ammoType === '2') {
-            s.ammoOrdnance += 10;
-            log(`${f.name} вернулся со снарядами (+10).`);
-          } else if (ammoType === '3') {
-            s.grenades += 5;
-            log(`${f.name} вернулся с гранатами (+5).`);
-          }
-          delete f.ammoType;
-        }
+  f.isAway = false;
+  if (f.hp > 0) {  // <-- добавлена проверка, что боец жив
+    const ammoType = f.ammoType || '1';
+    if (ammoType === '1') {
+      s.ammoSmall += 30;
+      log(`${f.name} вернулся с патронами (+30).`);
+    } else if (ammoType === '2') {
+      s.ammoOrdnance += 10;
+      log(`${f.name} вернулся со снарядами (+10).`);
+    } else if (ammoType === '3') {
+      s.grenades += 5;
+      log(`${f.name} вернулся с гранатами (+5).`);
+    }
+  } else {
+    log(`${f.name} погиб в пути, боеприпасы не доставлены.`);
+  }
+  delete f.ammoType;
+}
       }
     });
   });
@@ -777,10 +787,28 @@ function disembarkSquad() {
     ${!f.isCommander && f.hp > 0 && !f.isAway ? `<button onclick="sendForAmmo(${index})" style="background:#f39c12;">📦 За боеприпасами</button>` : ''}
   </div>`;
 });
-      if (currentSquad.embarkedSquadIndex !== null) {
+            if (currentSquad.embarkedSquadIndex !== null) {
         const emb = appData.squads[currentSquad.embarkedSquadIndex];
         html += `<div style="margin-top:8px; padding:6px; background:#2a2a2a; border-radius:4px;"><strong>🚌 Десант: ${emb.name} (${emb.fighters.filter(f=>f.hp>0).length} живых)</strong></div>`;
       }
+
+      // Состояние орудий ДОТ/САУ
+      if (currentSquad.crewInstances && (currentSquad.name.includes('ДОТ') || currentSquad.name.includes('САУ'))) {
+        let crewHtml = '<div style="margin-top:8px;"><strong>Состояние вооружения:</strong><br>';
+        currentSquad.crewInstances.forEach((ci, idx) => {
+          const cw = getFactionCrewWeapons(currentSquad.faction).find(w => w.name === ci.weaponName);
+          const status = ci.status || 'ok';
+          let statusText = status === 'ok' ? '🟢 Исправно' : status === 'blinded' ? '🟡 Ослеплено' : '🔴 Уничтожено';
+          crewHtml += `${cw?.name || ci.weaponName}: ${statusText} `;
+          crewHtml += `<button onclick="changeCrewStatus(${idx}, 'ok')" ${status === 'ok' ? 'disabled' : ''}>Исправно</button> `;
+          crewHtml += `<button onclick="changeCrewStatus(${idx}, 'blinded')" ${status === 'blinded' ? 'disabled' : ''}>Ослепить</button> `;
+          crewHtml += `<button onclick="changeCrewStatus(${idx}, 'destroyed')" ${status === 'destroyed' ? 'disabled' : ''}>Уничтожить</button><br>`;
+        });
+        crewHtml += '</div>';
+        html += crewHtml;
+      }
+
+      container.innerHTML = html;
       container.innerHTML = html;
 
       const base = currentSquad.baseMorale;
@@ -810,7 +838,21 @@ const btn = document.getElementById('btnMolotovCrew');
 if (btn) {
   btn.style.display = hasMolotovCrew ? 'inline-block' : 'none';
 }
-      
+      // Панель состояния орудий (только для ДОТов и САУ)
+if (currentSquad.crewInstances && (currentSquad.name.includes('ДОТ') || currentSquad.name.includes('САУ'))) {
+  let crewHtml = '<div style="margin-top:8px;"><strong>Состояние вооружения:</strong><br>';
+  currentSquad.crewInstances.forEach((ci, idx) => {
+    const cw = getFactionCrewWeapons(currentSquad.faction).find(w => w.name === ci.weaponName);
+    const status = ci.status || 'ok'; // 'ok', 'blinded', 'destroyed'
+    let statusText = status === 'ok' ? '🟢 Исправно' : status === 'blinded' ? '🟡 Ослеплено' : '🔴 Уничтожено';
+    crewHtml += `${cw?.name || ci.weaponName}: ${statusText} `;
+    crewHtml += `<button onclick="changeCrewStatus(${idx}, 'ok')" ${status === 'ok' ? 'disabled' : ''}>Исправно</button> `;
+    crewHtml += `<button onclick="changeCrewStatus(${idx}, 'blinded')" ${status === 'blinded' ? 'disabled' : ''}>Ослепить</button> `;
+    crewHtml += `<button onclick="changeCrewStatus(${idx}, 'destroyed')" ${status === 'destroyed' ? 'disabled' : ''}>Уничтожить</button><br>`;
+  });
+  crewHtml += '</div>';
+  html += crewHtml; // добавьте эту строку перед container.innerHTML = html; (после формирования html)
+}
       updateMainButtons();
       renderActiveCardButtons();
     }
@@ -832,6 +874,13 @@ function sendForAmmo(fighterIndex) {
   log(`${fighter.name} отправился за ${type === '1' ? 'патронами' : type === '2' ? 'снарядами' : 'гранатами'}, вернётся через ${t} ходов.`);
   updateUI();
   saveData();
+}
+
+function changeCrewStatus(ciIndex, newStatus) {
+  if (!currentSquad || !currentSquad.crewInstances) return;
+  currentSquad.crewInstances[ciIndex].status = newStatus;
+  saveData();
+  updateUI();
 }
     
 function renderActiveCardButtons() {
@@ -917,74 +966,70 @@ if (getAP(currentSquadIndex) > 0 && currentSquad.armor) {
         html += `<button onclick="vehicleDeploy()" style="background:#7f8c8d;">⚙️ Развёртывание/Свёртывание</button> `;
     }
 }
+  // Развёртывание/свёртывание для расчётов
+if (currentSquad.crewInstances && currentSquad.crewInstances.length > 0 && getAP(currentSquadIndex) > 0) {
+  html += `<button onclick="toggleDeploy()" style="background:#7f8c8d;">⚙️ Развернуть/Свернуть</button> `;
+}
     container.innerHTML = html;
 }
     
 function moveSquad(terrainKey) {
-    if (!currentSquad) return;
-    if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); return; }
+  if (!currentSquad) return;
+  if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); return; }
 
-    // Проверки возможности движения (расчёты, техника)
-    if (currentSquad.crewInstances) {
-        let isHeavyWeapon = false;
-        const crewWeapons = getFactionCrewWeapons(currentSquad.faction);
-        for (let ci of currentSquad.crewInstances) {
-            if (ci.active === false) continue;
-            const cw = crewWeapons.find(w => w.name === ci.weaponName);
-            if (cw && (cw.type === 'mortar' || cw.type === 'at_gun')) {
-                isHeavyWeapon = true;
-                break;
-            }
-        }
-        if (isHeavyWeapon) {
-            const total = currentSquad.fighters.filter(f => f.hp > 0).length;
-            const half = Math.ceil(currentSquad.fighters.length / 2);
-            if (total <= half) {
-                log('❌ Расчёт потерял более половины бойцов, перемещение невозможно.');
-                return;
-            }
-        }
+  // Проверки возможности перемещения (расчёты, техника) – оставьте как есть
+  if (currentSquad.crewInstances) {
+    let isHeavyWeapon = false;
+    const crewWeapons = getFactionCrewWeapons(currentSquad.faction);
+    for (let ci of currentSquad.crewInstances) {
+      if (ci.active === false) continue;
+      const cw = crewWeapons.find(w => w.name === ci.weaponName);
+      if (cw && (cw.type === 'mortar' || cw.type === 'at_gun')) {
+        isHeavyWeapon = true;
+        break;
+      }
     }
-    if (currentSquad.armor) {
-        const driver = currentSquad.fighters.find(f => f.name.includes('Механик-водитель'));
-        if (!driver || driver.hp <= 0) {
-            log('❌ Механик-водитель погиб, техника не двигается.');
-            return;
-        }
-    }
-
-    const dir = prompt('Направление:\n1 - Вверх\n2 - Вниз\n3 - Влево\n4 - Вправо', '1');
-    if (!dir) return;
-    const dirMap = { '1': 'вверх', '2': 'вниз', '3': 'влево', '4': 'вправо' };
-    const dirName = dirMap[dir];
-    if (!dirName) return;
-
-    const hexes = parseInt(prompt('Количество гексов:', '1'));
-    if (isNaN(hexes) || hexes <= 0) return;
-
-    let totalCost = 0;
-    if (currentSquad.armor) {
-        // Условная скорость: 3 гекса за 1 ОД (2 полу-ОД)
-        const hexPerBlock = 3;
-        const costPerBlock = 2;
-        totalCost = Math.ceil(hexes / hexPerBlock) * costPerBlock;
-    } else {
-        const costPerHex = getActionCost(currentSquad, 'move', terrainKey);
-        if (costPerHex === undefined) {
-            log('Этот тип местности недоступен для отряда.');
-            return;
-        }
-        totalCost = costPerHex * hexes;
-    }
-
-    if (!spendAP(currentSquadIndex, totalCost)) {
-        log(`Недостаточно ОД (требуется ${totalCost}).`);
+    if (isHeavyWeapon) {
+      const total = currentSquad.fighters.filter(f => f.hp > 0).length;
+      const half = Math.ceil(currentSquad.fighters.length / 2);
+      if (total <= half) {
+        log('❌ Расчёт потерял более половины бойцов, перемещение невозможно.');
         return;
+      }
     }
+  }
+  if (currentSquad.armor) {
+    const driver = currentSquad.fighters.find(f => f.name.includes('Механик-водитель'));
+    if (!driver || driver.hp <= 0) {
+      log('❌ Механик-водитель погиб, техника не двигается.');
+      return;
+    }
+  }
 
-    log(`Отряд "${currentSquad.name}" переместился на ${hexes} гексов ${dirName} (${terrainKey}), потрачено ${totalCost} полу-ОД.`);
-    saveData();
-    updateUI();
+  // --- Перемещение всегда на 1 гекс, направление не указываем ---
+  const hexes = 1;
+  let totalCost = 0;
+  if (currentSquad.armor) {
+    const hexPerBlock = 3;
+    const costPerBlock = 2;
+    totalCost = Math.ceil(hexes / hexPerBlock) * costPerBlock;
+  } else {
+    const costPerHex = getActionCost(currentSquad, 'move', terrainKey);
+    if (costPerHex === undefined) {
+      log('Этот тип местности недоступен для отряда.');
+      return;
+    }
+    totalCost = costPerHex * hexes;
+  }
+
+  if (!spendAP(currentSquadIndex, totalCost)) {
+    log(`Недостаточно ОД (требуется ${totalCost}).`);
+    return;
+  }
+
+  log(`Отряд "${currentSquad.name}" переместился на 1 гекс (местность: ${terrainKey}), потрачено ${totalCost} полу-ОД.`);
+  saveData();
+  updateUI();
 }
 
     function updateMainButtons() {
@@ -994,24 +1039,57 @@ function moveSquad(terrainKey) {
   const maxShots = getMaxShots(currentSquad);
   const moraleOk = getEffectiveMorale() > 1;
 
-  // Стрелковое
-  const btnSmall = document.getElementById('attackSmallArms');
-  if (btnSmall) {
-    const cost = getActionCost(currentSquad, 'shoot');
-    const disabled = !(ap >= cost && canShoot(currentSquad) && moraleOk);
-    btnSmall.disabled = disabled;
-    btnSmall.style.opacity = disabled ? '0.5' : '1';
+ // Стрелковое
+const btnSmall = document.getElementById('attackSmallArms');
+if (btnSmall) {
+  // Определяем, есть ли у отряда возможность стрелять из стрелкового оружия/пулемётов
+  let canUseSmallArms = true;
+  if (currentSquad.armor) {
+    // Бронетехника: нужен десант ИЛИ активированный пулемёт
+    const hasEmbarked = currentSquad.embarkedSquadIndex !== null;
+    const hasActiveMG = currentSquad.crewInstances && currentSquad.crewInstances.some(ci => {
+  if (ci.active === false || ci.status === 'destroyed' || ci.status === 'blinded') return false;
+  const cw = getFactionCrewWeapons(currentSquad.faction).find(w => w.name === ci.weaponName);
+  if (!cw || cw.type !== 'mg') return false;
+  const alive = ci.fighterIndices.filter(idx => currentSquad.fighters[idx]?.hp > 0).length;
+  return alive > 0;
+});
+    canUseSmallArms = hasEmbarked || hasActiveMG;
+  } else {
+    // Пехота/расчёты: можно всегда, если есть патроны и бойцы вне расчётов
+    canUseSmallArms = currentSquad.ammoSmall > 0 && currentSquad.fighters.some(f => f.hp > 0 && !isCrewMember(f));
   }
 
-  // Орудия
-  const btnOrdnance = document.getElementById('attackOrdnance');
-  if (btnOrdnance) {
-    const cost = getActionCost(currentSquad, 'shoot');
-    const disabled = !(ap >= cost && canShoot(currentSquad) && moraleOk);
-    btnOrdnance.disabled = disabled;
-    btnOrdnance.style.opacity = disabled ? '0.5' : '1';
+  const cost = getActionCost(currentSquad, 'shoot');
+  const disabled = !(ap >= cost && canShoot(currentSquad) && moraleOk && canUseSmallArms);
+  btnSmall.disabled = disabled;
+  btnSmall.style.opacity = disabled ? '0.5' : '1';
+}
+
+// Орудия/миномёты
+const btnOrdnance = document.getElementById('attackOrdnance');
+if (btnOrdnance) {
+  // Проверяем, есть ли активные орудия/миномёты в crewInstances
+  let hasOrdnance = false;
+  if (currentSquad.armor) {
+    hasOrdnance = currentSquad.crewInstances && currentSquad.crewInstances.some(ci => {
+      if (ci.active === false) return false;
+      const cw = getFactionCrewWeapons(currentSquad.faction).find(w => w.name === ci.weaponName);
+      return cw && (cw.type === 'at_gun' || cw.type === 'mortar' || cw.type === 'tank_gun');
+    });
+  } else {
+    hasOrdnance = currentSquad.crewInstances && currentSquad.crewInstances.some(ci => {
+      if (ci.active === false) return false;
+      const cw = getFactionCrewWeapons(currentSquad.faction).find(w => w.name === ci.weaponName);
+      return cw && (cw.type === 'mortar' || cw.type === 'at_gun');
+    });
   }
 
+  const cost = getActionCost(currentSquad, 'shoot');
+  const disabled = !(ap >= cost && canShoot(currentSquad) && moraleOk && hasOrdnance && currentSquad.ammoOrdnance > 0);
+  btnOrdnance.disabled = disabled;
+  btnOrdnance.style.opacity = disabled ? '0.5' : '1';
+}
   // ПТО
   const btnVehicle = document.getElementById('attackVehicle');
   if (btnVehicle) {
@@ -1117,10 +1195,10 @@ function usePanzerblinde() {
 
 function useATGrenade() {
   if (!currentSquad || currentSquad.atRifleGrenades <= 0) return;
-  const rifleman = currentSquad.fighters.find(f => f.hp > 0 && f.weapon.toLowerCase().includes('винтовка'));
-  if (!rifleman) {
-    log('Нет живых бойцов с винтовкой для запуска гранаты!');
+  if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'special'))) {
+    log('Недостаточно ОД для выстрела винтовочной гранаты.');
     return;
+  }
   }
   currentSquad.atRifleGrenades--;
   log('=== КУМУЛЯТИВНАЯ ВИНТОВОЧНАЯ ГРАНАТА (50 мм) ===');
@@ -1134,6 +1212,13 @@ function useATGrenade() {
   updateUI();
 }
 
+    function isCrewMember(fighter) {
+  // если боец состоит в каком-либо расчёте – считается членом расчёта
+  if (!currentSquad || !currentSquad.crewInstances) return false;
+  const idx = currentSquad.fighters.indexOf(fighter);
+  return currentSquad.crewInstances.some(ci => ci.fighterIndices.includes(idx) && ci.active !== false);
+}
+    
 function activateFlemishFury() {
   if (!currentSquad || !currentSquad.flemishFury || currentSquad.flemishFuryUsed) return;
   if (!currentSquad.lastMeleeRolls || currentSquad.lastMeleeRolls.length === 0) {
@@ -1341,16 +1426,30 @@ function meleeAttack() {
   if (!currentSquad || currentSquad.armor) { log('Техника не участвует в рукопашной.'); return; }
   if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); return; }
   const weapons = getFactionWeapons(currentSquad.faction);
+  
+  // --- БОНУСЫ ОТ КАРТ (одноразовые) ---
+  let extraMeleeBonus = 0;
+  if (currentSquad.effects?.spanishFury?.active && !currentSquad.effects.spanishFury.used) {
+    extraMeleeBonus += 1;
+    currentSquad.effects.spanishFury.used = true;
+    log('Испанская ярость: +1 в рукопашной (одноразово)');
+  }
+  if (currentSquad.effects?.porLaRevolucion?.active && !currentSquad.effects.porLaRevolucion.used) {
+    extraMeleeBonus += 1;
+    currentSquad.effects.porLaRevolucion.used = true;
+    log('Por la revolución!: +1 в рукопашной');
+  }
+
   log('=== РУКОПАШНАЯ ===');
   let hits = 0, totalDamage = 0;
   currentSquad.lastMeleeRolls = [];
   currentSquad.fighters.forEach(f => {
     if (f.hp === 0) return;
     const w = weapons.find(w => w.name === f.weapon);
-    let bonus = 0;
+    let bonus = extraMeleeBonus;  // начинаем с бонусов карт
     if (w) {
       const nameLower = w.name.toLowerCase();
-      if (nameLower.includes('винтовка') || nameLower.includes('карабин')) bonus = 1;
+      if (nameLower.includes('винтовка') || nameLower.includes('карабин')) bonus += 1;  // прибавляем, а не перезаписываем
     }
     if (currentSquad.effects?.calvinistRestraint) {
       bonus -= 1;
@@ -1369,8 +1468,9 @@ function meleeAttack() {
   });
   log(`Раунд: попаданий ${hits}, урон ${totalDamage}. Враг -1 дух.`);
   saveData();
-  updateUI();  // <-- добавим обновление интерфейса
+  updateUI();
 }
+    
 function vehicleTurn() {
     if (!currentSquad || !currentSquad.armor) return;
     if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'turn'))) {
@@ -1405,6 +1505,21 @@ function vehicleDeploy() {
     saveData();
     updateUI();
 }
+
+function toggleDeploy() {
+  if (!currentSquad || !currentSquad.crewInstances) return;
+  if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'deploy'))) {
+    log('Недостаточно ОД для развёртывания/свёртывания.');
+    return;
+  }
+  // Переключаем состояние: если не было свойства deployed, считаем что развёрнуты
+  if (currentSquad.deployed === undefined) currentSquad.deployed = true;
+  currentSquad.deployed = !currentSquad.deployed;
+  log(`${currentSquad.name} теперь ${currentSquad.deployed ? 'развёрнут' : 'свёрнут'} (0.5 ОД).`);
+  saveData();
+  updateUI();
+}
+    
 function attackVehicle() {
   if (!currentSquad) return;
   if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'shoot'))) {
@@ -1417,7 +1532,11 @@ if (!canShoot(currentSquad)) {
 }
   const crewWeapons = getFactionCrewWeapons(currentSquad.faction);
   const dist = parseInt(document.getElementById('targetDistance').value) || 5;
-  const atGuns = (currentSquad.crewInstances || []).filter(ci => { if (ci.active === false) return false; const cw = crewWeapons.find(w => w.name === ci.weaponName); return cw && (cw.type === 'at_gun' || cw.type === 'tank_gun'); });
+   const atGuns = (currentSquad.crewInstances || []).filter(ci => {
+    if (ci.active === false || ci.status === 'destroyed' || ci.status === 'blinded') return false;
+    const cw = crewWeapons.find(w => w.name === ci.weaponName);
+    return cw && (cw.type === 'at_gun' || cw.type === 'tank_gun');
+  });
   if (atGuns.length === 0) { log('Нет активных ПТО/орудий.'); return; }
   const targetState = prompt('Состояние цели:\n1 - неподвижна, открыто\n2 - неподвижна, пересечёнка\n3 - подвижна, пересечёнка', '1');
   let hitTarget = targetState === '2' ? 6 : targetState === '3' ? 7 : 4;
@@ -1449,7 +1568,7 @@ currentSquad.ammoOrdnance -= shots;
     function attackAmpulometAtVehicle() {
   if (!currentSquad) return;
   if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); updateUI(); return; }
-if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'special'))) {
+if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'shoot'))) {
     log('Недостаточно ОД для действия.');
     return;
   }
@@ -1462,7 +1581,7 @@ if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'special'))) {
   const accMod = activeMods.reduce((s, m) => s + (m.accuracyMod || 0), 0);
 
   const ampulometCrews = (currentSquad.crewInstances || []).filter(ci => {
-    if (ci.active === false) return false;
+    if (ci.active === false || ci.status === 'destroyed' || ci.status === 'blinded') return;
     const cw = crewWeapons.find(w => w.name === ci.weaponName);
     return cw && cw.isAmpulomet;
   });
@@ -1531,7 +1650,9 @@ if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'special'))) {
   saveData();
   updateUI();
 }
+    
     // ===================== ТЕРМИТНЫЙ ЗАРЯД =====================
+    
 function useThermiteCharge() {
   if (!currentSquad || currentSquad.useThermiteCharge <= 0) return;
   if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'special'))) {
@@ -1566,10 +1687,15 @@ function useThermiteCharge() {
   // Бросок на гибель бойца
   const deathRoll = rollD6();
   if (deathRoll >= 4 && deathRoll <= 6) {
-    // Выбираем случайного живого бойца (кроме командира)
-    const candidates = currentSquad.fighters.map((f, i) => 
-  f.hp > 0 && !f.isCommander && f.weapon !== 'РОКС-3' ? i : -1
-).filter(i => i >= 0);
+       // Исключаем командира, пулемётчиков и вторых номеров
+const excludedNames = ['пулеметчик', 'пулемётчик', 'второй номер'];
+const candidates = currentSquad.fighters.map((f, i) => {
+  const nameLower = f.name.toLowerCase();
+  const isExcluded = nameLower.includes('командир') || 
+                     nameLower.includes('сержант') ||
+                     excludedNames.some(n => nameLower.includes(n));
+  return (f.hp > 0 && !f.isCommander && f.weapon !== 'РОКС-3' && !isExcluded) ? i : -1;
+}).filter(i => i >= 0);
     if (candidates.length > 0) {
       const idx = candidates[Math.floor(Math.random() * candidates.length)];
       currentSquad.fighters[idx].hp = 0;
@@ -1752,7 +1878,7 @@ if (!canShoot(currentSquad)) {
   const accMod = activeMods.reduce((s, m) => s + (m.accuracyMod || 0), 0);
 
   const molotovCrews = (currentSquad.crewInstances || []).filter(ci => {
-    if (ci.active === false) return false;
+    if (ci.active === false || ci.status === 'destroyed' || ci.status === 'blinded') return;
     const cw = crewWeapons.find(w => w.name === ci.weaponName);
     return cw && cw.isMolotov;
   });
@@ -1869,6 +1995,8 @@ if (effRoll >= cover) {
   saveData();
   updateUI();
 }
+
+    
 function attackSmallArms() {
   if (!currentSquad) return;
   if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); updateUI(); return; }
@@ -1914,9 +2042,7 @@ if (currentSquad.effects?.badPowder) {
   const aliveFighters = currentSquad.fighters.map((f, idx) => f.hp > 0 ? idx : -1).filter(i => i >= 0);
   if (aliveFighters.length > 0) {
     badPowderTarget = aliveFighters[Math.floor(Math.random() * aliveFighters.length)];
-    // Эффект срабатывает один раз за атаку, после чего убираем флаг (одноразово)
-    delete currentSquad.effects.badPowder;
-  }
+    }
 }
   log('=== СТРЕЛКОВОЕ / ПУЛЕМЁТЫ ===');
   let totalShots = 0, totalHits = 0;
@@ -1963,8 +2089,8 @@ let shots = Math.min(w.values[rollD6() - 1] + shotMod - penalty, currentSquad.am
 
   // Пулемёты расчётов (только тип mg)
   if (currentSquad.crewInstances && currentSquad.ammoSmall > 0) {
-    currentSquad.crewInstances.forEach(ci => {
-      if (ci.active === false) return;
+    
+      if (ci.active === false || ci.status === 'destroyed' || ci.status === 'blinded') return;
       const cw = crewWeapons.find(w => w.name === ci.weaponName);
       if (!cw || cw.type !== 'mg') return;
       let alive = ci.fighterIndices.filter(idx => currentSquad.fighters[idx]?.hp > 0).length;
@@ -2052,7 +2178,7 @@ if (!canShoot(currentSquad)) {
   }
 
   currentSquad.crewInstances.forEach(ci => {
-    if (ci.active === false) return;
+    if (ci.active === false || ci.status === 'destroyed' || ci.status === 'blinded') return;
     const cw = crewWeapons.find(w => w.name === ci.weaponName);
     if (!cw || (cw.type !== 'at_gun' && cw.type !== 'mortar')) return;
     const alive = ci.fighterIndices.filter(idx => currentSquad.fighters[idx]?.hp > 0).length;
