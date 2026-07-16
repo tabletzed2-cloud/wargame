@@ -2023,7 +2023,6 @@ if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'shoot'))) {
   log('Недостаточно ОД для стрельбы.');
   return;
 }
-}
   const activeMods = [...(appData.activeCards || []).filter(c => c.active), ...(appData.modifiers || []).filter(m => m.active)];
   const shotMod = activeMods.reduce((s, m) => s + (m.shotMod || 0), 0);
   let accMod = activeMods.reduce((s, m) => s + (m.accuracyMod || 0), 0);
@@ -2155,7 +2154,7 @@ if (sniperHits > 0) {
     log(`🔫 Всего выстрелов: ${totalShots}, попаданий: ${totalHits}`);
     log(`───────────────`);
   }
-  
+ }
     
 function attackOrdnance() {
   if (!currentSquad) return;
