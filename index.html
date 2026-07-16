@@ -108,7 +108,7 @@
     <button onclick="attackMolotovCrew()" id="btnMolotovCrew" style="display:none; background:#e67e22;">🔥 Бутылкомет по технике</button>
     <button id="throwGrenades" onclick="throwGrenades()">💣 Бросок гранат</button>
     <button id="satchelCharge" onclick="satchelCharge()">🧨 Связка гранат</button>
-    <button id="meleeAttack" onclick="">⚔️ Рукопашная</button>
+    <button id="meleeAttack" onclick="meleeAttack()">⚔️ Рукопашная</button>
     <hr>
     <label>Входящий урон: <input type="number" id="incomingDamage" value="0" min="0" style="width:60px"></label>
     <button onclick="receiveDamage()">💥 Получить урон</button>
@@ -443,22 +443,14 @@ function resetAllData() {
     location.reload();
   }
 }
-    function getMaxAP(squad) {
-  // Определяем тип отряда по имени и наличию брони
+function getMaxAP(squad) {
+  if (squad.name.includes('ДОТ')) return 12;   // 6 ОД = 12 полу-ОД
   if (squad.armor) {
-    // Бронетехника – база 4 + количество членов экипажа
     const crewCount = squad.fighters.length;
-    return 4 + crewCount; // например, БТР: 5, САУ: 9
-  } else if (squad.name.includes('Пулеметный расчёт') || squad.name.includes('Станковый')) {
-    return 6; // станковые пулемёты
-  } else if (squad.name.includes('Минометный') || squad.name.includes('ПТО') || squad.name.includes('Расчёт')) {
-    return 6; // миномёты и ПТО
-  } else {
-    return 6; // пехота
+    return 4 + crewCount;   // например, БТР: 5, САУ: 9
   }
-      if (squad.name.includes('ДОТ')) {
-  return 12; // 6 ОД = 12 полу-ОД (позволяет выстрелить из ПТО (6) и двух пулемётов по 2 выстрела (4+4=8) – но нужно следить за лимитами)
-}
+  // всем остальным (пехота, пулемёты, миномёты, ПТО) – 3 ОД = 6 полу-ОД
+  return 6;
 }
     function ensureAP(idx) {
   if (!actionPoints[idx]) {
@@ -808,7 +800,6 @@ function disembarkSquad() {
         html += crewHtml;
       }
 
-      container.innerHTML = html;
       container.innerHTML = html;
 
       const base = currentSquad.baseMorale;
@@ -1559,9 +1550,10 @@ currentSquad.ammoOrdnance -= shots;
       } else { log(`❌ ${cw.name}: Промах (d10=${roll})`); }
     }
   });
-    if (currentSquad.actionsThisTurn) {
-  currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + totalShots;
-}
+      if (currentSquad.actionsThisTurn) {
+    currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
+  }
+   updateUI();   
    saveData();
 }  
     function attackAmpulometAtVehicle() {
@@ -1643,9 +1635,9 @@ if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'shoot'))) {
   log(`───────────────`);
   log(`💥 Выстрелов: ${totalShots}, попаданий: ${totalHits}, поджогов: ${fireCount}`);
   log(`───────────────`);
-      if (currentSquad.actionsThisTurn) {
-  currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + totalShots;
-}
+  if (currentSquad.actionsThisTurn) {
+  currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
+} 
   saveData();
   updateUI();
 }
@@ -1941,8 +1933,8 @@ if (!canShoot(currentSquad)) {
   log(`───────────────`);
   log(`🔥 Всего выстрелов: ${totalShots}, попаданий: ${totalHits}, возгораний: ${fireCount}, ослеплений: ${blindCount}`);
   log(`───────────────`);
-      if (currentSquad.actionsThisTurn) {
-  currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + totalShots;
+       if (currentSquad.actionsThisTurn) {
+  currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
 }
   saveData();
   updateUI();
@@ -2143,9 +2135,9 @@ if (sniperHits > 0) {
   }
 }
 
-  if (currentSquad.actionsThisTurn) {
-  currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + totalShots;
-}
+   if (currentSquad.actionsThisTurn) {
+    currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
+  }
   
     saveData();
   updateUI();
@@ -2226,8 +2218,8 @@ if (!canShoot(currentSquad)) {
     log(`───────────────`);
   }
  if (currentSquad.actionsThisTurn) {
-  currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + totalShots;
-}
+    currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
+ }
   saveData();
   updateUI();
 }
