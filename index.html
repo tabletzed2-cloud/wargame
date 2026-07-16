@@ -1426,7 +1426,7 @@ function meleeAttack() {
   if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); return; }
   const weapons = getFactionWeapons(currentSquad.faction);
   
-  // --- БОНУСЫ ОТ КАРТ (одноразовые) ---
+  // Бонусы от карт (одноразовые) – обязательно до цикла!
   let extraMeleeBonus = 0;
   if (currentSquad.effects?.spanishFury?.active && !currentSquad.effects.spanishFury.used) {
     extraMeleeBonus += 1;
@@ -1445,10 +1445,10 @@ function meleeAttack() {
   currentSquad.fighters.forEach(f => {
     if (f.hp === 0) return;
     const w = weapons.find(w => w.name === f.weapon);
-    let bonus = extraMeleeBonus;  // начинаем с бонусов карт
+    let bonus = extraMeleeBonus; // начинаем с бонуса карт
     if (w) {
       const nameLower = w.name.toLowerCase();
-      if (nameLower.includes('винтовка') || nameLower.includes('карабин')) bonus += 1;  // прибавляем, а не перезаписываем
+      if (nameLower.includes('винтовка') || nameLower.includes('карабин')) bonus += 1; // прибавляем, а не перезаписываем
     }
     if (currentSquad.effects?.calvinistRestraint) {
       bonus -= 1;
@@ -1560,8 +1560,8 @@ currentSquad.ammoOrdnance -= shots;
     }
   });
     if (currentSquad.actionsThisTurn) {
-    currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
-  }
+  currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + totalShots;
+}
    saveData();
 }  
     function attackAmpulometAtVehicle() {
@@ -1644,8 +1644,8 @@ if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'shoot'))) {
   log(`💥 Выстрелов: ${totalShots}, попаданий: ${totalHits}, поджогов: ${fireCount}`);
   log(`───────────────`);
       if (currentSquad.actionsThisTurn) {
-    currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
-  }
+  currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + totalShots;
+}
   saveData();
   updateUI();
 }
@@ -1942,8 +1942,8 @@ if (!canShoot(currentSquad)) {
   log(`🔥 Всего выстрелов: ${totalShots}, попаданий: ${totalHits}, возгораний: ${fireCount}, ослеплений: ${blindCount}`);
   log(`───────────────`);
       if (currentSquad.actionsThisTurn) {
-    currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
-  }
+  currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + totalShots;
+}
   saveData();
   updateUI();
 }
@@ -2144,7 +2144,7 @@ if (sniperHits > 0) {
 }
 
   if (currentSquad.actionsThisTurn) {
-  currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
+  currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + totalShots;
 }
   
     saveData();
@@ -2225,8 +2225,8 @@ if (!canShoot(currentSquad)) {
     log(`💥 Всего выстрелов: ${totalShots}, попаданий: ${totalHits}, суммарный урон: ${totalDamage}`);
     log(`───────────────`);
   }
-  if (currentSquad.actionsThisTurn) {
-  currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
+ if (currentSquad.actionsThisTurn) {
+  currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + totalShots;
 }
   saveData();
   updateUI();
