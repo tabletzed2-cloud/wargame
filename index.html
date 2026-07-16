@@ -1050,7 +1050,7 @@ function moveSquad(terrainKey) {
   const moraleOk = getEffectiveMorale() > 1;
 
  // Стрелковое
-const btnSmall = document.getElementById('attackSmallArms');
+const btnSmall = document.getElementById('');
 if (btnSmall) {
   // Определяем, есть ли у отряда возможность стрелять из стрелкового оружия/пулемётов
   let canUseSmallArms = true;
@@ -2155,25 +2155,7 @@ if (sniperHits > 0) {
     log(`🔫 Всего выстрелов: ${totalShots}, попаданий: ${totalHits}`);
     log(`───────────────`);
   }
-  if (currentSquad.effects?.ammoRegen) {
-  currentSquad.ammoRegenCounter = (currentSquad.ammoRegenCounter || 0) + totalShots;
-  if (totalShots > 0) {
-    currentSquad.attackCounter = (currentSquad.attackCounter || 0) + 1;
-    if (currentSquad.attackCounter >= 3) {
-      currentSquad.attackCounter = 0;
-      currentSquad.ammoSmall += 3;
-      log('Кальвинистская бережливость: +3 патрона (за 3 атаки).');
-    }
-  }
-}
-
-   if (currentSquad.actionsThisTurn) {
-    currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
-  }
   
-    saveData();
-  updateUI();
-}
     
 function attackOrdnance() {
   if (!currentSquad) return;
