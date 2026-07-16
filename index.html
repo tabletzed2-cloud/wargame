@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.06 — Ход </title>
+  <title>Боевой модуль v11.07 — Ход </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -46,7 +46,7 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v11.06 — Ход </h2>
+  <h2>⚔️ Боевой модуль v11.07 — Ход </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -485,8 +485,9 @@ function spendAP(squadIndex, cost) {
 }
 
 function getMaxShots(squad) {
+  if (squad.name.includes('ДОТ')) return 5;   // ПТО(1) + 2 пулемёта по 2
+  if (squad.name.includes('САУ')) return 3;   // орудие(1) + пулемёт(2)
   if (squad.armor) {
-    // Если есть орудие – лимит 1, иначе 2 (для пулемётов)
     const hasGun = squad.crewInstances && squad.crewInstances.some(ci => {
       const cw = getFactionCrewWeapons(squad.faction).find(w => w.name === ci.weaponName);
       return cw && (cw.type === 'at_gun' || cw.type === 'mortar' || cw.type === 'tank_gun');
@@ -496,12 +497,30 @@ function getMaxShots(squad) {
     const cw = getFactionCrewWeapons(squad.faction).find(w => w.name === ci.weaponName);
     return cw && (cw.type === 'mortar' || cw.type === 'at_gun');
   })) {
-    return 1; // миномёты/ПТО – 1 выстрел
+    return 1;
   } else {
-    return 2; // пехота и станковые пулемёты – 2
+    return 2;
   }
 }
 
+function getWeaponShotCount(squad, weaponKey) {
+  if (!squad.actionsThisTurn) squad.actionsThisTurn = {};
+  if (!squad.actionsThisTurn.shotCounts) squad.actionsThisTurn.shotCounts = {};
+  return squad.actionsThisTurn.shotCounts[weaponKey] || 0;
+}
+
+function incrementWeaponShotCount(squad, weaponKey) {
+  if (!squad.actionsThisTurn) squad.actionsThisTurn = {};
+  if (!squad.actionsThisTurn.shotCounts) squad.actionsThisTurn.shotCounts = {};
+  squad.actionsThisTurn.shotCounts[weaponKey] = (squad.actionsThisTurn.shotCounts[weaponKey] || 0) + 1;
+}
+
+function getWeaponMaxShots(crewWeapon) {
+  // mg – 2, всё остальное (ПТО, миномёт, орудие) – 1
+  if (crewWeapon.type === 'mg') return 2;
+  return 1;
+}
+    
 function canShoot(squad) {
   return getShotsUsed(squad) < getMaxShots(squad);
 }
@@ -842,7 +861,7 @@ if (currentSquad.crewInstances && (currentSquad.name.includes('ДОТ') || curre
     crewHtml += `<button onclick="changeCrewStatus(${idx}, 'destroyed')" ${status === 'destroyed' ? 'disabled' : ''}>Уничтожить</button><br>`;
   });
   crewHtml += '</div>';
-  html += crewHtml; // добавьте эту строку перед container.innerHTML = html; (после формирования html)
+  html += crewHtml; 
 }
       updateMainButtons();
       renderActiveCardButtons();
@@ -1202,7 +1221,7 @@ function useATGrenade() {
   updateUI();
 }
 
-    function isCrewMember(fighter) {
+function isCrewMember(fighter) {
   // если боец состоит в каком-либо расчёте – считается членом расчёта
   if (!currentSquad || !currentSquad.crewInstances) return false;
   const idx = currentSquad.fighters.indexOf(fighter);
@@ -1516,10 +1535,7 @@ function attackVehicle() {
   log('Недостаточно ОД для стрельбы из ПТО.');
   return;
 }
-if (!canShoot(currentSquad)) {
-  log('Достигнут лимит выстрелов за ход (1).');
-  return;
-}
+
   const crewWeapons = getFactionCrewWeapons(currentSquad.faction);
   const dist = parseInt(document.getElementById('targetDistance').value) || 5;
    const atGuns = (currentSquad.crewInstances || []).filter(ci => {
@@ -1534,6 +1550,13 @@ if (!canShoot(currentSquad)) {
   atGuns.forEach(ci => {
     const cw = crewWeapons.find(w => w.name === ci.weaponName);
     if (!cw) return;
+          const weaponKey = ci.weaponName;
+      const maxThis = getWeaponMaxShots(cw);
+      const curThis = getWeaponShotCount(currentSquad, weaponKey);
+      if (curThis >= maxThis) {
+        log(`${cw.name}: лимит выстрелов исчерпан.`);
+        return;
+      }
     const alive = ci.fighterIndices.filter(idx => currentSquad.fighters[idx]?.hp > 0).length;
     if (alive === 0) return;
     let shots = alive >= (cw.crewSize || 3) ? (cw.shotsFull || 3) : alive >= 2 ? (cw.shotsReduced2 || 2) : (cw.shotsReduced1 || 1);
@@ -1541,6 +1564,7 @@ if (!canShoot(currentSquad)) {
     let penMM = penetration[String(dist)] || 0;
     log(`${cw.name}: расчёт ${alive}, выстрелов ${shots}, пробитие ${penMM} мм`);
     shots = Math.min(shots, currentSquad.ammoOrdnance);
+    incrementWeaponShotCount(currentSquad, weaponKey);
 currentSquad.ammoOrdnance -= shots;
     for (let i = 0; i < shots; i++) {
       const roll = rollD10();
@@ -1572,7 +1596,7 @@ if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'shoot'))) {
   const accMod = activeMods.reduce((s, m) => s + (m.accuracyMod || 0), 0);
 
   const ampulometCrews = (currentSquad.crewInstances || []).filter(ci => {
-    if (ci.active === false || ci.status === 'destroyed' || ci.status === 'blinded') return;
+    if (ci.active === false || ci.status === 'destroyed' || ci.status === 'blinded') return false;
     const cw = crewWeapons.find(w => w.name === ci.weaponName);
     return cw && cw.isAmpulomet;
   });
@@ -1635,11 +1659,11 @@ if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'shoot'))) {
   log(`───────────────`);
   log(`💥 Выстрелов: ${totalShots}, попаданий: ${totalHits}, поджогов: ${fireCount}`);
   log(`───────────────`);
-  if (currentSquad.actionsThisTurn) {
-  currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
-} 
-  saveData();
+if (currentSquad.actionsThisTurn) {
+    currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
+  }
   updateUI();
+  saveData();
 }
     
     // ===================== ТЕРМИТНЫЙ ЗАРЯД =====================
@@ -1853,10 +1877,6 @@ function rollD4() {
   log('Недостаточно ОД для выстрела из бутылкомёта.');
   return;
 }
-if (!canShoot(currentSquad)) {
-  log('Достигнут лимит выстрелов за ход.');
-  return;
-}
   if (!currentSquad) return;
   if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); updateUI(); return; }
 
@@ -1991,14 +2011,18 @@ if (effRoll >= cover) {
 function attackSmallArms() {
   if (!currentSquad) return;
   if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); updateUI(); return; }
+  // Для пехоты без расчётов – общий лимит 2
+if (!currentSquad.crewInstances || currentSquad.crewInstances.length === 0) {
+  if (!canShoot(currentSquad)) {
+    log('Достигнут лимит выстрелов за ход (максимум 2).');
+    return;
+  }
+}
    // Проверка ОД и лимита выстрелов
 if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'shoot'))) {
   log('Недостаточно ОД для стрельбы.');
   return;
 }
-if (!canShoot(currentSquad)) {
-  log('Достигнут лимит выстрелов за ход (максимум 2).');
-  return;
 }
   const activeMods = [...(appData.activeCards || []).filter(c => c.active), ...(appData.modifiers || []).filter(m => m.active)];
   const shotMod = activeMods.reduce((s, m) => s + (m.shotMod || 0), 0);
@@ -2091,6 +2115,13 @@ let shots = Math.min(w.values[rollD6() - 1] + shotMod - penalty, currentSquad.am
         alive = emb.fighters.filter(f => f.hp > 0).length > 0 ? 1 : 0;
       }
       if (alive === 0) return;
+            const weaponKey = ci.weaponName;
+      const maxThis = getWeaponMaxShots(cw);
+      const curThis = getWeaponShotCount(currentSquad, weaponKey);
+      if (curThis >= maxThis) {
+        log(`${cw.name}: лимит выстрелов исчерпан.`);
+        return;
+      }
       let shots = 0;
       if (cw.shotRule === 'sum_d6') {
         let dice = cw.fullCrewDice || 3;
@@ -2099,6 +2130,7 @@ let shots = Math.min(w.values[rollD6() - 1] + shotMod - penalty, currentSquad.am
       }
       shots = Math.max(0, shots + shotMod);
       if (shots <= 0) return;
+      incrementWeaponShotCount(currentSquad, weaponKey);
       shots = Math.min(shots, currentSquad.ammoSmall);
       currentSquad.ammoSmall -= shots;
       totalShots += shots;
@@ -2150,10 +2182,6 @@ function attackOrdnance() {
   log('Недостаточно ОД для стрельбы из орудий.');
   return;
 }
-if (!canShoot(currentSquad)) {
-  log('Достигнут лимит выстрелов за ход (1).');
-  return;
-}
   const activeMods = [...(appData.activeCards || []).filter(c => c.active), ...(appData.modifiers || []).filter(m => m.active)];
   const shotMod = activeMods.reduce((s, m) => s + (m.shotMod || 0), 0);
   const dist = parseInt(document.getElementById('targetDistance').value) || 5;
@@ -2174,6 +2202,13 @@ if (!canShoot(currentSquad)) {
     if (!cw || (cw.type !== 'at_gun' && cw.type !== 'mortar')) return;
     const alive = ci.fighterIndices.filter(idx => currentSquad.fighters[idx]?.hp > 0).length;
     if (alive === 0) return;
+          const weaponKey = ci.weaponName;
+      const maxThis = getWeaponMaxShots(cw);
+      const curThis = getWeaponShotCount(currentSquad, weaponKey);
+      if (curThis >= maxThis) {
+        log(`${cw.name}: лимит выстрелов исчерпан.`);
+        return;
+      }
     let shots = 0;
     if (cw.shotRule === 'fixed_per_crew') {
       if (alive >= (cw.crewSize || 3)) shots = cw.shotsFull || 3;
@@ -2192,6 +2227,7 @@ if (!canShoot(currentSquad)) {
       return;
     }
     shots = Math.min(shots, currentSquad.ammoOrdnance);
+    incrementWeaponShotCount(currentSquad, weaponKey);
     currentSquad.ammoOrdnance -= shots;
     totalShots += shots;
     for (let i = 0; i < shots; i++) {
