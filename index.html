@@ -69,18 +69,19 @@
     </div>
     <hr>
     <div id="activeSquadArea"></div>
-    <div style="margin:8px 0; background:#2a2a2a; padding:8px; border-radius:6px;">
+
+    <div id="embarkPanel" style="display:none; margin:8px 0; background:#2a2a2a; padding:8px; border-radius:6px;"></div>
+    <div class="section">
+      <label>Дистанция до цели (гексы): <input type="number" id="targetDistance" value="5" min="1" style="width:60px"></label>
+    </div>
+    <div id="squadContainer">Загрузка...</div>
+        <div style="margin:8px 0; background:#2a2a2a; padding:8px; border-radius:6px;">
   <strong>Ход: <span id="turnCounter">1</span></strong> |
   ОД: <strong id="apDisplay">0</strong>/<strong id="maxApDisplay">0</strong>
   <button onclick="nextTurn()" style="background:#2980b9;">⏭️ Завершить ход</button>
   <button onclick="moveToNextSquad()">→ Следующий отряд</button>
   <button onclick="skipSquad()">⏩ Пропустить отряд</button>
 </div>
-    <div id="embarkPanel" style="display:none; margin:8px 0; background:#2a2a2a; padding:8px; border-radius:6px;"></div>
-    <div class="section">
-      <label>Дистанция до цели (гексы): <input type="number" id="targetDistance" value="5" min="1" style="width:60px"></label>
-    </div>
-    <div id="squadContainer">Загрузка...</div>
     <div id="activeCardsBattle" style="margin:6px 0; padding:6px; background:#2a2a2a; border-radius:4px;">
   <strong>Активные карты:</strong> <span id="activeCardsListBattle">Нет</span>
       <div id="activeCardButtons" style="margin:6px 0;"></div>
@@ -2005,7 +2006,7 @@ if (effRoll >= cover) {
 function attackSmallArms() {
   if (!currentSquad) return;
   if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); updateUI(); return; }
-
+  if (!currentSquad.actionsThisTurn) currentSquad.actionsThisTurn = {};
   const activeMods = [...(appData.activeCards || []).filter(c => c.active), ...(appData.modifiers || []).filter(m => m.active)];
   const shotMod = activeMods.reduce((s, m) => s + (m.shotMod || 0), 0);
   let accMod = activeMods.reduce((s, m) => s + (m.accuracyMod || 0), 0);
@@ -2056,7 +2057,7 @@ function attackSmallArms() {
   }
 
   // Теперь тратим ОД (только если есть доступное оружие)
-  if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'shoot'))) {
+  if (!spendAP(currentSquadIndex, 2))) {
     log('Недостаточно ОД для стрельбы.');
     return;
   }
