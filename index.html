@@ -917,10 +917,9 @@ if (getAP(currentSquadIndex) > 0 && currentSquad.armor) {
         html += `<button onclick="vehicleDeploy()" style="background:#7f8c8d;">⚙️ Развёртывание/Свёртывание</button> `;
     }
 }
-  }
-
-  container.innerHTML = html;
+    container.innerHTML = html;
 }
+    
 function moveSquad(terrainKey) {
     if (!currentSquad) return;
     if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); return; }
