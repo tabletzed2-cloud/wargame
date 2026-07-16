@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.03 — Ход </title>
+  <title>Боевой модуль v11.04 — Ход </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -46,7 +46,7 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v11.03 — Ход </h2>
+  <h2>⚔️ Боевой модуль v11.04 — Ход </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -793,7 +793,10 @@ if (currentSquad.effects?.geenDuibreed) {
 const eff = morale + mod + extraMorale;
       const pct = Math.max(0, eff / base * 100);
       document.getElementById('moraleContainer').innerHTML = `<div>Дух: ${morale}/${base} ${mod !== 0 ? `(эфф. ${eff})` : ''}</div><div class="morale-bar" style="width:${pct}%; background:${eff <= 0 ? '#c0392b' : eff <= base/2 ? '#f39c12' : '#27ae60'}"></div>`;
-      // Обновляем отображение ОД
+      // Обновляем отображение ОД и хода
+      document.getElementById('apDisplay').innerText = getAP(currentSquadIndex);
+      document.getElementById('maxApDisplay').innerText = actionPoints[currentSquadIndex] ? actionPoints[currentSquadIndex].maxAp : 0;
+      document.getElementById('turnCounter').innerText = currentTurn;
       updateActiveCardsBattle();
       const maxShots = getMaxShots(currentSquad);
       const shotsUsed = getShotsUsed(currentSquad);
@@ -811,6 +814,7 @@ if (btn) {
       updateMainButtons();
       renderActiveCardButtons();
     }
+    
 function sendForAmmo(fighterIndex) {
   if (!currentSquad) return;
   const fighter = currentSquad.fighters[fighterIndex];
@@ -893,89 +897,95 @@ function renderActiveCardButtons() {
   }
 
   // Перемещение
-  if (getAP(currentSquadIndex) > 0) {
-    html += `<button onclick="moveSquad()" style="background:#2980b9;">🚶 Переместиться</button> `;
+if (getAP(currentSquadIndex) > 0 && !currentSquad.armor) {
+    html += `<button onclick="moveSquad('open')">🌄 Бег (откр.)</button> `;
+    html += `<button onclick="moveSquad('forest')">🌲 Лес</button> `;
+    html += `<button onclick="moveSquad('road')">🛣️ Дорога</button> `;
+    html += `<button onclick="moveSquad('bad')">🌋 Тяжёлая</button> `;
+    html += `<button onclick="moveSquad('crouch')">🐍 Переползание</button> `;
+}
+if (getAP(currentSquadIndex) > 0 && currentSquad.armor) {
+    html += `<button onclick="moveSquad('open')">🌄 Открытая</button> `;
+    html += `<button onclick="moveSquad('forest')">🌲 Лес</button> `;
+    html += `<button onclick="moveSquad('road')">🛣️ Дорога</button> `;
+    html += `<button onclick="moveSquad('bad')">🌋 Тяжёлая</button> `;
+}
+  if (currentSquad.armor && getAP(currentSquadIndex) > 0) {
+    html += `<button onclick="vehicleTurn()" style="background:#7f8c8d;">🔄 Разворот</button> `;
+    html += `<button onclick="vehicleAcquireTarget()" style="background:#7f8c8d;">🎯 Наведение на цель</button> `;
+    if (currentSquad.name.includes('САУ')) {
+        html += `<button onclick="vehicleDeploy()" style="background:#7f8c8d;">⚙️ Развёртывание/Свёртывание</button> `;
+    }
+}
   }
 
   container.innerHTML = html;
 }
-function moveSquad() {
-  if (!currentSquad) return;
-  if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); return; }
+function moveSquad(terrainKey) {
+    if (!currentSquad) return;
+    if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); return; }
 
-  // Проверка возможности перемещения для расчётов и техники
-  if (currentSquad.crewInstances) {
-    let isHeavyWeapon = false;
-    const crewWeapons = getFactionCrewWeapons(currentSquad.faction);
-    for (let ci of currentSquad.crewInstances) {
-      if (ci.active === false) continue;
-      const cw = crewWeapons.find(w => w.name === ci.weaponName);
-      if (cw && (cw.type === 'mortar' || cw.type === 'at_gun')) {
-        isHeavyWeapon = true;
-        break;
-      }
+    // Проверки возможности движения (расчёты, техника)
+    if (currentSquad.crewInstances) {
+        let isHeavyWeapon = false;
+        const crewWeapons = getFactionCrewWeapons(currentSquad.faction);
+        for (let ci of currentSquad.crewInstances) {
+            if (ci.active === false) continue;
+            const cw = crewWeapons.find(w => w.name === ci.weaponName);
+            if (cw && (cw.type === 'mortar' || cw.type === 'at_gun')) {
+                isHeavyWeapon = true;
+                break;
+            }
+        }
+        if (isHeavyWeapon) {
+            const total = currentSquad.fighters.filter(f => f.hp > 0).length;
+            const half = Math.ceil(currentSquad.fighters.length / 2);
+            if (total <= half) {
+                log('❌ Расчёт потерял более половины бойцов, перемещение невозможно.');
+                return;
+            }
+        }
     }
-    if (isHeavyWeapon) {
-      const total = currentSquad.fighters.filter(f => f.hp > 0).length;
-      const half = Math.ceil(currentSquad.fighters.length / 2);
-      if (total <= half) {
-        log('❌ Расчёт потерял более половины бойцов, перемещение невозможно.');
-        return;
-      }
+    if (currentSquad.armor) {
+        const driver = currentSquad.fighters.find(f => f.name.includes('Механик-водитель'));
+        if (!driver || driver.hp <= 0) {
+            log('❌ Механик-водитель погиб, техника не двигается.');
+            return;
+        }
     }
-  }
 
-  if (currentSquad.armor) {
-    const driver = currentSquad.fighters.find(f => f.name.includes('Механик-водитель'));
-    if (!driver || driver.hp <= 0) {
-      log('❌ Механик-водитель погиб, техника не двигается.');
-      return;
-    }
-  }
+    const dir = prompt('Направление:\n1 - Вверх\n2 - Вниз\n3 - Влево\n4 - Вправо', '1');
+    if (!dir) return;
+    const dirMap = { '1': 'вверх', '2': 'вниз', '3': 'влево', '4': 'вправо' };
+    const dirName = dirMap[dir];
+    if (!dirName) return;
 
-  // Запрос направления и гексов
-  const dir = prompt('Направление:\n1 - Вверх\n2 - Вниз\n3 - Влево\n4 - Вправо', '1');
-  if (!dir) return;
-  const dirMap = { '1': 'вверх', '2': 'вниз', '3': 'влево', '4': 'вправо' };
-  const dirName = dirMap[dir];
-  if (!dirName) return;
+    const hexes = parseInt(prompt('Количество гексов:', '1'));
+    if (isNaN(hexes) || hexes <= 0) return;
 
-  const hexes = parseInt(prompt('Количество гексов:', '1'));
-  if (isNaN(hexes) || hexes <= 0) return;
-
-  const terrain = prompt('Тип местности:\n1 - Открытая\n2 - Лес\n3 - Дорога\n4 - Болото/Бурелом/...\n5 - Переползание/Скрытое', '1');
-  if (!terrain) return;
-  const terrainMap = { '1': 'open', '2': 'forest', '3': 'road', '4': 'bad', '5': 'crouch' };
-  let totalCost = 0;
-  if (currentSquad.armor) {
-    // Для техники стоимость рассчитывается блоками
-    // У каждой техники своя скорость: для простоты будем считать, что базовая скорость 3 гекса за 1 ОД (2 полу-ОД)
-    // Но вы можете задать скорость в характеристиках отряда (пока нет). Используем 3 гекса за 2 полу-ОД.
-    const hexPerBlock = 3; // можно сделать параметром отряда
-    const costPerBlock = 2; // 2 полу-ОД за блок
-    totalCost = Math.ceil(hexes / hexPerBlock) * costPerBlock;
-  } else {
-    const terrainKey = terrainMap[terrain];
-if (!terrainKey) {
-  log('Неверный тип местности.');
-  return;
-}
-    const costPerHex = getActionCost(currentSquad, 'move', terrainKey);
+    let totalCost = 0;
+    if (currentSquad.armor) {
+        // Условная скорость: 3 гекса за 1 ОД (2 полу-ОД)
+        const hexPerBlock = 3;
+        const costPerBlock = 2;
+        totalCost = Math.ceil(hexes / hexPerBlock) * costPerBlock;
+    } else {
+        const costPerHex = getActionCost(currentSquad, 'move', terrainKey);
         if (costPerHex === undefined) {
-      log('Перемещение невозможно для данного типа местности.');
-      return;
+            log('Этот тип местности недоступен для отряда.');
+            return;
+        }
+        totalCost = costPerHex * hexes;
     }
-    totalCost = costPerHex * hexes;
-  }
 
-  if (!spendAP(currentSquadIndex, totalCost)) {
-    log(`Недостаточно ОД (требуется ${totalCost}).`);
-    return;
-  }
+    if (!spendAP(currentSquadIndex, totalCost)) {
+        log(`Недостаточно ОД (требуется ${totalCost}).`);
+        return;
+    }
 
-  log(`Отряд "${currentSquad.name}" переместился на ${hexes} гексов ${dirName} (местность: ${terrainKey}), потрачено ${totalCost} ОД.`);
-  saveData();
-  updateUI();
+    log(`Отряд "${currentSquad.name}" переместился на ${hexes} гексов ${dirName} (${terrainKey}), потрачено ${totalCost} полу-ОД.`);
+    saveData();
+    updateUI();
 }
 
     function updateMainButtons() {
@@ -1362,7 +1372,40 @@ function meleeAttack() {
   saveData();
   updateUI();  // <-- добавим обновление интерфейса
 }
+function vehicleTurn() {
+    if (!currentSquad || !currentSquad.armor) return;
+    if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'turn'))) {
+        log('Недостаточно ОД для разворота.');
+        return;
+    }
+    log(`${currentSquad.name} совершает разворот (потрачено 0.5 ОД).`);
+    saveData();
+    updateUI();
+}
 
+function vehicleAcquireTarget() {
+    if (!currentSquad || !currentSquad.armor) return;
+    if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'special'))) {
+        log('Недостаточно ОД для наведения.');
+        return;
+    }
+    log(`${currentSquad.name} наводится на новую цель (потрачено 0.5 ОД).`);
+    saveData();
+    updateUI();
+}
+
+function vehicleDeploy() {
+    if (!currentSquad || !currentSquad.armor) return;
+    if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'deploy'))) {
+        log('Недостаточно ОД для развёртывания.');
+        return;
+    }
+    // Переключение состояния развёрнутости можно хранить в свойстве отряда,
+    // но для простоты просто тратим ОД и логируем.
+    log(`${currentSquad.name} разворачивается/сворачивается (потрачено 0.5 ОД).`);
+    saveData();
+    updateUI();
+}
 function attackVehicle() {
   if (!currentSquad) return;
   if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'shoot'))) {
@@ -1399,9 +1442,9 @@ currentSquad.ammoOrdnance -= shots;
       } else { log(`❌ ${cw.name}: Промах (d10=${roll})`); }
     }
   });
-  if (currentSquad.actionsThisTurn) {
-  currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
-}
+    if (currentSquad.actionsThisTurn) {
+    currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
+  }
    saveData();
 }  
     function attackAmpulometAtVehicle() {
@@ -1483,6 +1526,9 @@ if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'special'))) {
   log(`───────────────`);
   log(`💥 Выстрелов: ${totalShots}, попаданий: ${totalHits}, поджогов: ${fireCount}`);
   log(`───────────────`);
+      if (currentSquad.actionsThisTurn) {
+    currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
+  }
   saveData();
   updateUI();
 }
@@ -1771,6 +1817,9 @@ if (!canShoot(currentSquad)) {
   log(`───────────────`);
   log(`🔥 Всего выстрелов: ${totalShots}, попаданий: ${totalHits}, возгораний: ${fireCount}, ослеплений: ${blindCount}`);
   log(`───────────────`);
+      if (currentSquad.actionsThisTurn) {
+    currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
+  }
   saveData();
   updateUI();
 }
@@ -1977,6 +2026,7 @@ if (sniperHits > 0) {
     saveData();
   updateUI();
 }
+    
 function attackOrdnance() {
   if (!currentSquad) return;
   if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); updateUI(); return; }
