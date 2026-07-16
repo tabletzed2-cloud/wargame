@@ -2086,9 +2086,9 @@ let shots = Math.min(w.values[rollD6() - 1] + shotMod - penalty, currentSquad.am
     });
   }
 
-  // Пулемёты расчётов (только тип mg)
+   // Пулемёты расчётов (только тип mg)
   if (currentSquad.crewInstances && currentSquad.ammoSmall > 0) {
-    
+    currentSquad.crewInstances.forEach(ci => {
       if (ci.active === false || ci.status === 'destroyed' || ci.status === 'blinded') return;
       const cw = crewWeapons.find(w => w.name === ci.weaponName);
       if (!cw || cw.type !== 'mg') return;
@@ -2104,7 +2104,7 @@ let shots = Math.min(w.values[rollD6() - 1] + shotMod - penalty, currentSquad.am
         let dice = cw.fullCrewDice || 3;
         if (alive < (cw.crewSize || 5)) dice = Math.max(cw.minCrewDice || 1, Math.floor(alive / ((cw.crewSize || 5) / (cw.fullCrewDice || 3))));
         for (let i = 0; i < dice; i++) shots += rollD6();
-      } // для пулемётов обычно sum_d6, но на всякий случай fixed_per_crew не используется
+      }
       shots = Math.max(0, shots + shotMod);
       if (shots <= 0) return;
       shots = Math.min(shots, currentSquad.ammoSmall);
