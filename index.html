@@ -71,10 +71,7 @@
     <div id="activeSquadArea"></div>
 
     <div id="embarkPanel" style="display:none; margin:8px 0; background:#2a2a2a; padding:8px; border-radius:6px;"></div>
-    <div class="section">
-      <label>Дистанция до цели (гексы): <input type="number" id="targetDistance" value="5" min="1" style="width:60px"></label>
-    </div>
-    <div id="squadContainer">Загрузка...</div>
+        <div id="squadContainer">Загрузка...</div>
         <div style="margin:8px 0; background:#2a2a2a; padding:8px; border-radius:6px;">
   <strong>Ход: <span id="turnCounter">1</span></strong> |
   ОД: <strong id="apDisplay">0</strong>/<strong id="maxApDisplay">0</strong>
@@ -82,6 +79,9 @@
   <button onclick="moveToNextSquad()">→ Следующий отряд</button>
   <button onclick="skipSquad()">⏩ Пропустить отряд</button>
 </div>
+    <div class="section">
+      <label>Дистанция до цели (гексы): <input type="number" id="targetDistance" value="5" min="1" style="width:60px"></label>
+    </div>
     <div id="activeCardsBattle" style="margin:6px 0; padding:6px; background:#2a2a2a; border-radius:4px;">
   <strong>Активные карты:</strong> <span id="activeCardsListBattle">Нет</span>
       <div id="activeCardButtons" style="margin:6px 0;"></div>
@@ -1115,7 +1115,7 @@ if (btnSmall) {
   }
 
   const cost = getActionCost(currentSquad, 'shoot');
-  const disabled = !(ap >= cost && canShoot(currentSquad) && moraleOk && canUseSmallArms);
+ const disabled = !(ap >= cost && (currentSquad.name.includes('ДОТ') || currentSquad.name.includes('САУ') ? true : canShoot(currentSquad)) && moraleOk && canUseSmallArms);
   btnSmall.disabled = disabled;
   btnSmall.style.opacity = disabled ? '0.5' : '1';
 }
@@ -1140,7 +1140,7 @@ if (btnOrdnance) {
   }
 
   const cost = getActionCost(currentSquad, 'shoot');
-  const disabled = !(ap >= cost && canShoot(currentSquad) && moraleOk && hasOrdnance && currentSquad.ammoOrdnance > 0);
+  const disabled = !(ap >= cost && (currentSquad.name.includes('ДОТ') || currentSquad.name.includes('САУ') ? true : canShoot(currentSquad)) && moraleOk && hasOrdnance && currentSquad.ammoOrdnance > 0);
   btnOrdnance.disabled = disabled;
   btnOrdnance.style.opacity = disabled ? '0.5' : '1';
 }
@@ -1154,7 +1154,7 @@ if (btnOrdnance) {
       const cw = getFactionCrewWeapons(currentSquad.faction).find(w => w.name === ci.weaponName);
       return cw && (cw.type === 'at_gun' || cw.type === 'tank_gun');
     });
-    const disabled = !(ap >= cost && canShoot(currentSquad) && moraleOk && hasAtGun);
+    const disabled = !(ap >= cost && (currentSquad.name.includes('ДОТ') || currentSquad.name.includes('САУ') ? true : canShoot(currentSquad)) && moraleOk && hasAtGun);
     btnVehicle.disabled = disabled;
     btnVehicle.style.opacity = disabled ? '0.5' : '1';
   }
