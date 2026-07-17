@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.08 — Ход </title>
+  <title>Боевой модуль v11.09 — Ход </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -46,7 +46,7 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v11.08 — Ход </h2>
+  <h2>⚔️ Боевой модуль v11.09 — Ход </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -103,12 +103,13 @@
     <button onclick="resetAll()">🔄 Сбросить</button>
     <hr>
     <label>Укрытие цели (d10 >= <input type="number" id="coverTarget" value="6" min="2" max="10" style="width:50px">)</label>
-    <button id="attackSmallArms" onclick="attackSmallArms()">🔫 Стрелковое / Пулемёты</button>
+    <button id="" onclick="()">🔫 Стрелковое / Пулемёты</button>
     <button id="attackOrdnance" onclick="attackOrdnance()">💥 Орудия / Миномёты</button>
     <button id="attackVehicle" onclick="attackVehicle()">🚀 Атака ПТО по технике</button>
     <button onclick="attackMolotovCrew()" id="btnMolotovCrew" style="display:none; background:#e67e22;">🔥 Бутылкомет по технике</button>
     <button id="throwGrenades" onclick="throwGrenades()">💣 Бросок гранат</button>
     <button id="satchelCharge" onclick="satchelCharge()">🧨 Связка гранат</button>
+    <button id="sniperShot" onclick="sniperShot()" style="display:none;">🎯 Снайперский выстрел</button>
     <button id="meleeAttack" onclick="meleeAttack()">⚔️ Рукопашная</button>
     <hr>
     <label>Входящий урон: <input type="number" id="incomingDamage" value="0" min="0" style="width:60px"></label>
@@ -852,6 +853,63 @@ if (btn) {
       updateMainButtons();
       renderActiveCardButtons();
     }
+function sniperShot() {
+  if (!currentSquad) return;
+  if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); return; }
+
+  // Найти снайпера с подходящим оружием
+  const sniper = currentSquad.fighters.find(f => {
+    if (f.hp <= 0 || f.isAway) return false;
+    const w = getFactionWeapons(currentSquad.faction).find(w => w.name === f.weapon);
+    return w && w.sniper;
+  });
+  if (!sniper) {
+    log('Нет боеспособного снайпера.');
+    return;
+  }
+
+  const sniperWeapon = getFactionWeapons(currentSquad.faction).find(w => w.name === sniper.weapon);
+  if (!sniperWeapon || !sniperWeapon.sniper) {
+    log('У снайпера нет снайперской винтовки.');
+    return;
+  }
+
+  // Проверка ОД (2 полу-ОД = 1 ОД)
+  if (!spendAP(currentSquadIndex, 2)) {
+    log('Недостаточно ОД для снайперского выстрела (требуется 1 ОД).');
+    return;
+  }
+
+  // Проверка патронов
+  if (currentSquad.ammoSmall <= 0) {
+    log('Нет патронов!');
+    return;
+  }
+
+  // Тратим 1 патрон
+  currentSquad.ammoSmall--;
+
+  const dist = parseInt(document.getElementById('targetDistance').value) || 5;
+  const cover = parseInt(document.getElementById('coverTarget').value) || 6;
+  const isSuppressed = getEffectiveMorale() <= getSuppressionThreshold();
+  const accMod = (sniperWeapon.accuracyBonus || 0);
+  const damage = sniperWeapon.damagePerHit || 3;
+
+  const roll = rollD10();
+  let effRoll = roll + accMod;
+  if (isSuppressed) effRoll -= 1;
+  if (dist > (sniperWeapon.effectiveRange || 0)) effRoll -= Math.floor((dist - (sniperWeapon.effectiveRange || 0)) / 2);
+
+  log(`=== СНАЙПЕРСКИЙ ВЫСТРЕЛ (${sniper.name}) ===`);
+  if (effRoll >= cover) {
+    log(`🎯 Попадание! d10=${roll}+${accMod} = ${effRoll}, урон: ${damage}`);
+  } else {
+    log(`❌ Промах (d10=${roll}+${accMod}=${effRoll}).`);
+  }
+
+  saveData();
+  updateUI();
+}
     
 function sendForAmmo(fighterIndex) {
   if (!currentSquad) return;
@@ -1145,6 +1203,22 @@ if (btnOrdnance) {
       btnMolotov.style.display = 'none';
     }
   }
+      const btnSniper = document.getElementById('sniperShot');
+if (btnSniper) {
+  const hasSniper = currentSquad && currentSquad.fighters.some(f => {
+    if (f.hp <= 0 || f.isAway) return false;
+    const w = getFactionWeapons(currentSquad.faction).find(w => w.name === f.weapon);
+    return w && w.sniper;
+  });
+  if (hasSniper) {
+    btnSniper.style.display = 'inline-block';
+    const cost = 2; // 2 полу-ОД (1 ОД)
+    btnSniper.disabled = !(ap >= cost && currentSquad.ammoSmall > 0 && moraleOk);
+    btnSniper.style.opacity = btnSniper.disabled ? '0.5' : '1';
+  } else {
+    btnSniper.style.display = 'none';
+  }
+}
 }
 function useLastBreath() {
   if (!currentSquad || !currentSquad.effects?.lastBreath) return;
@@ -2096,8 +2170,8 @@ function attackSmallArms() {
   }
 
   // Личное оружие пехоты
-  if (!isVehicle && currentSquad.ammoSmall > 0) {
-    currentSquad.fighters.forEach((f, index) => {
+  if (!isVehicle && currentSquad.ammoSmall > 0 && !currentSquad.name.includes('ДОТ')) {
+  currentSquad.fighters.forEach((f, index) => {
       if (f.hp === 0 || crewMemberIndices.has(index)) return;
       const w = weapons.find(w => w.name === f.weapon);
       if (!w) return;
