@@ -214,7 +214,7 @@ if (!selectedFaction) {
             "weapons": [
               { "name": "Винтовка Vz.24", "values": [1,1,1,1,1,1], "effectiveRange": 5, "meleeBonus": 1 },
               { "name": "Пистолет Star M1914", "values": [0,1,1,2,2,3], "effectiveRange": 2, "meleeBonus": 0 },
-              { "name": "ПП Star Si-35", "values": [0,1,1,2,2,3], "effectiveRange": 3, "meleeBonus": 0 },
+              { "name": "ПП Star Si-35", "values": [0,1,1,2,2,3], "effectiveRange": 3, "meleeBonus": 1 },
               { "name": "АВС-36", "values": [1,1,2,2,3,3], "effectiveRange": 6, "meleeBonus": 1 },
               { "name": "ППД-40", "values": [0,2,2,3,4,4], "effectiveRange": 3, "meleeBonus": 0 },
               { "name": "ДП-27", "values": [0,1,2,3,4,4], "effectiveRange": 5, "meleeBonus": 0 },
@@ -358,20 +358,20 @@ if (!selectedFaction) {
 
     let appData;
     try {
-      const saved = safeLocalStorage('getItem', STORAGE_KEY);
-      if (saved) {
-        appData = JSON.parse(saved);
-        if (appData.modifiers) appData.modifiers = appData.modifiers.filter(m => m.name !== 'Плохой порох');
-        if (!appData.factions || !appData.templates || !appData.squads) throw new Error('Структура повреждена');
-      } else {
-        appData = getDefaultData();
-      }
-    } catch (e) {
-      console.warn('Сброс данных', e);
-      safeLocalStorage('removeItem', STORAGE_KEY);
-      appData = getDefaultData();
-    }
-
+  const saved = safeLocalStorage('getItem', STORAGE_KEY);
+  if (saved) {
+    appData = JSON.parse(saved);
+    // Автоматически удаляем устаревший глобальный модификатор «Плохой порох»
+    if (appData.modifiers) appData.modifiers = appData.modifiers.filter(m => m.name !== 'Плохой порох');
+    if (!appData.factions || !appData.templates || !appData.squads) throw new Error('Структура повреждена');
+  } else {
+    appData = getDefaultData();
+  }
+} catch (e) {
+  console.warn('Сброс данных', e);
+  safeLocalStorage('removeItem', STORAGE_KEY);
+  appData = getDefaultData();
+}
     appData.squads = appData.squads || [];
     appData.templates = appData.templates || [];
       // Добавляем поля боезапаса, если их нет
