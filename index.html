@@ -60,7 +60,8 @@
   <div id="battleTab" class="tabcontent" style="display:block">
     <div class="section">
       <h3>Подготовка к бою</h3>
-      <label>Фильтр по фракции: <select id="battleFactionFilter" onchange="renderTemplateSelection()"><option value="">Все фракции</option></select></label>
+      <div id="factionEmblem" style="margin-bottom:8px; display:flex; align-items:center; gap:8px;"></div>
+      <label>Фильтр по фракции: <select id="battleFactionFilter" onchange="renderTemplateSelection(); renderFactionInfoForFilter()"><option value="">Все фракции</option></select></label>
       <label>Шаблоны отрядов (отметьте нужные и нажмите "Добавить в бой"):</label>
       <div id="templateSelection"></div>
       <button onclick="addSelectedTemplatesToBattle()">Добавить выбранные в бой</button>
@@ -123,7 +124,8 @@
   <div id="cardsTab" class="tabcontent"><h3>🃏 Фракционные карты</h3><div><label>Фракция: <select id="cardsFactionSelect" onchange="renderCardLibrary()"></select></label><button onclick="addCardToLibrary()">➕ Добавить карту</button></div><div id="cardLibraryContainer"></div><hr><h4>Выбрать карты в активные</h4><div id="cardSelectionForBattle"></div><div id="infoCardsContainer" style="margin-top:8px;"></div><button onclick="activateSelectedCards()">✅ Активировать выбранные карты</button></div>
   <div id="activeEffectsTab" class="tabcontent"><h3>✨ Активные эффекты</h3><p>Текущие модификаторы, влияющие на бой:</p><div id="activeCardsList"></div><hr><h4>Добавить свободный модификатор</h4><div class="modifier-row"><input type="text" id="modName" placeholder="Название" style="width:100px"><label>Выстр: <input type="number" id="modShots" value="0" style="width:50px"></label><label>Точн: <input type="number" id="modAcc" value="0" style="width:50px"></label><label>Дух: <input type="number" id="modMorale" value="0" style="width:50px"></label><button onclick="addModifier()">➕</button></div><div id="modifiersList"></div></div>
   <div id="saveTab" class="tabcontent"><h3>Шаблоны отрядов</h3><div><label>Фильтр по фракции: <select id="templateFactionFilter" onchange="renderTemplates()"><option value="">Все</option></select></label><button onclick="saveCurrentAsTemplate()">💾 Сохранить отряд как шаблон</button></div><div id="templatesList"></div><hr><button onclick="exportAllData()">📤 Экспорт всех данных</button><input type="file" id="importFile" onchange="importAllData(event)" style="display:none"><button onclick="document.getElementById('importFile').click()">📥 Импорт данных</button></div>
-
+  <select id="battleFactionFilter" onchange="renderTemplateSelection(); renderFactionInfoForFilter()">
+  
   <script>
     // =================== ГЛОБАЛЬНЫЕ ФУНКЦИИ ===================
     function getFactionWeapons(f) { return (appData.factions[f] && appData.factions[f].weapons) ? appData.factions[f].weapons : []; }
@@ -173,20 +175,20 @@ if (!selectedFaction) {
           "BeVe": {
             "icon": "https://i.imgur.com/8yfFp7I.png",
             "weapons": [
-              { "name": "Винтовка FN model 24/30", "values": [1,1,1,1,1,1], "effectiveRange": 5, "meleeBonus": 1 },
-              { "name": "Винтовка Geweer M95", "values": [1,1,1,1,2,2], "effectiveRange": 5, "meleeBonus": 1 },
-              { "name": "Автоматическая винтовка Johanson M1941", "values": [0,1,1,2,2,2], "effectiveRange": 5, "meleeBonus": 1 },
-              { "name": "Пистолет Browning Hi-Power", "values": [0,1,1,2,2,3], "effectiveRange": 2, "meleeBonus": 0 },
-              { "name": "Ручной пулемет FN model D", "values": [0,1,1,2,2,3], "effectiveRange": 5, "meleeBonus": 0 },
-              { "name": "Ручной пулемет FN model D-exp", "values": [0,2,3,4,5,0], "effectiveRange": 5, "meleeBonus": 0 },
-              { "name": "Geweer OIP M.38", "values": [1,1,1,1,1,2], "effectiveRange": 5, "meleeBonus": 0, "sniper": true, "accuracyBonus": 3, "damagePerHit": 3 }
+              { "name": "Винтовка FN model 24/30", "values": [1,1,1,1,1,1], "effectiveRange": 5, "meleeBonus": 1, "icon": ""},
+              { "name": "Винтовка Geweer M95", "values": [1,1,1,1,2,2], "effectiveRange": 5, "meleeBonus": 1, "icon": "" },
+              { "name": "Автоматическая винтовка Johanson M1941", "values": [0,1,1,2,2,2], "effectiveRange": 5, "meleeBonus": 1, "icon": "" },
+              { "name": "Пистолет Browning Hi-Power", "values": [0,1,1,2,2,3], "effectiveRange": 2, "meleeBonus": 0, "icon": "" },
+              { "name": "Ручной пулемет FN model D", "values": [0,1,1,2,2,3], "effectiveRange": 5, "meleeBonus": 0, "icon": "" },
+              { "name": "Ручной пулемет FN model D-exp", "values": [0,2,3,4,5,0], "effectiveRange": 5, "meleeBonus": 0, "icon": "" },
+              { "name": "Geweer OIP M.38", "values": [1,1,1,1,1,2], "effectiveRange": 5, "meleeBonus": 0, "sniper": true, "accuracyBonus": 3, "damagePerHit": 3, "icon": "" }
             ],
             "crewWeapons": [
-              { "type": "mg", "name": "Станковый пулемет Schwarzlose M.08/15", "crewSize": 3, "shotRule": "sum_d6", "fullCrewDice": 3, "minCrewDice": 1, "effectiveRange": 5 },
-              { "type": "mortar", "name": "Минометный расчёт 50мм DBT", "crewSize": 3, "shotRule": "fixed_per_crew", "shotsFull": 3, "shotsReduced2": 2, "shotsReduced1": 1, "effectiveRange": 10 },
-              { "type": "at_gun", "name": "Расчёт ПТО Bohler M37", "crewSize": 3, "shotRule": "fixed_per_crew", "shotsFull": 3, "shotsReduced2": 2, "shotsReduced1": 1, "effectiveRange": 10, "penetration": {"1":58,"2":58,"3":58,"4":54,"5":54,"6":54,"7":51,"8":51,"9":51,"10":47,"11":47,"12":47,"13":43,"14":43,"15":43,"16":41,"17":41,"18":41,"19":39,"20":39,"21":39,"22":36,"23":36,"24":36,"25":36,"26":36,"27":36,"28":36,"29":36,"30":36} },
-              { "type": "at_gun", "name": "75-мм орудие SAU Brugge", "crewSize": 3, "shotRule": "fixed_per_crew", "shotsFull": 2, "shotsReduced2": 1, "shotsReduced1": 1, "effectiveRange": 15, "penetration": {"1":65,"2":65,"3":65,"4":60,"5":60,"6":60,"7":57,"8":57,"9":57,"10":55,"11":55,"12":55,"13":55,"14":55,"15":55,"16":52,"17":52,"18":52,"19":50,"20":50,"21":50,"22":47,"23":47,"24":47,"25":45,"26":45,"27":45,"28":40,"29":40,"30":40} },
-              { "type": "mg", "name": "Пулемёт SAU Brugge", "crewSize": 1, "shotRule": "sum_d6", "fullCrewDice": 1, "minCrewDice": 1, "effectiveRange": 5 }
+              { "type": "mg", "name": "Станковый пулемет Schwarzlose M.08/15", "crewSize": 3, "shotRule": "sum_d6", "fullCrewDice": 3, "minCrewDice": 1, "effectiveRange": 5, "icon": "" },
+              { "type": "mortar", "name": "Минометный расчёт 50мм DBT", "crewSize": 3, "shotRule": "fixed_per_crew", "shotsFull": 3, "shotsReduced2": 2, "shotsReduced1": 1, "effectiveRange": 10, "icon": "https://i.imgur.com/bxlyHe3.png" },
+              { "type": "at_gun", "name": "Расчёт ПТО Bohler M37", "crewSize": 3, "shotRule": "fixed_per_crew", "shotsFull": 3, "shotsReduced2": 2, "shotsReduced1": 1, "effectiveRange": 10, "penetration": {"1":58,"2":58,"3":58,"4":54,"5":54,"6":54,"7":51,"8":51,"9":51,"10":47,"11":47,"12":47,"13":43,"14":43,"15":43,"16":41,"17":41,"18":41,"19":39,"20":39,"21":39,"22":36,"23":36,"24":36,"25":36,"26":36,"27":36,"28":36,"29":36,"30":36}, "icon": "" },
+              { "type": "at_gun", "name": "75-мм орудие SAU Brugge", "crewSize": 3, "shotRule": "fixed_per_crew", "shotsFull": 2, "shotsReduced2": 1, "shotsReduced1": 1, "effectiveRange": 15, "penetration": {"1":65,"2":65,"3":65,"4":60,"5":60,"6":60,"7":57,"8":57,"9":57,"10":55,"11":55,"12":55,"13":55,"14":55,"15":55,"16":52,"17":52,"18":52,"19":50,"20":50,"21":50,"22":47,"23":47,"24":47,"25":45,"26":45,"27":45,"28":40,"29":40,"30":40}, "icon": "" },
+              { "type": "mg", "name": "Пулемёт SAU Brugge", "crewSize": 1, "shotRule": "sum_d6", "fullCrewDice": 1, "minCrewDice": 1, "effectiveRange": 5, "icon": "" }
             ],
             "cardLibrary": [
   { "name": "Кальвинистская эффективность", "desc": "Голландское подразделение получает +1 к меткости, если не двигалось.", "effect": "+1 меткость (голландцы, без движения)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "dutch", "requires": "stationary" },
@@ -198,7 +200,7 @@ if (!selectedFaction) {
   { "name": "Длинное дыхание", "desc": "При уничтожении отряда враг рядом получает урон.", "effect": "Маркер возмездия (бельгийцы)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "belgian" },
   { "name": "Geen Duibreed Terug!", "desc": "Бельгийцы получают +2 к духу при живом лейтенанте.", "effect": "+2 дух (бельгийцы)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 2, "icon": "", "subfaction": "belgian", "requiresCommander": true },
   { "name": "Кальвинистская бережливость", "desc": "Каждые 3 хода восстанавливается 3 патрона.", "effect": "Восстановление боезапаса (голландцы)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "dutch", "ammoRegen": 3 },
-  { "name": "Кальвинистская сдержанность", "desc": "Голландцы не могут атаковать в рукопашной, в защите -1.", "effect": "Штраф в ближнем бою (голландцы)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "dutch", "meleePenalty": true },
+  { "name": "Кальвинистская сдержанность", "desc": "Голландцы не могут атаковать в рукопашной, в защите -1.", "effect": "Штраф в ближнем бою (голландцы)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/TAC5DDu.png", "subfaction": "dutch", "meleePenalty": true },
   { "name": "Taalkwetie (Языковой вопрос)", "desc": "Подразделения за пределами 4 гексов от штаба получают -1 ОД.", "effect": "-1ОД дальше 4 гексов", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "informational": true },
   { "name": "Упрямство", "desc": "Выбранное подразделение не отступает с заданного гекса ни при каких условиях, даже по приказу.", "effect": "Не отступает", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "informational": true },
   { "name": "Собачья упряжка", "desc": "Расчёт пулемёта/миномёта +1 гекс за ход.", "effect": "+1 гекс перемещения", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "informational": true },
@@ -210,21 +212,21 @@ if (!selectedFaction) {
             ] 
           },
           "A.I.R.F.": {
-            "icon": "",
+            "icon": "https://i.imgur.com/V6YvAfB.png",
             "weapons": [
-              { "name": "Винтовка Vz.24", "values": [1,1,1,1,1,1], "effectiveRange": 5, "meleeBonus": 1 },
-              { "name": "Пистолет Star M1914", "values": [0,1,1,2,2,3], "effectiveRange": 2, "meleeBonus": 0 },
-              { "name": "ПП Star Si-35", "values": [0,1,1,2,2,3], "effectiveRange": 3, "meleeBonus": 1 },
-              { "name": "АВС-36", "values": [1,1,2,2,3,3], "effectiveRange": 6, "meleeBonus": 1 },
-              { "name": "ППД-40", "values": [0,2,2,3,4,4], "effectiveRange": 3, "meleeBonus": 0 },
-              { "name": "ДП-27", "values": [0,1,2,3,4,4], "effectiveRange": 5, "meleeBonus": 0 },
-              { "name": "Ручной пулемет Zb.26", "values": [0,1,1,2,2,3], "effectiveRange": 5, "meleeBonus": 0 },
-              { "name": "РОКС-3", "values": [0,0,0,0,0,0], "effectiveRange": 1, "meleeBonus": 0, "flamethrower": true, "maxShots": 3 }
+              { "name": "Винтовка Vz.24", "values": [1,1,1,1,1,1], "effectiveRange": 5, "meleeBonus": 1, "icon": "https://i.imgur.com/MOKxQYc.png" },
+              { "name": "Пистолет Star M1914", "values": [0,1,1,2,2,3], "effectiveRange": 2, "meleeBonus": 0, "icon": "https://i.imgur.com/xB7ekEE.png" },
+              { "name": "ПП Star Si-35", "values": [0,1,1,2,2,3], "effectiveRange": 3, "meleeBonus": 1, "icon": "https://i.imgur.com/BK3D3AZ.png" },
+              { "name": "АВС-36", "values": [1,1,2,2,3,3], "effectiveRange": 6, "meleeBonus": 1, "icon": "" },
+              { "name": "ППД-40", "values": [0,2,2,3,4,4], "effectiveRange": 3, "meleeBonus": 0, "icon": "" },
+              { "name": "ДП-27", "values": [0,1,2,3,4,4], "effectiveRange": 5, "meleeBonus": 0, "icon": "" },
+              { "name": "Ручной пулемет Zb.26", "values": [0,1,1,2,2,3], "effectiveRange": 5, "meleeBonus": 0, "icon": "https://i.imgur.com/YWQNfRQ.png" },
+              { "name": "РОКС-3", "values": [0,0,0,0,0,0], "effectiveRange": 1, "meleeBonus": 0, "flamethrower": true, "maxShots": 3, "icon": "" }
             ],
             "crewWeapons": [
-              { "type": "mg", "name": "Станковый пулемет Hotchkiss Mle 1914", "crewSize": 3, "shotRule": "sum_d6", "fullCrewDice": 3, "minCrewDice": 1, "effectiveRange": 6 },
-              { "type": "mortar", "name": "Бутылкомет Цукермана", "crewSize": 2, "shotRule": "fixed_per_crew", "shotsFull": 3, "shotsReduced2": 2, "shotsReduced1": 1, "effectiveRange": 3, "splashDamageDice": 3, "isMolotov": true },
-              { "type": "mortar", "name": "Ампуломёт АМ-1", "crewSize": 3, "shotRule": "fixed_per_crew", "shotsFull": 3, "shotsReduced2": 2, "shotsReduced1": 1, "effectiveRange": 8, "splashDamageDice": 1, "isAmpulomet": true, "damageType": "d4" }
+              { "type": "mg", "name": "Станковый пулемет Hotchkiss Mle 1914", "crewSize": 3, "shotRule": "sum_d6", "fullCrewDice": 3, "minCrewDice": 1, "effectiveRange": 6, "icon": "https://i.imgur.com/UnphOwR.png" },
+              { "type": "mortar", "name": "Бутылкомет Цукермана", "crewSize": 2, "shotRule": "fixed_per_crew", "shotsFull": 3, "shotsReduced2": 2, "shotsReduced1": 1, "effectiveRange": 3, "splashDamageDice": 3, "isMolotov": true, "icon": "" },
+              { "type": "mortar", "name": "Ампуломёт АМ-1", "crewSize": 3, "shotRule": "fixed_per_crew", "shotsFull": 3, "shotsReduced2": 2, "shotsReduced1": 1, "effectiveRange": 8, "splashDamageDice": 1, "isAmpulomet": true, "damageType": "d4", "icon": "" }
             ],
             "cardLibrary": [
               { "name": "Интербригада", "desc": "Бойцы воодушевлены идеей.", "effect": "Дух +3", "shotMod": 0, "accuracyMod": 0, "moraleMod": 3, "icon": "" },
@@ -259,7 +261,7 @@ if (!selectedFaction) {
           {"name":"Штаб взвода Бельгийцы","faction":"BeVe","subfaction":"belgian","baseMorale":5,"currentMorale":5,"icon":"https://i.imgur.com/T9Rl8AP.png","fighters":[{"name":"Лейтенант","weapon":"Пистолет Browning Hi-Power","hp":3,"maxHp":3,"isCommander":true},{"name":"Заместитель","weapon":"Винтовка FN model 24/30","hp":3,"maxHp":3},{"name":"Посыльный","weapon":"Винтовка FN model 24/30","hp":3,"maxHp":3},{"name":"Посыльный","weapon":"Винтовка FN model 24/30","hp":3,"maxHp":3}],"crewInstances":[],"ammoSmall":32,"ammoOrdnance":0,"grenades":8},
           {"name":"Штаб взвода Голландцы","faction":"BeVe","subfaction":"dutch","baseMorale":4,"currentMorale":5,"icon":"https://i.imgur.com/T9Rl8AP.png","fighters":[{"name":"Лейтенант","weapon":"Пистолет Browning Hi-Power","hp":3,"maxHp":3,"isCommander":true},{"name":"Заместитель","weapon":"Винтовка Geweer M95","hp":3,"maxHp":3},{"name":"Посыльный","weapon":"Винтовка Geweer M95","hp":3,"maxHp":3},{"name":"Посыльный","weapon":"Винтовка Geweer M95","hp":3,"maxHp":3}],"crewInstances":[],"ammoSmall":32,"ammoOrdnance":0,"grenades":8},
           {"name":"Снайперское звено OIP","faction":"BeVe","subfaction":"common","baseMorale":6,"currentMorale":6,"icon":"","ammoSmall":10,"ammoOrdnance":0,"grenades":0,"fighters":[{"name":"Снайпер","weapon":"Geweer OIP M.38","hp":3,"maxHp":3,"isCommander":true},{"name":"Второй номер","weapon":"Пистолет Browning Hi-Power","hp":3,"maxHp":3}],"crewInstances":[]},
-          {"name":"Пулеметный расчёт","faction":"BeVe","baseMorale":6,"currentMorale":6,"icon":"https://i.imgur.com/7YByg19.png","fighters":[{"name":"Сержант","weapon":"Винтовка Geweer M95","hp":3,"maxHp":3,"isCommander":true},{"name":"Наводчик","weapon":"Пистолет Browning Hi-Power","hp":3,"maxHp":3},{"name":"Второй номер","weapon":"Пистолет Browning Hi-Power","hp":3,"maxHp":3},{"name":"Подносчик","weapon":"Винтовка Geweer M95","hp":3,"maxHp":3},{"name":"Подносчик","weapon":"Винтовка Geweer M95","hp":3,"maxHp":3},{"name":"Подносчик","weapon":"Винтовка Geweer M95","hp":3,"maxHp":3}],"crewInstances":[{"weaponName":"Станковый пулемет Schwarzlose M.08/15","fighterIndices":[1,2],"active":true}],"ammoSmall":48,"ammoOrdnance":0,"grenades":12},
+          {"name":"Пулеметный расчёт","faction":"BeVe","baseMorale":6,"currentMorale":6,"icon":"https://i.imgur.com/UFLw50H.png","fighters":[{"name":"Сержант","weapon":"Винтовка Geweer M95","hp":3,"maxHp":3,"isCommander":true},{"name":"Наводчик","weapon":"Пистолет Browning Hi-Power","hp":3,"maxHp":3},{"name":"Второй номер","weapon":"Пистолет Browning Hi-Power","hp":3,"maxHp":3},{"name":"Подносчик","weapon":"Винтовка Geweer M95","hp":3,"maxHp":3},{"name":"Подносчик","weapon":"Винтовка Geweer M95","hp":3,"maxHp":3},{"name":"Подносчик","weapon":"Винтовка Geweer M95","hp":3,"maxHp":3}],"crewInstances":[{"weaponName":"Станковый пулемет Schwarzlose M.08/15","fighterIndices":[1,2],"active":true}],"ammoSmall":48,"ammoOrdnance":0,"grenades":12},
           {"name":"Противотанковый расчёт","faction":"BeVe","baseMorale":6,"currentMorale":6,"icon":"https://i.imgur.com/3hXV544.png","fighters":[{"name":"Сержант","weapon":"Винтовка Geweer M95","hp":3,"maxHp":3,"isCommander":true},{"name":"Наводчик","weapon":"Винтовка Geweer M95","hp":3,"maxHp":3},{"name":"Заряжающий","weapon":"Винтовка Geweer M95","hp":3,"maxHp":3},{"name":"Подносчик","weapon":"Винтовка Geweer M95","hp":3,"maxHp":3},{"name":"Подносчик","weapon":"Винтовка Geweer M95","hp":3,"maxHp":3},{"name":"Подносчик","weapon":"Винтовка Geweer M95","hp":3,"maxHp":3}],"crewInstances":[{"weaponName":"Расчёт ПТО Bohler M37","fighterIndices":[0,1,2],"active":true}],"ammoSmall":72,"ammoOrdnance":40,"grenades":12},
           {"name":"Минометный расчёт","faction":"BeVe","baseMorale":3,"currentMorale":3,"icon":"https://i.imgur.com/VIoAPft.png","fighters":[{"name":"Сержант","weapon":"Винтовка Geweer M95","hp":3,"maxHp":3,"isCommander":true},{"name":"Наводчик","weapon":"Пистолет Browning Hi-Power","hp":3,"maxHp":3},{"name":"Заряжающий","weapon":"Винтовка Geweer M95","hp":3,"maxHp":3}],"crewInstances":[{"weaponName":"Минометный расчёт 50мм DBT","fighterIndices":[0,1,2],"active":true}],"ammoSmall":32,"ammoOrdnance":30,"grenades":6},
           {"name":"Отделение поддержки Бельгийцы","subfaction":"belgian","faction":"BeVe","baseMorale":9,"currentMorale":9,"icon":"https://i.imgur.com/RhEBoXX.png","fighters":[{"name":"Сержант","weapon":"Автоматическая винтовка Johanson M1941","hp":3,"maxHp":3,"isCommander":true},{"name":"Стрелок 1","weapon":"Автоматическая винтовка Johanson M1941","hp":3,"maxHp":3},{"name":"Стрелок 2","weapon":"Автоматическая винтовка Johanson M1941","hp":3,"maxHp":3},{"name":"Пулемётчик 1","weapon":"Ручной пулемет FN model D","hp":3,"maxHp":3},{"name":"Второй номер 1","weapon":"Винтовка FN model 24/30","hp":3,"maxHp":3},{"name":"Пулемётчик 2","weapon":"Ручной пулемет FN model D","hp":3,"maxHp":3},{"name":"Второй номер 2","weapon":"Винтовка FN model 24/30","hp":3,"maxHp":3},{"name":"Стрелок 3","weapon":"Автоматическая винтовка Johanson M1941","hp":3,"maxHp":3},{"name":"Стрелок 4","weapon":"Автоматическая винтовка Johanson M1941","hp":3,"maxHp":3}],"crewInstances":[],"ammoSmall":72,"ammoOrdnance":0,"grenades":18},
@@ -273,7 +275,7 @@ if (!selectedFaction) {
           {"name":"Штаб саперного взвода","faction":"A.I.R.F.","baseMorale":8,"currentMorale":8,"icon":"https://i.imgur.com/kl9mqPt.png","fighters":[{"name":"Ком.Взвода","weapon":"ПП Star Si-35","hp":3,"maxHp":3,"isCommander":true},{"name":"Сапер 1","weapon":"Винтовка Vz.24","hp":3,"maxHp":3},{"name":"Сапер 2","weapon":"Винтовка Vz.24","hp":3,"maxHp":3},{"name":"Сапер 3","weapon":"Винтовка Vz.24","hp":3,"maxHp":3},{"name":"Сапер 4","weapon":"Винтовка Vz.24","hp":3,"maxHp":3},{"name":"Пулеметчик ","weapon":"Ручной пулемет Zb.26","hp":3,"maxHp":3},{"name":"Второй номер","weapon":"Винтовка Vz.24","hp":3,"maxHp":3}],"crewInstances":[],"ammoSmall":42,"ammoOrdnance":0,"grenades":28},
           {"name":"Саперное отделение №1","faction":"A.I.R.F.","baseMorale":8,"currentMorale":8,"icon":"https://i.imgur.com/kl9mqPt.png","fighters":[{"name":"Сержант","weapon":"ПП Star Si-35","hp":3,"maxHp":3,"isCommander":true},{"name":"Сапер 1","weapon":"Винтовка Vz.24","hp":3,"maxHp":3},{"name":"Сапер 2","weapon":"Винтовка Vz.24","hp":3,"maxHp":3},{"name":"Сапер 3","weapon":"Винтовка Vz.24","hp":3,"maxHp":3},{"name":"Сапер 4","weapon":"Винтовка Vz.24","hp":3,"maxHp":3},{"name":"Пулеметчик ","weapon":"Ручной пулемет Zb.26","hp":3,"maxHp":3},{"name":"Второй номер","weapon":"Винтовка Vz.24","hp":3,"maxHp":3}],"crewInstances":[],"ammoSmall":42,"ammoOrdnance":0,"grenades":28},
           {"name":"Саперное отделение №2","faction":"A.I.R.F.","baseMorale":8,"currentMorale":8,"icon":"https://i.imgur.com/kl9mqPt.png","fighters":[{"name":"Сержант","weapon":"ПП Star Si-35","hp":3,"maxHp":3,"isCommander":true},{"name":"Сапер 1","weapon":"Винтовка Vz.24","hp":3,"maxHp":3},{"name":"Сапер 2","weapon":"Винтовка Vz.24","hp":3,"maxHp":3},{"name":"Сапер 3","weapon":"Винтовка Vz.24","hp":3,"maxHp":3},{"name":"Сапер 4","weapon":"Винтовка Vz.24","hp":3,"maxHp":3},{"name":"Пулеметчик ","weapon":"Ручной пулемет Zb.26","hp":3,"maxHp":3},{"name":"Второй номер","weapon":"Винтовка Vz.24","hp":3,"maxHp":3}],"crewInstances":[],"ammoSmall":42,"ammoOrdnance":0,"grenades":28},
-          {"name":"ДОТ Bosh","faction":"BeVe","baseMorale":10,"currentMorale":10,"icon":"","ammoSmall":120,"ammoOrdnance":50,"grenades":0,"fighters":[
+          {"name":"ДОТ Bosh","faction":"BeVe","baseMorale":10,"currentMorale":10,"icon":"https://i.imgur.com/dJMPAQb.png","ammoSmall":120,"ammoOrdnance":50,"grenades":0,"fighters":[
             {"name":"Лейтенант","weapon":"Пистолет Browning Hi-Power","hp":3,"maxHp":3,"isCommander":true},
             {"name":"Адьютант","weapon":"Винтовка FN model 24/30","hp":3,"maxHp":3},
             {"name":"Подносчик","weapon":"Винтовка FN model 24/30","hp":3,"maxHp":3},
@@ -290,7 +292,7 @@ if (!selectedFaction) {
             {"weaponName":"Станковый пулемет Schwarzlose M.08/15","fighterIndices":[6,7,8],"active":true},
             {"weaponName":"Станковый пулемет Schwarzlose M.08/15","fighterIndices":[9],"active":true}
           ]},
-          {"name":"САУ Brugge №1","faction":"BeVe","baseMorale":8,"currentMorale":8,"icon":"","ammoSmall":50,"ammoOrdnance":40,"grenades":0,"fighters":[
+          {"name":"САУ Brugge №1","faction":"BeVe","baseMorale":8,"currentMorale":8,"icon":"https://i.imgur.com/frygoa8.png","ammoSmall":50,"ammoOrdnance":40,"grenades":0,"fighters":[
             {"name":"Механик-водитель","weapon":"Пистолет Browning Hi-Power","hp":3,"maxHp":3},
             {"name":"Стрелок-радист","weapon":"Пистолет Browning Hi-Power","hp":3,"maxHp":3},
             {"name":"Заряжающий","weapon":"Пистолет Browning Hi-Power","hp":3,"maxHp":3},
@@ -302,7 +304,7 @@ if (!selectedFaction) {
             {"weaponName": "Пулемёт SAU Brugge", "fighterIndices": [1], "active": true }
           ],
           "armor": { "front": 20, "side": 20, "rear": 40, "turret": 40 }},
-            {"name":"САУ Brugge №2","faction":"BeVe","baseMorale":8,"currentMorale":8,"icon":"","ammoSmall":50,"ammoOrdnance":40,"grenades":0,"fighters":[
+            {"name":"САУ Brugge №2","faction":"BeVe","baseMorale":8,"currentMorale":8,"icon":"https://i.imgur.com/frygoa8.png","ammoSmall":50,"ammoOrdnance":40,"grenades":0,"fighters":[
             {"name":"Механик-водитель","weapon":"Пистолет Browning Hi-Power","hp":3,"maxHp":3},
             {"name":"Стрелок-радист","weapon":"Пистолет Browning Hi-Power","hp":3,"maxHp":3},
             {"name":"Заряжающий","weapon":"Пистолет Browning Hi-Power","hp":3,"maxHp":3},
@@ -314,7 +316,7 @@ if (!selectedFaction) {
             {"weaponName": "Пулемёт SAU Brugge", "fighterIndices": [1], "active": true }
           ],
           "armor": { "front": 20, "side": 20, "rear": 40, "turret": 40 }},
-            {"name":"САУ Brugge №3","faction":"BeVe","baseMorale":8,"currentMorale":8,"icon":"","ammoSmall":50,"ammoOrdnance":40,"grenades":0,"fighters":[
+            {"name":"САУ Brugge №3","faction":"BeVe","baseMorale":8,"currentMorale":8,"icon":"https://i.imgur.com/frygoa8.png","ammoSmall":50,"ammoOrdnance":40,"grenades":0,"fighters":[
             {"name":"Механик-водитель","weapon":"Пистолет Browning Hi-Power","hp":3,"maxHp":3},
             {"name":"Стрелок-радист","weapon":"Пистолет Browning Hi-Power","hp":3,"maxHp":3},
             {"name":"Заряжающий","weapon":"Пистолет Browning Hi-Power","hp":3,"maxHp":3},
@@ -326,7 +328,7 @@ if (!selectedFaction) {
             {"weaponName": "Пулемёт SAU Brugge", "fighterIndices": [1], "active": true }
           ],
           "armor": { "front": 20, "side": 20, "rear": 40, "turret": 40 }},
-            {"name":"БТР Llanero №1","faction":"A.I.R.F.","baseMorale":8,"currentMorale":8,"icon":"","ammoSmall":40,"ammoOrdnance":0,"grenades":0,"fighters":[
+            {"name":"БТР Llanero №1","faction":"A.I.R.F.","baseMorale":8,"currentMorale":8,"icon":"https://i.imgur.com/csxjzNB.png","ammoSmall":40,"ammoOrdnance":0,"grenades":0,"fighters":[
             {"name":"Механик-водитель","weapon":"Пистолет Star M1914","hp":3,"maxHp":3}
           ],
           "crewInstances":[
@@ -334,7 +336,7 @@ if (!selectedFaction) {
           ],
           "armor": { "front": 25, "side": 15, "rear": 10, "turret": null },
           "embarkedSquadIndex": null},
-           {"name":"БТР Llanero №2","faction":"A.I.R.F.","baseMorale":8,"currentMorale":8,"icon":"","ammoSmall":40,"ammoOrdnance":0,"grenades":0,"fighters":[
+           {"name":"БТР Llanero №2","faction":"A.I.R.F.","baseMorale":8,"currentMorale":8,"icon":"https://i.imgur.com/csxjzNB.png","ammoSmall":40,"ammoOrdnance":0,"grenades":0,"fighters":[
             {"name":"Механик-водитель","weapon":"Пистолет Star M1914","hp":3,"maxHp":3}
           ],
           "crewInstances":[
@@ -342,7 +344,7 @@ if (!selectedFaction) {
           ],
           "armor": { "front": 25, "side": 15, "rear": 10, "turret": null },
           "embarkedSquadIndex": null},
-           {"name":"БТР Llanero №3","faction":"A.I.R.F.","baseMorale":8,"currentMorale":8,"icon":"","ammoSmall":40,"ammoOrdnance":0,"grenades":0,"fighters":[
+           {"name":"БТР Llanero №3","faction":"A.I.R.F.","baseMorale":8,"currentMorale":8,"icon":"https://i.imgur.com/csxjzNB.png","ammoSmall":40,"ammoOrdnance":0,"grenades":0,"fighters":[
             {"name":"Механик-водитель","weapon":"Пистолет Star M1914","hp":3,"maxHp":3}
           ],
           "crewInstances":[
@@ -466,6 +468,21 @@ function getMaxAP(squad) {
   return actionPoints[squadIndex] ? actionPoints[squadIndex].ap : 0;
 }
 
+    function renderFactionInfoForFilter() {
+  const faction = document.getElementById('battleFactionFilter').value;
+  const container = document.getElementById('factionEmblem');
+  if (!faction) {
+    renderFactionInfo(); // вернём основную выбранную фракцию
+    return;
+  }
+  const data = appData.factions[faction];
+  if (!data) return;
+  const iconUrl = data.icon || '';
+  container.innerHTML = `
+    ${iconUrl ? `<img src="${iconUrl}" style="height:40px; border-radius:4px;" alt="${faction}">` : ''}
+    <span style="font-weight:bold; font-size:1.1rem;">Просмотр фракции: ${faction}</span>
+  `;
+}
 function spendAP(squadIndex, cost) {
   if (!actionPoints[squadIndex]) return false;
   if (actionPoints[squadIndex].ap < cost) return false;
@@ -641,7 +658,7 @@ if (awayCount > 0) status = ` (${awayCount} в отлучке)`;
         html += `
           <div class="squad-select-card ${activeClass}">
             <div class="squad-select-info">
-              ${squad.icon ? `<img src="${squad.icon}" style="height:40px; vertical-align:middle; margin-right:8px;">` : ''}<strong>${squad.name}</strong> [${squad.faction}]${armorStr} — бойцов: ${squad.fighters.length}, дух: ${squad.currentMorale ?? squad.baseMorale}/${squad.baseMorale}
+              ${squad.icon ? `<img src="${squad.icon}" style="height:40px; vertical-align:middle; margin-right:8px;">` : ''}${(appData.factions[squad.faction] && appData.factions[squad.faction].icon) ? `<img src="${appData.factions[squad.faction].icon}" style="height:20px; vertical-align:middle; margin-right:4px;">` : ''}<strong>${squad.name}</strong> [${squad.faction}]${armorStr} — бойцов: ${squad.fighters.length}, дух: ${squad.currentMorale ?? squad.baseMorale}/${squad.baseMorale}
               ${squad.embarkedSquadIndex !== null ? ' <span class="embarked-info">🚌 Десант: ' + appData.squads[squad.embarkedSquadIndex].name + '</span>' : ''}
             </div>
             <button onclick="selectSquad(${index})" ${isActive ? 'disabled' : ''}>${isActive ? '✅ Текущий' : 'Выбрать'}</button>
@@ -792,6 +809,10 @@ function disembarkSquad() {
       const container = document.getElementById('squadContainer');
       if (!currentSquad) { container.innerHTML = 'Нет активного отряда'; return; }
       let html = '';
+      const factionIcon = (appData.factions[currentSquad.faction] && appData.factions[currentSquad.faction].icon) ? appData.factions[currentSquad.faction].icon : '';
+      if (factionIcon) {
+      html += `<img src="${factionIcon}" style="height:30px; vertical-align:middle; margin-right:6px;" alt="${currentSquad.faction}">`;
+      }
       if (currentSquad.icon) html += `<div class="squad-header"><img src="${currentSquad.icon}" alt="icon"><strong>${currentSquad.name}</strong> [${currentSquad.faction}]</div>`;
       if (currentSquad.armor) {
         html += `<div style="margin-bottom:6px; font-size:0.9rem; color:#aaa;">🛡️ Броня: Лоб ${currentSquad.armor.front}мм / Борт ${currentSquad.armor.side}мм / Корма ${currentSquad.armor.rear}мм` + (currentSquad.armor.turret !== null && currentSquad.armor.turret !== undefined ? ` / Башня ${currentSquad.armor.turret}мм` : '') + `</div>`;
@@ -803,7 +824,10 @@ function disembarkSquad() {
     status = ` (в отлучке, вернётся через ${f.turnsToReturn} ходов)`;
   }
   html += `<div class="card ${cls}">
-    <strong>${f.name}</strong> [${f.weapon || 'Без оружия'}] HP: ${f.hp}/${f.maxHp} ${f.isCommander ? '⭐' : ''} ${status}
+    <strong>${f.name}</strong> ${(() => {
+  const wep = getFactionWeapons(currentSquad.faction).find(w => w.name === f.weapon);
+  return wep && wep.icon ? `<img src="${wep.icon}" style="height:20px; vertical-align:middle; margin:0 4px;" title="${f.weapon}">` : `[${f.weapon || 'Без оружия'}]`;
+})()} HP: ${f.hp}/${f.maxHp} ${f.isCommander ? '⭐' : ''} ${status}
     <button onclick="adjustHP(${index}, 1)" style="background:#27ae60; padding:2px 5px; margin-left:8px;">+</button>
     <button onclick="adjustHP(${index}, -1)" style="background:#c0392b; padding:2px 5px;">-</button>
     ${!f.isCommander && f.hp > 0 && !f.isAway ? `<button onclick="sendForAmmo(${index})" style="background:#f39c12;">📦 За боеприпасами</button>` : ''}
@@ -862,6 +886,26 @@ if (btn) {
       updateMainButtons();
       renderActiveCardButtons();
     }
+function renderFactionInfo() {
+  const container = document.getElementById('factionEmblem');
+  if (!container) return;
+  if (!selectedFaction || selectedFaction === 'test') {
+    container.innerHTML = '<span style="color:#aaa;">Тестовый режим (все фракции)</span>';
+    return;
+  }
+  const faction = appData.factions[selectedFaction];
+  if (!faction) {
+    container.innerHTML = '';
+    return;
+  }
+  const iconUrl = faction.icon || '';
+  const subText = selectedSubFaction ? ` (${selectedSubFaction === 'belgian' ? 'Бельгийцы' : 'Голландцы'})` : '';
+  container.innerHTML = `
+    ${iconUrl ? `<img src="${iconUrl}" style="height:40px; border-radius:4px;" alt="${selectedFaction}">` : ''}
+    <span style="font-weight:bold; font-size:1.1rem;">Выбрана фракция: ${selectedFaction}${subText}</span>
+  `;
+}
+    
 function sniperShot() {
   if (!currentSquad) return;
   if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); return; }
@@ -2465,7 +2509,21 @@ function attackOrdnance() {
 
     // =================== ВКЛАДКА ОРУЖИЕ ===================
     function populateFactionSelect() { document.getElementById('factionSelect').innerHTML = Object.keys(appData.factions).map(f=>`<option>${f}</option>`).join(''); }
-    function loadWeaponTable() { const faction = document.getElementById('factionSelect').value; const weapons = getFactionWeapons(faction); document.getElementById('weaponTableContainer').innerHTML = weapons.map((w,i)=>`<div class="weapon-entry"><input value="${w.name}" onchange="appData.factions['${faction}'].weapons[${i}].name=this.value" style="width:120px"> d6: ${w.values.map((v,j)=>`<input type="number" value="${v}" onchange="appData.factions['${faction}'].weapons[${i}].values[${j}]=parseInt(this.value)||0" style="width:40px">`).join('')} Дальность: <input type="number" value="${w.effectiveRange}" onchange="appData.factions['${faction}'].weapons[${i}].effectiveRange=parseInt(this.value)||0" style="width:60px"> Рукопашный: <input type="number" value="${w.meleeBonus || 0}" onchange="appData.factions['${faction}'].weapons[${i}].meleeBonus=parseInt(this.value)||0" style="width:50px"> <button onclick="deleteWeapon('${faction}',${i})">❌</button></div>`).join(''); }
+    function loadWeaponTable() {
+  const faction = document.getElementById('factionSelect').value;
+  const weapons = getFactionWeapons(faction);
+  document.getElementById('weaponTableContainer').innerHTML = weapons.map((w, i) => {
+    return `<div class="weapon-entry">
+      <input value="${w.name}" onchange="appData.factions['${faction}'].weapons[${i}].name=this.value" style="width:120px">
+      <input value="${w.icon || ''}" onchange="appData.factions['${faction}'].weapons[${i}].icon=this.value" placeholder="URL иконки" style="width:100px">
+      ${w.icon ? `<img src="${w.icon}" style="height:30px; vertical-align:middle; margin:0 4px;">` : ''}
+      d6: ${w.values.map((v, j) => `<input type="number" value="${v}" onchange="appData.factions['${faction}'].weapons[${i}].values[${j}]=parseInt(this.value)||0" style="width:40px">`).join('')}
+      Дальность: <input type="number" value="${w.effectiveRange}" onchange="appData.factions['${faction}'].weapons[${i}].effectiveRange=parseInt(this.value)||0" style="width:60px">
+      Рукопашный: <input type="number" value="${w.meleeBonus || 0}" onchange="appData.factions['${faction}'].weapons[${i}].meleeBonus=parseInt(this.value)||0" style="width:50px">
+      <button onclick="deleteWeapon('${faction}',${i})">❌</button>
+    </div>`;
+  }).join('');
+}
     function addWeapon() { const faction = document.getElementById('factionSelect').value; const name = prompt('Название оружия:', 'Новое оружие'); if (!name) return; const bonus = parseInt(prompt('Рукопашный бонус:', '0')) || 0; appData.factions[faction].weapons.push({ name, values: [1,1,1,1,1,1], effectiveRange: 8, meleeBonus: bonus }); loadWeaponTable(); saveData(); }
     function deleteWeapon(faction,idx) { appData.factions[faction].weapons.splice(idx,1); loadWeaponTable(); saveData(); }
     function addFaction() { const name = prompt('Название фракции:'); if(name && !appData.factions[name]) { appData.factions[name] = {weapons:[], crewWeapons:[], cardLibrary:[], icon:''}; saveData(); populateFactionSelect(); loadWeaponTable(); } }
@@ -3055,6 +3113,7 @@ container.innerHTML = filteredTemplates.map(t => {
 
     // Инициализация
     renderSquadSelector();
+    else if (tabName === 'battleTab') { renderSquadSelector(); renderTemplateSelection(); updateUI(); renderEmbarkPanel(); renderFactionInfo(); }
     updateUI();
     renderTemplateSelection();
     resetAP();
