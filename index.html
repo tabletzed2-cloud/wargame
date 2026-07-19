@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.10 — Ход </title>
+  <title>Боевой модуль v11.11 — Ход </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -46,7 +46,7 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v11.10 — Ход </h2>
+  <h2>⚔️ Боевой модуль v11.11 — Ход </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -361,6 +361,7 @@ if (!selectedFaction) {
       const saved = safeLocalStorage('getItem', STORAGE_KEY);
       if (saved) {
         appData = JSON.parse(saved);
+        if (appData.modifiers) appData.modifiers = appData.modifiers.filter(m => m.name !== 'Плохой порох');
         if (!appData.factions || !appData.templates || !appData.squads) throw new Error('Структура повреждена');
       } else {
         appData = getDefaultData();
@@ -446,13 +447,11 @@ function resetAllData() {
   }
 }
 function getMaxAP(squad) {
-  if (squad.name.includes('ДОТ')) return 12;   // 6 ОД = 12 полу-ОД
-  if (squad.armor) {
-    const crewCount = squad.fighters.length;
-    return 4 + crewCount;   // например, БТР: 5, САУ: 9
-  }
-  // всем остальным (пехота, пулемёты, миномёты, ПТО) – 3 ОД = 6 полу-ОД
-  return 6;
+  let base;
+  if (squad.name.includes('ДОТ')) base = 12;
+  else if (squad.armor) base = 4 + squad.fighters.length;
+  else base = 6;
+  return Math.max(0, base - (squad._tempAPReduction || 0));
 }
     function ensureAP(idx) {
   if (!actionPoints[idx]) {
@@ -555,6 +554,16 @@ function nextTurn() {
 }
       }
     });
+  });
+    // Обработка эффекта "Por la revolución!" – штраф ОД на этот ход
+  appData.squads.forEach(s => {
+    // сбрасываем предыдущее временное уменьшение
+    s._tempAPReduction = 0;
+    if (s.effects?.porLaRevolucion?.active && !s.effects.porLaRevolucion.used) {
+      s._tempAPReduction = 2;   // -1 ОД = -2 полу-ОД
+      s.effects.porLaRevolucion.used = true;
+      log(`Отряд "${s.name}" теряет 1 ОД в этом ходу (Por la revolución!)`);
+    }
   });
   resetAP();
   // Сброс счётчиков действий (для лимита выстрелов)
