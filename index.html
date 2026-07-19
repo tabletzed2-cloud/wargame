@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.12 — картинки </title>
+  <title>Боевой модуль v11.13 — картинки </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -46,7 +46,7 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v11.12 — картинки </h2>
+  <h2>⚔️ Боевой модуль v11.13 — картинки </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -180,7 +180,7 @@ if (!selectedFaction) {
               { "name": "Пистолет Browning Hi-Power", "values": [0,1,1,2,2,3], "effectiveRange": 2, "meleeBonus": 0, "icon": "https://i.imgur.com/kZOQk86.png" },
               { "name": "Ручной пулемет FN model D", "values": [0,1,1,2,2,3], "effectiveRange": 5, "meleeBonus": 0, "icon": "https://i.imgur.com/ACVEF7D.png" },
               { "name": "Ручной пулемет FN model D-exp", "values": [0,2,3,4,5,0], "effectiveRange": 5, "meleeBonus": 0, "icon": "https://i.imgur.com/nnQ7CRv.png" },
-              { "name": "Geweer OIP M.38", "values": [1,1,1,1,1,2], "effectiveRange": 5, "meleeBonus": 0, "sniper": true, "accuracyBonus": 3, "damagePerHit": 3, "icon": "" }
+              { "name": "Geweer OIP M.38", "values": [1,1,1,1,1,2], "effectiveRange": 5, "meleeBonus": 0, "sniper": true, "accuracyBonus": 3, "damagePerHit": 3, "icon": "https://i.imgur.com/l4zDAgG.png" }
             ],
             "crewWeapons": [
               { "type": "mg", "name": "Станковый пулемет Schwarzlose M.08/15", "crewSize": 3, "shotRule": "sum_d6", "fullCrewDice": 3, "minCrewDice": 1, "effectiveRange": 5, "icon": "https://i.imgur.com/OaFqcZd.png" },
@@ -3107,14 +3107,14 @@ container.innerHTML = filteredTemplates.map(t => {
       else if (tabName === 'cardsTab') { populateCardsFactionSelect(); renderCardLibrary(); }
       else if (tabName === 'activeEffectsTab') { renderActiveEffects(); }
       else if (tabName === 'saveTab') renderTemplates();
-      else if (tabName === 'battleTab') { renderSquadSelector(); renderTemplateSelection(); updateUI(); renderEmbarkPanel(); }
+      else if (tabName === 'battleTab') { renderSquadSelector(); renderTemplateSelection(); updateUI(); renderEmbarkPanel(); renderFactionInfo(); }
     }
 
     // Инициализация
     renderSquadSelector();
-    else if (tabName === 'battleTab') { renderSquadSelector(); renderTemplateSelection(); updateUI(); renderEmbarkPanel(); renderFactionInfo(); }
     updateUI();
     renderTemplateSelection();
+    renderFactionInfo();
     resetAP();
   </script>
 </body>
