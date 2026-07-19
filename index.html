@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.11 — Ход </title>
+  <title>Боевой модуль v11.12 — картинки </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -20,10 +20,10 @@
     .tabcontent{display:none}
     .section{margin:8px 0}
     .squad-header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-    .squad-header img{max-height:60px;border-radius:4px}
+    .squad-header img{max-height:120px;border-radius:4px}
     .modifier-row,.weapon-entry,.fighter-row,.crew-row{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
     .card-item{border:1px solid #555;background:#2a2a2a;padding:8px;margin:6px 0;border-radius:6px;display:flex;gap:10px;align-items:flex-start}
-    .card-item img{max-width:80px;max-height:80px;border-radius:6px}
+    .card-item img{max-width:120px;max-height:120px;border-radius:6px}
     .card-info{flex:1}
     .card-info h4{margin:0 0 4px}
     .card-info .desc{font-size:.8rem;color:#aaa;margin-bottom:4px}
@@ -46,7 +46,7 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v11.11 — Ход </h2>
+  <h2>⚔️ Боевой модуль v11.12 — картинки </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -641,7 +641,7 @@ if (awayCount > 0) status = ` (${awayCount} в отлучке)`;
         html += `
           <div class="squad-select-card ${activeClass}">
             <div class="squad-select-info">
-              <strong>${squad.name}</strong> [${squad.faction}]${armorStr} — бойцов: ${squad.fighters.length}, дух: ${squad.currentMorale ?? squad.baseMorale}/${squad.baseMorale}
+              ${squad.icon ? `<img src="${squad.icon}" style="height:40px; vertical-align:middle; margin-right:8px;">` : ''}<strong>${squad.name}</strong> [${squad.faction}]${armorStr} — бойцов: ${squad.fighters.length}, дух: ${squad.currentMorale ?? squad.baseMorale}/${squad.baseMorale}
               ${squad.embarkedSquadIndex !== null ? ' <span class="embarked-info">🚌 Десант: ' + appData.squads[squad.embarkedSquadIndex].name + '</span>' : ''}
             </div>
             <button onclick="selectSquad(${index})" ${isActive ? 'disabled' : ''}>${isActive ? '✅ Текущий' : 'Выбрать'}</button>
@@ -1345,7 +1345,7 @@ function updateActiveCardsBattle() {
   active.forEach(c => {
     const imgSrc = c.icon || '';
     html += `<div style="background:#2a2a2a; border-radius:6px; padding:4px; display:flex; align-items:center; gap:4px;" title="${c.effect || ''}">
-      ${imgSrc ? `<img src="${imgSrc}" style="width:32px; height:32px; object-fit:cover; border-radius:4px;">` : ''}
+      ${imgSrc ? `<img src="${imgSrc}" style="width:48px; height:48px; object-fit:cover; border-radius:4px;">` : ''}
       <span style="font-size:0.8rem;">${c.name}</span>
     </div>`;
   });
@@ -2948,10 +2948,11 @@ function addCardToLibrary() {
   const desc = prompt('Описание:');
   const effect = prompt('Эффект:');
   const subfaction = prompt('Подфракция (common, belgian, dutch или оставьте пустым):') || 'common';
+  const icon = prompt('URL иконки карты (или оставьте пустым):', '');
   appData.factions[faction].cardLibrary.push({
     name, desc, effect,
     shotMod: 0, accuracyMod: 0, moraleMod: 0,
-    icon: '',
+    icon: icon || '',
     subfaction: subfaction,
     informational: false
   });
@@ -2977,6 +2978,8 @@ function editCard(faction, idx) {
   if (newEffect !== null) card.effect = newEffect;
   const newSub = prompt('Подфракция (common, belgian, dutch):', card.subfaction || 'common');
   if (newSub !== null) card.subfaction = newSub;
+  const newIcon = prompt('URL иконки:', card.icon || '');
+  if (newIcon !== null) card.icon = newIcon;
   saveData();
   renderCardLibrary();
 }
