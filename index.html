@@ -226,7 +226,7 @@ try {
 if (!selectedFaction) showFactionModal();
     
   safeLocalStorage('setItem', 'wargame_choice', JSON.stringify({faction: selectedFaction, sub: selectedSubFaction}));
-}
+
     function getDefaultData() {
       return {
         "factions": {
