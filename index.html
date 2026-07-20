@@ -65,11 +65,33 @@
 .faction-card .faction-name {
   font-size: 1.1rem; font-weight: bold; color: #fff; margin-top: 8px;
 }
+    .detection-modal {
+  display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+  background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center;
+}
+.detection-modal.active { display: flex; }
+.detection-modal-content {
+  background: #2c2c2c; border: 2px solid #555; border-radius: 12px; padding: 20px;
+  min-width: 320px; max-width: 90%; color: #ddd;
+}
+.detection-modal-content h3 { margin-top: 0; }
+.detection-option { margin: 8px 0; }
+.detection-option label { margin-left: 6px; }
   </style>
 </head>
 <body>
   <div id="factionModal" class="faction-modal">
   <div class="faction-modal-content" id="factionModalContent"></div>
+</div>
+  <div id="detectionModal" class="detection-modal">
+  <div class="detection-modal-content">
+    <h3 id="detectionTitle">Условия обнаружения</h3>
+    <div id="detectionOptions"></div>
+    <div style="margin-top:16px; text-align:center;">
+      <button id="detectionExecuteBtn">Проверить</button>
+      <button onclick="closeDetectionModal()" style="background:#555;">Отмена</button>
+    </div>
+  </div>
 </div>
   <h2>⚔️ Боевой модуль v11.14 — обнаружение </h2>
   <div class="tab">
@@ -1167,14 +1189,14 @@ if (getAP(currentSquadIndex) > 0 && currentSquad.armor) {
 if (currentSquad.crewInstances && currentSquad.crewInstances.length > 0 && getAP(currentSquadIndex) > 0) {
   html += `<button onclick="toggleDeploy()" style="background:#7f8c8d;">⚙️ Развернуть/Свернуть</button> `;
 }
-  // Кнопки обнаружения
+   // Кнопки обнаружения
 const ap = getAP(currentSquadIndex);
 if (ap > 0) {
   if (!currentSquad.detected) {
-    html += `<button onclick="checkDetection()" style="background:#2980b9;">🔍 Проверить обнаружение</button> `;
+    html += `<button onclick="showDetectionDialog('check')" style="background:#2980b9;">🔍 Проверить обнаружение</button> `;
     html += `<button onclick="manualDetect()" style="background:#c0392b;">👁️ Обнаружить вручную</button> `;
   } else {
-    html += `<button onclick="hideSquad()" style="background:#27ae60;">🥷 Скрыться</button> `;
+    html += `<button onclick="showDetectionDialog('hide')" style="background:#27ae60;">🥷 Скрыться</button> `;
   }
 }
     container.innerHTML = html;
@@ -1739,6 +1761,92 @@ function toggleDeploy() {
   if (currentSquad.deployed === undefined) currentSquad.deployed = true;
   currentSquad.deployed = !currentSquad.deployed;
   log(`${currentSquad.name} теперь ${currentSquad.deployed ? 'развёрнут' : 'свёрнут'} (0.5 ОД).`);
+  saveData();
+  updateUI();
+}
+    let detectionMode = ''; // 'check' или 'hide'
+
+function showDetectionDialog(mode) {
+  if (!currentSquad) return;
+  detectionMode = mode;
+  const title = mode === 'check' ? 'Проверка обнаружения' : 'Попытка скрыться';
+  document.getElementById('detectionTitle').textContent = title;
+  document.getElementById('detectionExecuteBtn').textContent = mode === 'check' ? 'Проверить обнаружение' : 'Попытаться скрыться';
+
+  // Список условий с модификаторами
+  const conditions = [
+    { id: 'fired', label: 'Отряд вёл стрельбу', mod: 3 },
+    { id: 'armor', label: 'Бронетехника/автотранспорт', mod: currentSquad.armor ? 3 : 2 },
+    { id: 'controlled', label: 'Сектор под контролем', mod: 2 },
+    { id: 'fastmove', label: 'Передвигается ускоренно', mod: 1 },
+    { id: 'platoon', label: 'Размер отряда взвод и больше', mod: 1 },
+    { id: 'night', label: 'Ночь/туман/дымовая завеса', mod: -2 },
+    { id: 'building', label: 'Отряд в здании/окопе', mod: -2 },
+    { id: 'stationary', label: 'Отряд неподвижен', mod: -2 },
+    { id: 'forest', label: 'В лесу/кустах/залег', mod: -1 },
+    { id: 'scout', label: 'Разведчики', mod: -1 },
+    { id: 'sneak', label: 'Скрытное перемещение', mod: -1 },
+    { id: 'enemyfight', label: 'Противник ведёт бой', mod: -1 }
+  ];
+
+  let html = '';
+  conditions.forEach(c => {
+    // Автоматически отмечаем неподвижен, если отряд не двигался
+    let checked = '';
+    if (c.id === 'stationary' && !currentSquad.movedThisTurn) checked = 'checked';
+    if (c.id === 'armor' && currentSquad.armor) checked = 'checked'; // предзаполним бронетехнику
+    if (c.id === 'platoon' && currentSquad.fighters.length >= 10) checked = 'checked';
+    html += `<div class="detection-option"><input type="checkbox" id="det_${c.id}" value="${c.mod}" ${checked}><label for="det_${c.id}">${c.label} (${c.mod >= 0 ? '+' + c.mod : c.mod})</label></div>`;
+  });
+  document.getElementById('detectionOptions').innerHTML = html;
+  document.getElementById('detectionModal').classList.add('active');
+
+  // Назначаем обработчик кнопки
+  document.getElementById('detectionExecuteBtn').onclick = function() {
+    executeDetectionCheck(detectionMode);
+  };
+}
+
+function closeDetectionModal() {
+  document.getElementById('detectionModal').classList.remove('active');
+}
+
+function executeDetectionCheck(mode) {
+  if (!currentSquad) return;
+  closeDetectionModal();
+
+  // Считаем сумму отмеченных модификаторов
+  let mod = 0;
+  const checkboxes = document.querySelectorAll('#detectionOptions input[type="checkbox"]:checked');
+  checkboxes.forEach(cb => {
+    mod += parseInt(cb.value);
+  });
+
+  const roll = rollD10();
+  const result = roll + mod;
+  
+  if (mode === 'check') {
+    log(`Проверка обнаружения: d10=${roll} + мод=${mod} = ${result}`);
+    if (result > 6) {
+      currentSquad.detected = true;
+      currentSquad.noiseMarker = false;
+      log('Отряд обнаружен!');
+    } else if (result === 6) {
+      currentSquad.noiseMarker = true;
+      log('Маркер «Шум» установлен.');
+    } else {
+      log('Отряд остаётся незамеченным.');
+    }
+  } else { // hide
+    log(`Попытка скрыться: d10=${roll} + мод=${mod} = ${result}`);
+    if (result > 6) {
+      currentSquad.detected = false;
+      currentSquad.noiseMarker = false;
+      log('Отряд успешно скрылся!');
+    } else {
+      log('Не удалось скрыться.');
+    }
+  }
   saveData();
   updateUI();
 }
