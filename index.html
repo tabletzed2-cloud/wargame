@@ -2598,6 +2598,11 @@ function disembarkSquad() {
       }
       return count;
     }
+    renderSquadSelector();
+  updateUI();
+  renderTemplateSelection();
+  renderFactionInfo();
+  resetAP();
 } // конец initAfterFactionChoice
     
     // =================== БОЕВЫЕ ФУНКЦИИ ===================
@@ -3217,15 +3222,7 @@ function resupply(type) {
     function healAll() { if (!currentSquad) return; currentSquad.fighters.forEach(f => f.hp = f.maxHp); morale = currentSquad.baseMorale; currentSquad.currentMorale = morale; suppressed = routed = false; updateUI(); saveData(); }
     function resetAll() { if (!currentSquad) return; currentSquad.fighters.forEach(f => f.hp = f.maxHp); morale = currentSquad.baseMorale; currentSquad.currentMorale = morale; suppressed = routed = false; updateUI(); saveData(); }
    
-
-    // Инициализация
-    renderSquadSelector();
-    updateUI();
-    renderTemplateSelection();
-    renderFactionInfo();
-    resetAP();
-    
-
+ 
 function startGame() {
   try {
     const savedChoice = JSON.parse(safeLocalStorage('getItem', 'wargame_choice'));
