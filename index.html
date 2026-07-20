@@ -229,6 +229,13 @@ function safeLocalStorage(method, ...args) {
       try { return window.localStorage[method](...args); }
       catch(e) { console.warn('localStorage недоступен, работаем без сохранения'); return null; }
     }    
+    function resetAllData() {
+  if (confirm('Сбросить все сохранённые данные и выбор фракции?')) {
+    safeLocalStorage('removeItem', STORAGE_KEY);
+    safeLocalStorage('removeItem', 'wargame_choice');
+    location.reload();
+  }
+}
 let selectedFaction = null;
 let selectedSubFaction = null; // 'belgian', 'dutch' или null
     
