@@ -466,9 +466,9 @@ if (s.flemishFuryUsed === undefined) s.flemishFuryUsed = false;
 if (s.effects === undefined) s.effects = {};
      if (s.ammoRegenCounter === undefined) s.ammoRegenCounter = 0; 
 if (s.attackCounter === undefined) s.attackCounter = 0;});
-    if (s.detected === undefined) s.detected = false;
-if (s.noiseMarker === undefined) s.noiseMarker = false;
-if (s.movedThisTurn === undefined) s.movedThisTurn = false;
+         if (t.detected === undefined) t.detected = false;
+      if (t.noiseMarker === undefined) t.noiseMarker = false;
+      if (t.movedThisTurn === undefined) t.movedThisTurn = false;
     appData.templates.forEach(t => { 
       if (t.icon === undefined) t.icon = ""; 
       if (t.armor === undefined) t.armor = null;
@@ -479,10 +479,7 @@ if (t.flemishFury === undefined) t.flemishFury = false;
 if (t.flemishFuryUsed === undefined) t.flemishFuryUsed = false;
 if (t.effects === undefined) t.effects = {};
             if (t.lastMeleeRolls === undefined) t.lastMeleeRolls = [];
-      if (s.detected === undefined) s.detected = false;
-if (s.noiseMarker === undefined) s.noiseMarker = false;
-if (s.movedThisTurn === undefined) s.movedThisTurn = false;
-    });
+         });
 
     appData.squads.forEach(squad => {
       const weapons = getFactionWeapons(squad.faction);
@@ -791,7 +788,7 @@ if (awayCount > 0) status = ` (${awayCount} в отлучке)`;
         crewInstances: [],
         armor: null,
         embarkedSquadIndex: null,
-        hidden: false
+        hidden: false,
         detected: false,
 noiseMarker: false,
 movedThisTurn: false
