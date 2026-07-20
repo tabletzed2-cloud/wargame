@@ -3,8 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.13 — картинки </title>
+  <title>Боевой модуль v11.14 — картинки </title>
   <style>
+    .faction-modal {
+  display: none;
+  position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+  background-color: rgba(0,0,0,0.75);
+  justify-content: center; align-items: center;
+}
+.faction-modal.active { display: flex; }
+.faction-card {
+  background: #2c2c2c; border: 2px solid #555; border-radius: 12px; padding: 20px;
+  margin: 20px; cursor: pointer; text-align: center; transition: all 0.2s ease;
+  width: 220px; min-height: 280px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.faction-card:hover {
+  border-color: #c0392b; background: #3a2a2a; transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(192,57,43,0.5);
+}
+.faction-card img {
+  max-height: 130px; max-width: 180px; margin-bottom: 15px;
+  border-radius: 8px; object-fit: contain;
+}
+.faction-card .faction-name {
+  font-size: 1.3rem; font-weight: bold; color: #fff; margin-top: 8px;
+}
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
     button{background:#c0392b;color:#fff;font-weight:bold;cursor:pointer}
@@ -46,7 +70,10 @@
   </style>
 </head>
 <body>
-  <h2>⚔️ Боевой модуль v11.13 — картинки </h2>
+  <div id="factionModal" class="faction-modal">
+  <div class="faction-modal-content" id="factionModalContent"></div>
+</div>
+  <h2>⚔️ Боевой модуль v11.14 — картинки </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -127,6 +154,69 @@
   
   <script>
     // =================== ГЛОБАЛЬНЫЕ ФУНКЦИИ ===================
+ function showFactionModal() {
+  const modal = document.getElementById('factionModal');
+  const content = document.getElementById('factionModalContent');
+  const factions = [
+    { key: 'BeVe', name: 'BeVe', icon: (appData?.factions?.BeVe?.icon) || 'https://i.imgur.com/8yfFp7I.png' },
+    { key: 'A.I.R.F.', name: 'A.I.R.F.', icon: (appData?.factions?.['A.I.R.F.']?.icon) || 'https://i.imgur.com/V6YvAfB.png' },
+    { key: 'test', name: 'Тестовый режим', icon: '' }
+  ];
+
+  let html = '<div style="text-align:center;color:#fff;font-size:1.8rem;margin-bottom:20px;">Выберите фракцию</div><div style="display:flex;flex-wrap:wrap;justify-content:center;">';
+  factions.forEach(f => {
+    html += `
+      <div class="faction-card" onclick="selectFaction('${f.key}')">
+        ${f.icon ? `<img src="${f.icon}" alt="${f.name}">` : '<div style="width:130px;height:130px;background:#444;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:2rem;color:#aaa;">?</div>'}
+        <div class="faction-name">${f.name}</div>
+      </div>
+    `;
+  });
+  html += '</div>';
+  content.innerHTML = html;
+  modal.classList.add('active');
+}
+
+function selectFaction(factionKey) {
+  if (factionKey === 'BeVe') {
+    // Показываем выбор подфракции
+    showSubFactionModal();
+  } else {
+    selectedFaction = factionKey;
+    selectedSubFaction = null;
+    document.getElementById('factionModal').classList.remove('active');
+    safeLocalStorage('setItem', 'wargame_choice', JSON.stringify({faction: selectedFaction, sub: selectedSubFaction}));
+    initAfterFactionChoice();
+  }
+}
+
+function showSubFactionModal() {
+  const modal = document.getElementById('factionModal');
+  const content = document.getElementById('factionModalContent');
+  content.innerHTML = `
+    <div style="text-align:center;color:#fff;font-size:1.8rem;margin-bottom:20px;">Выберите подфракцию (BeVe)</div>
+    <div style="display:flex;flex-wrap:wrap;justify-content:center;">
+      <div class="faction-card" onclick="selectSubFaction('belgian')">
+        <img src="https://i.imgur.com/8yfFp7I.png" alt="Бельгийцы" style="max-height:130px;">
+        <div class="faction-name">Бельгийцы</div>
+      </div>
+      <div class="faction-card" onclick="selectSubFaction('dutch')">
+        <img src="https://i.imgur.com/8yfFp7I.png" alt="Голландцы" style="max-height:130px;">
+        <div class="faction-name">Голландцы</div>
+      </div>
+    </div>
+  `;
+  modal.classList.add('active');
+}
+
+function selectSubFaction(sub) {
+  selectedFaction = 'BeVe';
+  selectedSubFaction = sub;
+  document.getElementById('factionModal').classList.remove('active');
+  safeLocalStorage('setItem', 'wargame_choice', JSON.stringify({faction: selectedFaction, sub: selectedSubFaction}));
+  initAfterFactionChoice();
+}
+    
     function getFactionWeapons(f) { return (appData.factions[f] && appData.factions[f].weapons) ? appData.factions[f].weapons : []; }
     function getFactionCrewWeapons(f) { return (appData.factions[f] && appData.factions[f].crewWeapons) ? appData.factions[f].crewWeapons : []; }
     function getFactionCards(f) { return (appData.factions[f] && appData.factions[f].cardLibrary) ? appData.factions[f].cardLibrary : []; }
@@ -141,33 +231,11 @@ function safeLocalStorage(method, ...args) {
     }    
 let selectedFaction = null;
 let selectedSubFaction = null; // 'belgian', 'dutch' или null
+    
+ 
+function initAfterFactionChoice() {
 
-// Загружаем сохранённый выбор (если есть)
-try {
-  const savedChoice = JSON.parse(safeLocalStorage('getItem', 'wargame_choice'));
-  if (savedChoice) {
-    selectedFaction = savedChoice.faction;
-    selectedSubFaction = savedChoice.sub || null;
-  }
-} catch(e) {}
-
-// Если выбор не сделан или нажали сброс данных, запрашиваем
-if (!selectedFaction) {
-  const choice = prompt('Выберите фракцию:\n1 - BeVe\n2 - A.I.R.F.\n0 - Тестовый режим (все фракции)');
-  if (choice === '1') selectedFaction = 'BeVe';
-  else if (choice === '2') selectedFaction = 'A.I.R.F.';
-  else if (choice === '0' || choice === '' || !choice) selectedFaction = 'test';
-  else selectedFaction = 'test';
-  if (selectedFaction === 'BeVe') {
-    const sub = prompt('Выберите подфракцию:\n1 - Бельгийцы\n2 - Голландцы', '1');
-    if (sub === '1') selectedSubFaction = 'belgian';
-    else if (sub === '2') selectedSubFaction = 'dutch';
-    else selectedSubFaction = 'belgian';
-  } else {
-    selectedSubFaction = null;
-  }
-  safeLocalStorage('setItem', 'wargame_choice', JSON.stringify({faction: selectedFaction, sub: selectedSubFaction}));
-}
+    
     function getDefaultData() {
       return {
         "factions": {
@@ -478,7 +546,7 @@ function getMaxAP(squad) {
   if (!data) return;
   const iconUrl = data.icon || '';
   container.innerHTML = `
-    ${iconUrl ? `<img src="${iconUrl}" style="height:40px; border-radius:4px;" alt="${faction}">` : ''}
+    ${iconUrl ? `<img src="${iconUrl}" style="height:80px; border-radius:4px;" alt="${faction}">` : ''}
     <span style="font-weight:bold; font-size:1.1rem;">Просмотр фракции: ${faction}</span>
   `;
 }
@@ -657,7 +725,7 @@ if (awayCount > 0) status = ` (${awayCount} в отлучке)`;
         html += `
           <div class="squad-select-card ${activeClass}">
             <div class="squad-select-info">
-              ${squad.icon ? `<img src="${squad.icon}" style="height:40px; vertical-align:middle; margin-right:8px;">` : ''}${(appData.factions[squad.faction] && appData.factions[squad.faction].icon) ? `<img src="${appData.factions[squad.faction].icon}" style="height:20px; vertical-align:middle; margin-right:4px;">` : ''}<strong>${squad.name}</strong> [${squad.faction}]${armorStr} — бойцов: ${squad.fighters.length}, дух: ${squad.currentMorale ?? squad.baseMorale}/${squad.baseMorale}
+              ${squad.icon ? `<img src="${squad.icon}" style="height:80px; vertical-align:middle; margin-right:8px;">` : ''}${(appData.factions[squad.faction] && appData.factions[squad.faction].icon) ? `<img src="${appData.factions[squad.faction].icon}" style="height:20px; vertical-align:middle; margin-right:4px;">` : ''}<strong>${squad.name}</strong> [${squad.faction}]${armorStr} — бойцов: ${squad.fighters.length}, дух: ${squad.currentMorale ?? squad.baseMorale}/${squad.baseMorale}
               ${squad.embarkedSquadIndex !== null ? ' <span class="embarked-info">🚌 Десант: ' + appData.squads[squad.embarkedSquadIndex].name + '</span>' : ''}
             </div>
             <button onclick="selectSquad(${index})" ${isActive ? 'disabled' : ''}>${isActive ? '✅ Текущий' : 'Выбрать'}</button>
@@ -825,7 +893,7 @@ function disembarkSquad() {
   html += `<div class="card ${cls}">
     <strong>${f.name}</strong> ${(() => {
   const wep = getFactionWeapons(currentSquad.faction).find(w => w.name === f.weapon);
-  return wep && wep.icon ? `<img src="${wep.icon}" style="height:20px; vertical-align:middle; margin:0 4px;" title="${f.weapon}">` : `[${f.weapon || 'Без оружия'}]`;
+  return wep && wep.icon ? `<img src="${wep.icon}" style="height:40px; vertical-align:middle; margin:0 4px;" title="${f.weapon}">` : `[${f.weapon || 'Без оружия'}]`;
 })()} HP: ${f.hp}/${f.maxHp} ${f.isCommander ? '⭐' : ''} ${status}
     <button onclick="adjustHP(${index}, 1)" style="background:#27ae60; padding:2px 5px; margin-left:8px;">+</button>
     <button onclick="adjustHP(${index}, -1)" style="background:#c0392b; padding:2px 5px;">-</button>
@@ -900,7 +968,7 @@ function renderFactionInfo() {
   const iconUrl = faction.icon || '';
   const subText = selectedSubFaction ? ` (${selectedSubFaction === 'belgian' ? 'Бельгийцы' : 'Голландцы'})` : '';
   container.innerHTML = `
-    ${iconUrl ? `<img src="${iconUrl}" style="height:40px; border-radius:4px;" alt="${selectedFaction}">` : ''}
+    ${iconUrl ? `<img src="${iconUrl}" style="height:80px; border-radius:4px;" alt="${selectedFaction}">` : ''}
     <span style="font-weight:bold; font-size:1.1rem;">Выбрана фракция: ${selectedFaction}${subText}</span>
   `;
 }
@@ -3116,6 +3184,25 @@ container.innerHTML = filteredTemplates.map(t => {
     renderTemplateSelection();
     renderFactionInfo();
     resetAP();
+    } // конец initAfterFactionChoice
+
+function startGame() {
+  try {
+    const savedChoice = JSON.parse(safeLocalStorage('getItem', 'wargame_choice'));
+    if (savedChoice) {
+      selectedFaction = savedChoice.faction;
+      selectedSubFaction = savedChoice.sub || null;
+    }
+  } catch(e) {}
+
+  if (!selectedFaction) {
+    showFactionModal();
+  } else {
+    initAfterFactionChoice();
+  }
+}
+
+startGame();
   </script>
 </body>
 </html>
