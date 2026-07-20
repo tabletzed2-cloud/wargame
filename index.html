@@ -226,6 +226,12 @@ function selectSubFaction(sub) {
 
     const STORAGE_KEY = 'wargameV10';
     let appData;   // глобальная переменная
+    let currentSquadIndex = 0;
+let currentSquad = null;
+let morale = 0;
+let suppressed = false, routed = false;
+let currentTurn = 1;
+let actionPoints = {};
     
 function safeLocalStorage(method, ...args) {
       try { return window.localStorage[method](...args); }
@@ -2209,12 +2215,12 @@ if (t.effects === undefined) t.effects = {};
       }
     });
 
-    let currentSquadIndex = 0;
-    let currentSquad = appData.squads.length > 0 ? appData.squads[0] : null;
-    let morale = currentSquad ? (currentSquad.currentMorale ?? currentSquad.baseMorale) : 0;
-    let suppressed = false, routed = false;
-    let currentTurn = 1;
-    let actionPoints = {}; // объект { squadIndex: { ap, maxAp } }
+    currentSquadIndex = 0;
+    currentSquad = appData.squads.length > 0 ? appData.squads[0] : null;
+    morale = currentSquad ? (currentSquad.currentMorale ?? currentSquad.baseMorale) : 0;
+    suppressed = false, routed = false;
+    currentTurn = 1;
+    actionPoints = {}; // объект { squadIndex: { ap, maxAp } }
 
     function saveData() { 
       safeLocalStorage('setItem', STORAGE_KEY, JSON.stringify(appData));
