@@ -226,6 +226,7 @@ function selectSubFaction(sub) {
 
     const STORAGE_KEY = 'wargameV10';
     let appData;   // глобальная переменная
+    
 function safeLocalStorage(method, ...args) {
       try { return window.localStorage[method](...args); }
       catch(e) { console.warn('localStorage недоступен, работаем без сохранения'); return null; }
@@ -2136,8 +2137,7 @@ function initAfterFactionChoice() {
       };
     }
 
-    let appData;
-    try {
+     try {
   const saved = safeLocalStorage('getItem', STORAGE_KEY);
   if (saved) {
     appData = JSON.parse(saved);
