@@ -466,10 +466,7 @@ if (s.flemishFuryUsed === undefined) s.flemishFuryUsed = false;
 if (s.effects === undefined) s.effects = {};
      if (s.ammoRegenCounter === undefined) s.ammoRegenCounter = 0; 
 if (s.attackCounter === undefined) s.attackCounter = 0;});
-         if (t.detected === undefined) s.detected = false;
-      if (t.noiseMarker === undefined) s.noiseMarker = false;
-      if (t.movedThisTurn === undefined) s.movedThisTurn = false;
-    appData.templates.forEach(t => { 
+          appData.templates.forEach(t => { 
       if (t.icon === undefined) t.icon = ""; 
       if (t.armor === undefined) t.armor = null;
       if (t.embarkedSquadIndex === undefined) t.embarkedSquadIndex = null;
