@@ -225,6 +225,7 @@ function selectSubFaction(sub) {
     function log(msg) { const d = document.getElementById('log'); if(d){ d.innerHTML += msg+'<br>'; d.scrollTop = d.scrollHeight; } }
 
     const STORAGE_KEY = 'wargameV10';
+    let appData;   // глобальная переменная
 function safeLocalStorage(method, ...args) {
       try { return window.localStorage[method](...args); }
       catch(e) { console.warn('localStorage недоступен, работаем без сохранения'); return null; }
