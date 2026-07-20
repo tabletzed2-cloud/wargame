@@ -43,9 +43,34 @@
     .embarked-info {
       background:#2a2a2a; padding:6px; border-radius:4px; margin-top:8px; display:inline-block;
     }
+    .faction-modal {
+  display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+  background-color: rgba(0,0,0,0.75); justify-content: center; align-items: center;
+}
+.faction-modal.active { display: flex; }
+.faction-card {
+  background: #2c2c2c; border: 2px solid #555; border-radius: 12px; padding: 15px;
+  margin: 15px; cursor: pointer; text-align: center; transition: all 0.2s ease;
+  width: 160px; min-height: 220px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.faction-card:hover {
+  border-color: #c0392b; background: #3a2a2a; transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(192,57,43,0.5);
+}
+.faction-card img {
+  max-height: 100px; max-width: 140px; margin-bottom: 15px;
+  border-radius: 8px; object-fit: contain;
+}
+.faction-card .faction-name {
+  font-size: 1.1rem; font-weight: bold; color: #fff; margin-top: 8px;
+}
   </style>
 </head>
 <body>
+  <div id="factionModal" class="faction-modal">
+  <div class="faction-modal-content" id="factionModalContent"></div>
+</div>
   <h2>⚔️ Боевой модуль v11.13 — картинки </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
@@ -141,6 +166,52 @@ function safeLocalStorage(method, ...args) {
     }    
 let selectedFaction = null;
 let selectedSubFaction = null; // 'belgian', 'dutch' или null
+    // === Модальное окно выбора фракции ===
+function showFactionModal() {
+  document.getElementById('factionModal').classList.add('active');
+  document.getElementById('factionModalContent').innerHTML = `
+    <div style="text-align:center;color:#fff;font-size:1.8rem;margin-bottom:20px;">Выберите фракцию</div>
+    <div style="display:flex;flex-wrap:wrap;justify-content:center;">
+      <div class="faction-card" onclick="selectFaction('BeVe')">
+        <img src="https://i.imgur.com/8yfFp7I.png" alt="BeVe"><div class="faction-name">BeVe</div>
+      </div>
+      <div class="faction-card" onclick="selectFaction('A.I.R.F.')">
+        <img src="https://i.imgur.com/V6YvAfB.png" alt="A.I.R.F."><div class="faction-name">A.I.R.F.</div>
+      </div>
+      <div class="faction-card" onclick="selectFaction('test')">
+        <div style="width:130px;height:130px;background:#444;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:2rem;color:#aaa;">?</div>
+        <div class="faction-name">Тестовый режим</div>
+      </div>
+    </div>`;
+}
+
+function selectFaction(factionKey) {
+  if (factionKey === 'BeVe') {
+    // показать подфракции
+    document.getElementById('factionModalContent').innerHTML = `
+      <div style="text-align:center;color:#fff;font-size:1.8rem;margin-bottom:20px;">Выберите подфракцию (BeVe)</div>
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;">
+        <div class="faction-card" onclick="selectSubFaction('belgian')">
+          <img src="https://i.imgur.com/8yfFp7I.png" alt="Бельгийцы"><div class="faction-name">Бельгийцы</div>
+        </div>
+        <div class="faction-card" onclick="selectSubFaction('dutch')">
+          <img src="https://i.imgur.com/8yfFp7I.png" alt="Голландцы"><div class="faction-name">Голландцы</div>
+        </div>
+      </div>`;
+  } else {
+    selectedFaction = factionKey;
+    selectedSubFaction = null;
+    safeLocalStorage('setItem', 'wargame_choice', JSON.stringify({faction: selectedFaction, sub: null}));
+    location.reload();
+  }
+}
+
+function selectSubFaction(sub) {
+  selectedFaction = 'BeVe';
+  selectedSubFaction = sub;
+  safeLocalStorage('setItem', 'wargame_choice', JSON.stringify({faction: 'BeVe', sub: sub}));
+  location.reload();
+}
 
 // Загружаем сохранённый выбор (если есть)
 try {
@@ -152,20 +223,8 @@ try {
 } catch(e) {}
 
 // Если выбор не сделан или нажали сброс данных, запрашиваем
-if (!selectedFaction) {
-  const choice = prompt('Выберите фракцию:\n1 - BeVe\n2 - A.I.R.F.\n0 - Тестовый режим (все фракции)');
-  if (choice === '1') selectedFaction = 'BeVe';
-  else if (choice === '2') selectedFaction = 'A.I.R.F.';
-  else if (choice === '0' || choice === '' || !choice) selectedFaction = 'test';
-  else selectedFaction = 'test';
-  if (selectedFaction === 'BeVe') {
-    const sub = prompt('Выберите подфракцию:\n1 - Бельгийцы\n2 - Голландцы', '1');
-    if (sub === '1') selectedSubFaction = 'belgian';
-    else if (sub === '2') selectedSubFaction = 'dutch';
-    else selectedSubFaction = 'belgian';
-  } else {
-    selectedSubFaction = null;
-  }
+if (!selectedFaction) showFactionModal();
+    
   safeLocalStorage('setItem', 'wargame_choice', JSON.stringify({faction: selectedFaction, sub: selectedSubFaction}));
 }
     function getDefaultData() {
