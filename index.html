@@ -535,6 +535,23 @@ function getMaxAP(squad) {
   return actionPoints[squadIndex] ? actionPoints[squadIndex].ap : 0;
 }
 
+function renderFactionInfo() {
+  const container = document.getElementById('factionEmblem');
+  if (!container) return;
+  if (!selectedFaction || selectedFaction === 'test') {
+    container.innerHTML = '<span style="color:#aaa;">Тестовый режим (все фракции)</span>';
+    return;
+  }
+  const faction = appData.factions[selectedFaction];
+  if (!faction) { container.innerHTML = ''; return; }
+  const iconUrl = faction.icon || '';
+  const subText = selectedSubFaction ? ` (${selectedSubFaction === 'belgian' ? 'Бельгийцы' : 'Голландцы'})` : '';
+  container.innerHTML = `
+    ${iconUrl ? `<img src="${iconUrl}" style="height:80px; border-radius:4px;" alt="${selectedFaction}">` : ''}
+    <span style="font-weight:bold; font-size:1.1rem;">Выбрана фракция: ${selectedFaction}${subText}</span>
+  `;
+}
+  
     function renderFactionInfoForFilter() {
   const faction = document.getElementById('battleFactionFilter').value;
   const container = document.getElementById('factionEmblem');
