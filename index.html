@@ -1931,7 +1931,20 @@ container.innerHTML = filteredTemplates.map(t => {
     }
     
 function initAfterFactionChoice() {
-
+  try {
+    const saved = safeLocalStorage('getItem', STORAGE_KEY);
+    if (saved) {
+      appData = JSON.parse(saved);
+      if (appData.modifiers) appData.modifiers = appData.modifiers.filter(m => m.name !== 'Плохой порох');
+      if (!appData.factions || !appData.templates || !appData.squads) throw new Error('Структура повреждена');
+    } else {
+      appData = getDefaultData();
+    }
+  } catch (e) {
+    console.warn('Сброс данных', e);
+    safeLocalStorage('removeItem', STORAGE_KEY);
+    appData = getDefaultData();
+  }
     
     function getDefaultData() {
       return {
