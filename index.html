@@ -2886,6 +2886,19 @@ function activateSelectedCards() {
     const faction = cb.dataset.faction;
     const name = cb.dataset.name;
     const card = appData.factions[faction].cardLibrary.find(c => c.name === name);
+    if (card.name === 'Фламандская Фурия') {
+  const targets = appData.squads.filter(s => !s.hidden);
+  if (targets.length === 0) {
+    log('Нет отрядов в бою для применения карты.');
+    return;
+  }
+  targets.forEach(s => {
+    applyCardEffect(card, s);
+  });
+  appData.activeCards.push({ ...card, faction, active: true });
+  log(`Карта "${card.name}" активирована для всех отрядов в бою.`);
+  return; // прерываем дальнейшую обработку этой карты
+}
     if (!card) return;
 
     // Если карта информационная — просто добавляем в активные, без автоматических эффектов
@@ -2895,7 +2908,7 @@ function activateSelectedCards() {
       return;
     }
 
-    const perSquad = ['Фламандская Фурия']; // только эта карта требует выбора отряда
+   const perSquad = []; // только эта карта требует выбора отряда
 
     if (perSquad.includes(card.name)) {
       const list = appData.squads.map((s,i) => `${i}: ${s.name} [${s.faction}]`).join('\n');
