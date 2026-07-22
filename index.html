@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.15 — обнаружение </title>
+  <title>Боевой модуль v11.16 — альфа </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -93,7 +93,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.15 — обнаружение </h2>
+  <h2>⚔️ Боевой модуль v11.16 — альфа </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -518,6 +518,8 @@ if (t.movedThisTurn === undefined) t.movedThisTurn = false;
     let currentSquad = appData.squads.length > 0 ? appData.squads[0] : null;
     let morale = currentSquad ? (currentSquad.currentMorale ?? currentSquad.baseMorale) : 0;
     let suppressed = false, routed = false;
+    if (appData.currentTurn === undefined) appData.currentTurn = 1;
+currentTurn = appData.currentTurn;
     let currentTurn = 1;
     let actionPoints = {}; // объект { squadIndex: { ap, maxAp } }
 
@@ -663,36 +665,17 @@ function nextTurn() {
       s._tempAPReduction = 2;   // -1 ОД = -2 полу-ОД
       s.effects.porLaRevolucion.used = true;
       log(`Отряд "${s.name}" теряет 1 ОД в этом ходу (Por la revolución!)`);
+      saveData();
     }
   });
   resetAP();
   // Сброс счётчиков действий (для лимита выстрелов)
   appData.squads.forEach(s => { s.actionsThisTurn = {}; });
-// Автоматическая проверка обнаружения всех необнаруженных отрядов
-appData.squads.forEach(s => {
-  if (s.detected || s.hidden) return; // пропускаем обнаруженные и скрытые (десант)
-  let autoMod = 0;
-  if (getShotsUsed(s) > 0) autoMod += 3; // стрелял в этот ход
-  if (s.armor) autoMod += 3;
-  if (s.fighters.length >= 10) autoMod += 1;
-  if (!s.movedThisTurn) autoMod -= 2; // неподвижен
-  // другие модификаторы можно добавить, но для автоматической проверки базовые
-  const roll = rollD10();
-  const result = roll + autoMod;
-  if (result > 6) {
-    s.detected = true;
-    s.noiseMarker = false;
-    log(`Отряд "${s.name}" обнаружен автоматически (d10=${roll}+${autoMod}=${result}).`);
-  } else if (result === 6) {
-    s.noiseMarker = true;
-    log(`Отряд "${s.name}" получил маркер «Шум» (d10=${roll}+${autoMod}=${result}).`);
-  }
-  // сбрасываем movedThisTurn для следующего хода
-  s.movedThisTurn = false;
-});
+appData.squads.forEach(s => { s.movedThisTurn = false; });
   
   updateUI();
   log(`=== ХОД ${currentTurn} ===`);
+  appData.currentTurn = currentTurn;
 }
    function moveToNextSquad() {
   let startIdx = currentSquadIndex;
@@ -1163,6 +1146,21 @@ function renderActiveCardButtons() {
     const disabled = !(ap >= cost && getEffectiveMorale() > 1);
     html += `<button onclick="useFireField()" style="background:#e67e22;" ${disabled ? 'disabled' : ''}>🔥 Поджечь огненное поле (${appData.fireFieldHex})</button> `;
   }
+// Для ДОТа – отдельные кнопки для каждого пулемёта
+if (currentSquad.name.includes('ДОТ') && currentSquad.crewInstances && currentSquad.crewInstances.length > 0) {
+  currentSquad.crewInstances.forEach((ci, idx) => {
+    if (ci.active === false || ci.status === 'destroyed' || ci.status === 'blinded') return;
+    const cw = getFactionCrewWeapons(currentSquad.faction).find(w => w.name === ci.weaponName);
+    if (!cw || cw.type !== 'mg') return;
+    const alive = ci.fighterIndices.filter(i => currentSquad.fighters[i]?.hp > 0).length;
+    if (alive === 0) return;
+    const used = getWeaponShotCount(currentSquad, ci.weaponName);
+    const maxShots = getWeaponMaxShots(cw);
+    const disabled = (used >= maxShots || getAP(currentSquadIndex) < 2 || getEffectiveMorale() <= 1) ? 'disabled' : '';
+    const ammoOk = currentSquad.ammoSmall > 0;
+    html += `<button onclick="fireDOTMG(${idx})" style="background:#8e44ad;" ${disabled} ${!ammoOk ? 'title="Нет патронов"' : ''}>Пулемёт ${idx+1}-й амбразуры (${used}/${maxShots})</button> `;
+  });
+}
 
   // Перемещение
 if (getAP(currentSquadIndex) > 0 && !currentSquad.armor) {
@@ -1171,6 +1169,9 @@ if (getAP(currentSquadIndex) > 0 && !currentSquad.armor) {
     html += `<button onclick="moveSquad('road')">🛣️ Дорога</button> `;
     html += `<button onclick="moveSquad('bad')">🌋 Тяжёлая</button> `;
     html += `<button onclick="moveSquad('crouch')">🐍 Переползание</button> `;
+}
+    if (currentSquad.armor) {
+  html += `<div style="margin-top:8px; font-size:0.8rem; color:#aaa;">Стоимость перемещения (за 1 гекс): Откр/Дорога – 2 полу-ОД за 3 гекса, Лес – 2 полу-ОД, Тяжёлая – 2 полу-ОД</div>`;
 }
 if (getAP(currentSquadIndex) > 0 && currentSquad.armor) {
     html += `<button onclick="moveSquad('open')">🌄 Открытая</button> `;
@@ -1260,6 +1261,55 @@ function moveSquad(terrainKey) {
   updateUI();
 }
 
+    function fireDOTMG(ciIndex) {
+  if (!currentSquad || !currentSquad.crewInstances) return;
+  const ci = currentSquad.crewInstances[ciIndex];
+  if (!ci || ci.active === false || ci.status === 'destroyed' || ci.status === 'blinded') return;
+  const cw = getFactionCrewWeapons(currentSquad.faction).find(w => w.name === ci.weaponName);
+  if (!cw || cw.type !== 'mg') return;
+
+  // Проверка лимита выстрелов
+  const used = getWeaponShotCount(currentSquad, ci.weaponName);
+  if (used >= getWeaponMaxShots(cw)) {
+    log(`${cw.name}: лимит выстрелов исчерпан.`);
+    return;
+  }
+
+  if (!spendAP(currentSquadIndex, 2)) {
+    log('Недостаточно ОД.');
+    return;
+  }
+
+  const alive = ci.fighterIndices.filter(i => currentSquad.fighters[i]?.hp > 0).length;
+  if (alive === 0) return;
+
+  // Бросок количества выстрелов (как в attackSmallArms)
+  let shots = 0;
+  if (cw.shotRule === 'sum_d6') {
+    let dice = cw.fullCrewDice || 3;
+    if (alive < (cw.crewSize || 5)) dice = Math.max(cw.minCrewDice || 1, Math.floor(alive / ((cw.crewSize || 5) / (cw.fullCrewDice || 3))));
+    for (let i = 0; i < dice; i++) shots += rollD6();
+  }
+  shots = Math.min(shots, currentSquad.ammoSmall);
+  currentSquad.ammoSmall -= shots;
+  incrementWeaponShotCount(currentSquad, ci.weaponName);
+
+  // Расчёт эффективности и урона
+  const dist = parseInt(document.getElementById('targetDistance').value) || 5;
+  const cover = parseInt(document.getElementById('coverTarget').value) || 6;
+  const isSuppressed = getEffectiveMorale() <= getSuppressionThreshold();
+  let hits = 0;
+  for (let i = 0; i < shots; i++) {
+    const roll = rollD10();
+    let effRoll = roll;
+    if (isSuppressed) effRoll -= 1;
+    if (dist > (cw.effectiveRange || 0)) effRoll -= Math.floor((dist - (cw.effectiveRange || 0)) / 2);
+    if (effRoll >= cover) hits++;
+  }
+  log(`${cw.name}: ${shots} выстр., попаданий ${hits}.`);
+  saveData();
+  updateUI();
+}
     function updateMainButtons() {
   if (!currentSquad) return;
   const ap = getAP(currentSquadIndex);
@@ -1270,6 +1320,10 @@ function moveSquad(terrainKey) {
  // Стрелковое
 const btnSmall = document.getElementById('attackSmallArms');
 if (btnSmall) {
+  if (currentSquad.name.includes('ДОТ')) {
+  btnSmall.disabled = true;
+  btnSmall.style.opacity = '0.5';
+}
   // Определяем, есть ли у отряда возможность стрелять из стрелкового оружия/пулемётов
   let canUseSmallArms = true;
   if (currentSquad.armor) {
@@ -1837,7 +1891,7 @@ function executeDetectionCheck(mode) {
     }
   } else { // hide
     log(`Попытка скрыться: d10=${roll} + мод=${mod} = ${result}`);
-    if (result > 6) {
+    if (result < 4) {
       currentSquad.detected = false;
       currentSquad.noiseMarker = false;
       log('Отряд успешно скрылся!');
