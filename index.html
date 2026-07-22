@@ -513,14 +513,16 @@ if (t.movedThisTurn === undefined) t.movedThisTurn = false;
         squad.crewInstances.forEach(ci => { if (ci.active === undefined) ci.active = true; });
       }
     });
-
+if (appData.currentTurn === undefined) appData.currentTurn = 1;
+    
     let currentSquadIndex = 0;
     let currentSquad = appData.squads.length > 0 ? appData.squads[0] : null;
     let morale = currentSquad ? (currentSquad.currentMorale ?? currentSquad.baseMorale) : 0;
     let suppressed = false, routed = false;
-    if (appData.currentTurn === undefined) appData.currentTurn = 1;
-currentTurn = appData.currentTurn;
     let currentTurn = 1;
+    if (appData.currentTurn !== undefined) {
+      currentTurn = appData.currentTurn;
+    }
     let actionPoints = {}; // объект { squadIndex: { ap, maxAp } }
 
     function saveData() { 
@@ -630,6 +632,7 @@ function canShoot(squad) {
     
 function nextTurn() {
   currentTurn++;
+    appData.currentTurn = currentTurn;
   // Обработка возвращения бойцов
   appData.squads.forEach(s => {
     s.fighters.forEach(f => {
@@ -665,8 +668,7 @@ function nextTurn() {
       s._tempAPReduction = 2;   // -1 ОД = -2 полу-ОД
       s.effects.porLaRevolucion.used = true;
       log(`Отряд "${s.name}" теряет 1 ОД в этом ходу (Por la revolución!)`);
-      saveData();
-    }
+      }
   });
   resetAP();
   // Сброс счётчиков действий (для лимита выстрелов)
@@ -676,6 +678,7 @@ appData.squads.forEach(s => { s.movedThisTurn = false; });
   updateUI();
   log(`=== ХОД ${currentTurn} ===`);
   appData.currentTurn = currentTurn;
+  saveData();
 }
    function moveToNextSquad() {
   let startIdx = currentSquadIndex;
