@@ -660,7 +660,8 @@ if (appData.weather) {
     renderTemplateSelection();
     renderFactionInfo();
     resetAP();
-
+}
+    
    function moveToNextSquad() {
   let startIdx = currentSquadIndex;
   let idx = (startIdx + 1) % appData.squads.length;
