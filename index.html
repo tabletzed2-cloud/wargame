@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.16 — альфа </title>
+  <title>Боевой модуль v11.17 — ДОТ </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -93,7 +93,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.16 — альфа </h2>
+  <h2>⚔️ Боевой модуль v11.17 — ДОТ </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -705,7 +705,14 @@ function skipSquad() {
   log(`Отряд "${currentSquad.name}" пропущен.`);
   moveToNextSquad();
 }
-    
+    function assignUniqueCrewKeys(squad) {
+  if (!squad.crewInstances) return;
+  squad.crewInstances.forEach((ci, idx) => {
+    if (!ci.uniqueKey) {
+      ci.uniqueKey = ci.weaponName + '_' + idx;
+    }
+  });
+}
     // =================== ВЫБОР ОТРЯДА ===================
     function selectSquad(idx) {
       if (currentSquad) currentSquad.currentMorale = morale;
@@ -1272,7 +1279,7 @@ function moveSquad(terrainKey) {
   if (!cw || cw.type !== 'mg') return;
 
   // Проверка лимита выстрелов
-  const used = getWeaponShotCount(currentSquad, ci.weaponName);
+  const used = getWeaponShotCount(currentSquad, ci.uniqueKey);
   if (used >= getWeaponMaxShots(cw)) {
     log(`${cw.name}: лимит выстрелов исчерпан.`);
     return;
@@ -2000,7 +2007,7 @@ function attackVehicle() {
     if (!cw || (cw.type !== 'at_gun' && cw.type !== 'tank_gun')) return false;
     const alive = ci.fighterIndices.filter(idx => currentSquad.fighters[idx]?.hp > 0).length;
     if (alive === 0) return false;
-    const curThis = getWeaponShotCount(currentSquad, ci.weaponName);
+    const curThis = getWeaponShotCount(currentSquad, ci.uniqueKey);
     const maxThis = getWeaponMaxShots(cw);
     return curThis < maxThis && currentSquad.ammoOrdnance > 0;
   });
@@ -2029,7 +2036,7 @@ function attackVehicle() {
     let penMM = penetration[String(dist)] || 0;
     log(`${cw.name}: расчёт ${alive}, выстрелов ${shots}, пробитие ${penMM} мм`);
     shots = Math.min(shots, currentSquad.ammoOrdnance);
-    incrementWeaponShotCount(currentSquad, ci.weaponName);
+    incrementWeaponShotCount(currentSquad, ci.uniqueKey);
     currentSquad.ammoOrdnance -= shots;
     for (let i = 0; i < shots; i++) {
       const roll = rollD10();
@@ -2519,7 +2526,7 @@ function attackSmallArms() {
       if (!cw || cw.type !== 'mg') return;
       const alive = ci.fighterIndices.filter(idx => currentSquad.fighters[idx]?.hp > 0).length;
       if (alive === 0) return;
-      const curThis = getWeaponShotCount(currentSquad, ci.weaponName);
+      const curThis = getWeaponShotCount(currentSquad, ci.uniqueKey);
       const maxThis = getWeaponMaxShots(cw);
       if (curThis < maxThis) anyAvailable = true;
     });
@@ -2604,7 +2611,7 @@ function attackSmallArms() {
       if (alive === 0) return;
       const weaponKey = ci.weaponName;
       const maxThis = getWeaponMaxShots(cw);
-      const curThis = getWeaponShotCount(currentSquad, weaponKey);
+      const curThis = getWeaponShotCount(currentSquad, ci.uniqueKey);
       if (curThis >= maxThis) {
         log(`${cw.name}: лимит выстрелов исчерпан.`);
         return;
@@ -2618,7 +2625,7 @@ function attackSmallArms() {
       shots = Math.max(0, shots + shotMod);
       if (shots <= 0) return;
       shots = Math.min(shots, currentSquad.ammoSmall);
-      incrementWeaponShotCount(currentSquad, weaponKey);
+      incrementWeaponShotCount(currentSquad, ci.uniqueKey);
       currentSquad.ammoSmall -= shots;
       totalShots += shots;
       for (let i = 0; i < shots; i++) {
@@ -2707,9 +2714,9 @@ function attackOrdnance() {
     const alive = ci.fighterIndices.filter(idx => currentSquad.fighters[idx]?.hp > 0).length;
     if (alive === 0) return;
 
-    const weaponKey = ci.weaponName;
+    const weaponKey = ci.uniqueKey;
     const maxThis = getWeaponMaxShots(cw);
-    const curThis = getWeaponShotCount(currentSquad, weaponKey);
+    const curThis = getWeaponShotCount(currentSquad, ci.uniqueKey);
     if (curThis >= maxThis) {
       log(`${cw.name}: лимит выстрелов исчерпан.`);
       return;
@@ -2848,7 +2855,8 @@ function attackOrdnance() {
     function addFighter() { if(!currentSquad) return; const weapons = getFactionWeapons(currentSquad.faction); currentSquad.fighters.push({name:`Боец ${currentSquad.fighters.length+1}`, weapon:weapons[0]?.name||'Без оружия', hp:3, maxHp:3, isCommander:false}); buildRosterEditor(); }
     function removeFighter() { if(!currentSquad) return; currentSquad.fighters.pop(); if(currentSquad.crewInstances) { currentSquad.crewInstances.forEach(ci=>{ ci.fighterIndices = ci.fighterIndices.filter(idx=>idx<currentSquad.fighters.length); }); currentSquad.crewInstances = currentSquad.crewInstances.filter(ci=>ci.fighterIndices.length>0); } buildRosterEditor(); }
     function renderCrewAssignmentsList() { const list = document.getElementById('crewAssignmentsList'); if(!currentSquad || !currentSquad.crewInstances) { if(list) list.innerHTML=''; return; } list.innerHTML = currentSquad.crewInstances.map((ci,i)=> { const fighters = ci.fighterIndices.map(idx=>currentSquad.fighters[idx]?.name||'?').join(', '); const activeText = ci.active !== false ? '🟢 Активен' : '🔴 Неактивен'; return `<div class="crew-row">${ci.weaponName} (бойцы: ${fighters}) <button onclick="toggleCrewActive(${i})">${activeText}</button> <button onclick="removeCrewAssignment(${i})">❌</button></div>`; }).join(''); }
-    function showCrewAssignmentDialog() { if(!currentSquad) return; const weapons = getFactionCrewWeapons(currentSquad.faction); if(!weapons.length) { alert('Нет орудий для этой фракции.'); return; } const weaponNames = weapons.map(w=>w.name); const weapon = prompt('Выберите орудие:\n'+weaponNames.join('\n'), weaponNames[0]); if(!weapon) return; const fighters = currentSquad.fighters.map((f,i)=>`${i}: ${f.name}`).join('\n'); const indicesStr = prompt('Введите индексы бойцов через запятую (например, 0,1):'); if(!indicesStr) return; const indices = indicesStr.split(',').map(s=>parseInt(s.trim())).filter(i=>!isNaN(i) && i>=0 && i<currentSquad.fighters.length); if(!indices.length) return; if(!currentSquad.crewInstances) currentSquad.crewInstances = []; currentSquad.crewInstances.push({weaponName: weapon, fighterIndices: indices, active: true}); renderCrewAssignmentsList(); }
+    function showCrewAssignmentDialog() { if(!currentSquad) return; const weapons = getFactionCrewWeapons(currentSquad.faction); if(!weapons.length) { alert('Нет орудий для этой фракции.'); return; } const weaponNames = weapons.map(w=>w.name); const weapon = prompt('Выберите орудие:\n'+weaponNames.join('\n'), weaponNames[0]); if(!weapon) return; const fighters = currentSquad.fighters.map((f,i)=>`${i}: ${f.name}`).join('\n'); const indicesStr = prompt('Введите индексы бойцов через запятую (например, 0,1):'); if(!indicesStr) return; const indices = indicesStr.split(',').map(s=>parseInt(s.trim())).filter(i=>!isNaN(i) && i>=0 && i<currentSquad.fighters.length); if(!indices.length) return; if(!currentSquad.crewInstances) currentSquad.crewInstances = []; currentSquad.crewInstances.push({weaponName: weapon, fighterIndices: indices, active: true});
+assignUniqueCrewKeys(currentSquad); renderCrewAssignmentsList(); }
     function removeCrewAssignment(idx) { if(!currentSquad) return; currentSquad.crewInstances.splice(idx,1); renderCrewAssignmentsList(); }
     function toggleCrewActive(idx) { if(!currentSquad || !currentSquad.crewInstances) return; currentSquad.crewInstances[idx].active = !(currentSquad.crewInstances[idx].active !== false); renderCrewAssignmentsList(); saveData(); }
     function applyRosterChanges() { if(!currentSquad) return; currentSquad.name = document.getElementById('squadNameInput').value; currentSquad.faction = document.getElementById('squadFactionSelect').value; currentSquad.baseMorale = parseInt(document.getElementById('squadBaseMorale').value)||10; currentSquad.currentMorale = currentSquad.baseMorale; const iconDataField = document.getElementById('squadIconData'); if (iconDataField) currentSquad.icon = iconDataField.value; morale = currentSquad.baseMorale; suppressed=routed=false; renderSquadSelector(); updateUI(); saveData(); }
@@ -3037,6 +3045,7 @@ function activateSelectedCards() {
               s.canMove = false;
             }
           });
+          appData.squads.forEach(s => assignUniqueCrewKeys(s));
           log('Все отряды BeVe получают +2 духу и не могут перемещаться до конца боя.');
           break;
         case 'Por la revolución!':
@@ -3439,6 +3448,7 @@ container.innerHTML = filteredTemplates.map(t => {
     tmpl.currentMorale = tmpl.baseMorale;
     tmpl.hidden = false;
     appData.squads.push(tmpl);
+    assignUniqueCrewKeys(tmpl);
   });
   // Обновляем ОД для всех отрядов (на случай, если индексы сдвинулись)
   appData.squads.forEach((_, i) => ensureAP(i));
@@ -3451,7 +3461,7 @@ container.innerHTML = filteredTemplates.map(t => {
     function clearAllSquads() { if (!confirm('Удалить ВСЕ отряды из боя?')) return; appData.squads = []; currentSquad = null; currentSquadIndex = -1; morale = 0; saveData(); renderSquadSelector(); updateUI(); }
     function renderTemplates() { const filterFaction = document.getElementById('templateFactionFilter')?.value || ''; const list = appData.templates.filter(t=>!filterFaction || t.faction===filterFaction); document.getElementById('templatesList').innerHTML = list.map((t,i)=>{ const origIdx = appData.templates.indexOf(t); return `<div><b>${t.name}</b> [${t.faction}] (${t.fighters.length} бойцов, дух ${t.baseMorale}) <button onclick="loadTemplateFromList(${origIdx})">Загрузить</button> <button onclick="deleteTemplate(${origIdx})">Удалить</button></div>`; }).join(''); const sel = document.getElementById('templateFactionFilter'); if (sel) { const cur = sel.value; sel.innerHTML = '<option value="">Все</option>' + Object.keys(appData.factions).map(f=>`<option value="${f}" ${f===cur?'selected':''}>${f}</option>`).join(''); } }
     function saveCurrentAsTemplate() { if(!currentSquad) return; const name = prompt('Имя шаблона:', currentSquad.name); if(!name) return; const tmpl = JSON.parse(JSON.stringify(currentSquad)); tmpl.name = name; appData.templates.push(tmpl); saveData(); renderTemplates(); }
-    function loadTemplateFromList(idx) { const tmpl = JSON.parse(JSON.stringify(appData.templates[idx])); tmpl.currentMorale = tmpl.baseMorale; tmpl.hidden = false; const exists = appData.squads.find(s => s.name === tmpl.name && s.faction === tmpl.faction); if (exists) { if (!confirm(`Отряд "${tmpl.name}" уже есть в бою. Добавить ещё один?`)) return; } appData.squads.push(tmpl); selectSquad(appData.squads.length - 1); renderSquadSelector(); updateUI(); saveData(); }
+    function loadTemplateFromList(idx) { const tmpl = JSON.parse(JSON.stringify(appData.templates[idx])); tmpl.currentMorale = tmpl.baseMorale; tmpl.hidden = false; const exists = appData.squads.find(s => s.name === tmpl.name && s.faction === tmpl.faction); if (exists) { if (!confirm(`Отряд "${tmpl.name}" уже есть в бою. Добавить ещё один?`)) return; } appData.squads.push(tmpl); assignUniqueCrewKeys(tmpl); selectSquad(appData.squads.length - 1); renderSquadSelector(); updateUI(); saveData(); }
     function deleteTemplate(idx) { if(confirm('Удалить шаблон?')) { appData.templates.splice(idx,1); renderTemplates(); saveData(); } }
     function exportAllData() { const blob = new Blob([JSON.stringify(appData,null,2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='wargame_data.json'; a.click(); URL.revokeObjectURL(url); }
     function importAllData(event) { const file = event.target.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = e => { try { appData = JSON.parse(e.target.result); saveData(); location.reload(); } catch(ex) { alert('Ошибка импорта'); } }; reader.readAsText(file); }
