@@ -642,24 +642,28 @@ function showWeatherModal() {
 }
 
 // ===== ИНИЦИАЛИЗАЦИЯ ПЕРЕМЕННЫХ И ЗАПУСК ИНТЕРФЕЙСА (только если погода уже выбрана) =====
-if (appData.weather) {
-    let currentSquadIndex = 0;
-    let currentSquad = appData.squads.length > 0 ? appData.squads[0] : null;
-    let morale = currentSquad ? (currentSquad.currentMorale ?? currentSquad.baseMorale) : 0;
-    let suppressed = false, routed = false;
-    let currentTurn = 1;
-    if (appData.currentTurn !== undefined) {
-      currentTurn = appData.currentTurn;
-    }
-    let actionPoints = {};
+// Глобальные переменные (объявляем один раз)
+let currentSquadIndex, currentSquad, morale, suppressed, routed, currentTurn, actionPoints;
 
-    // Остальные глобальные функции (getMaxShots, canShoot и т.д.) должны быть определены раньше или здесь, но они уже есть выше.
-    // Здесь только запуск интерфейса
+if (appData.weather) {
+    currentSquadIndex = 0;
+    currentSquad = appData.squads.length > 0 ? appData.squads[0] : null;
+    morale = currentSquad ? (currentSquad.currentMorale ?? currentSquad.baseMorale) : 0;
+    suppressed = false;
+    routed = false;
+    currentTurn = 1;
+    if (appData.currentTurn !== undefined) {
+        currentTurn = appData.currentTurn;
+    }
+    actionPoints = {};
+
     renderSquadSelector();
     updateUI();
     renderTemplateSelection();
     renderFactionInfo();
     resetAP();
+} else {
+    showWeatherModal();
 }
     
    function moveToNextSquad() {
