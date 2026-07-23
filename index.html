@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.18 — ДОТ </title>
+  <title>Боевой модуль v11.19 — ДОТ </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -93,7 +93,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.18 — ДОТ </h2>
+  <h2>⚔️ Боевой модуль v11.19 — ДОТ </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -2049,9 +2049,10 @@ function attackVehicle() {
     }
   });
 
-  if (currentSquad.actionsThisTurn) {
+  // Не увеличиваем общий счётчик для ДОТ/САУ, у них свои лимиты на каждое орудие
+if (currentSquad.actionsThisTurn && !currentSquad.name.includes('ДОТ') && !currentSquad.name.includes('САУ')) {
     currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
-  }
+}
   updateUI();
   saveData();
 }  
@@ -2663,9 +2664,10 @@ function attackSmallArms() {
   }
 
   // Увеличиваем общий счётчик атак
-  if (currentSquad.actionsThisTurn) {
+// Не увеличиваем общий счётчик для ДОТ/САУ, у них свои лимиты на каждое орудие
+if (currentSquad.actionsThisTurn && !currentSquad.name.includes('ДОТ') && !currentSquad.name.includes('САУ')) {
     currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
-  }
+}
   saveData();
   updateUI();
 }
@@ -2762,9 +2764,10 @@ function attackOrdnance() {
     log(`───────────────`);
   }
 
-  if (currentSquad.actionsThisTurn) {
+// Не увеличиваем общий счётчик для ДОТ/САУ, у них свои лимиты на каждое орудие
+if (currentSquad.actionsThisTurn && !currentSquad.name.includes('ДОТ') && !currentSquad.name.includes('САУ')) {
     currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
-  }
+}
   saveData();
   updateUI();
 }
