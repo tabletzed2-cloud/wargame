@@ -660,21 +660,7 @@ if (appData.weather) {
     renderTemplateSelection();
     renderFactionInfo();
     resetAP();
-} else {
-    showWeatherModal();
-}
 
-  resetAP();
-  // Сброс счётчиков действий (для лимита выстрелов)
-  appData.squads.forEach(s => { s.actionsThisTurn = {}; });
-  appData.squads.forEach(s => { s.movedThisTurn = false; });
-  appData.flareActive = false;
-  
-  updateUI();
-  log(`=== ХОД ${currentTurn} ===`);
-  appData.currentTurn = currentTurn;
-  saveData();
-}
    function moveToNextSquad() {
   let startIdx = currentSquadIndex;
   let idx = (startIdx + 1) % appData.squads.length;
@@ -700,7 +686,60 @@ function skipSquad() {
   log(`Отряд "${currentSquad.name}" пропущен.`);
   moveToNextSquad();
 }
-    
+
+  function nextTurn() {
+  currentTurn++;
+  appData.currentTurn = currentTurn;
+  // Обработка возвращения бойцов
+  appData.squads.forEach(s => {
+    s.fighters.forEach(f => {
+      if (f.isAway && f.turnsToReturn > 0) {
+        f.turnsToReturn--;
+        if (f.turnsToReturn === 0) {
+          f.isAway = false;
+          if (f.hp > 0) {
+            const ammoType = f.ammoType || '1';
+            if (ammoType === '1') {
+              s.ammoSmall += 30;
+              log(`${f.name} вернулся с патронами (+30).`);
+            } else if (ammoType === '2') {
+              s.ammoOrdnance += 10;
+              log(`${f.name} вернулся со снарядами (+10).`);
+            } else if (ammoType === '3') {
+              s.grenades += 5;
+              log(`${f.name} вернулся с гранатами (+5).`);
+            }
+          } else {
+            log(`${f.name} погиб в пути, боеприпасы не доставлены.`);
+          }
+          delete f.ammoType;
+        }
+      }
+    });
+  });
+
+  // Обработка эффекта "Por la revolución!" – штраф ОД на этот ход
+  appData.squads.forEach(s => {
+    s._tempAPReduction = 0;
+    if (s.effects?.porLaRevolucion?.active && !s.effects.porLaRevolucion.used) {
+      s._tempAPReduction = 2;   // -1 ОД = -2 полу-ОД
+      s.effects.porLaRevolucion.used = true;
+      log(`Отряд "${s.name}" теряет 1 ОД в этом ходу (Por la revolución!)`);
+    }
+  });
+
+  resetAP();
+
+  // Сброс счётчиков действий и флагов
+  appData.squads.forEach(s => { s.actionsThisTurn = {}; });
+  appData.squads.forEach(s => { s.movedThisTurn = false; });
+  appData.flareActive = false;
+
+  updateUI();
+  log(`=== ХОД ${currentTurn} ===`);
+  saveData();
+}
+  
     // =================== ВЫБОР ОТРЯДА ===================
     function selectSquad(idx) {
       if (currentSquad) currentSquad.currentMorale = morale;
@@ -1858,7 +1897,7 @@ function showDetectionDialog(mode) {
     html += `<div class="detection-option"><input type="checkbox" id="det_${c.id}" value="${c.mod}" ${checked}><label for="det_${c.id}">${c.label} (${c.mod >= 0 ? '+' + c.mod : c.mod})</label></div>`;
   });
   document.getElementById('detectionOptions').innerHTML = html;
-  document.getElementById('').classList.add('active');
+  document.getElementById('detectionModal').classList.add('active');
 
   // Назначаем обработчик кнопки
   document.getElementById('detectionExecuteBtn').onclick = function() {
@@ -1866,9 +1905,10 @@ function showDetectionDialog(mode) {
   };
 }
 
-function close() {
+function closeDetectionModal() {
   document.getElementById('detectionModal').classList.remove('active');
 }
+
 
 function executeDetectionCheck(mode) {
   if (!currentSquad) return;
