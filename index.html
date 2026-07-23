@@ -2062,7 +2062,7 @@ if (currentSquad.actionsThisTurn && !currentSquad.name.includes('ДОТ') && !cu
 }
   updateUI();
   saveData();
-}  
+  
     function attackAmpulometAtVehicle() {
   if (!currentSquad) return;
   if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); updateUI(); return; }
