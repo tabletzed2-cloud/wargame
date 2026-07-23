@@ -77,6 +77,18 @@
 .detection-modal-content h3 { margin-top: 0; }
 .detection-option { margin: 8px 0; }
 .detection-option label { margin-left: 6px; }
+    .detection-modal {
+  display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+  background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center;
+}
+.detection-modal.active { display: flex; }
+.detection-modal-content {
+  background: #2c2c2c; border: 2px solid #555; border-radius: 12px; padding: 20px;
+  min-width: 320px; max-width: 90%; color: #ddd;
+}
+.detection-modal-content h3 { margin-top: 0; }
+.detection-option { margin: 8px 0; }
+.detection-option label { margin-left: 6px; }
   </style>
 </head>
 <body>
@@ -527,20 +539,11 @@ if (t.movedThisTurn === undefined) t.movedThisTurn = false;
 appData.flareCharges = appData.flareCharges || {};
     });
 if (appData.currentTurn === undefined) appData.currentTurn = 1;
-    
-    let currentSquadIndex = 0;
-    let currentSquad = appData.squads.length > 0 ? appData.squads[0] : null;
-    let morale = currentSquad ? (currentSquad.currentMorale ?? currentSquad.baseMorale) : 0;
-    let suppressed = false, routed = false;
-    let currentTurn = 1;
-    if (appData.currentTurn !== undefined) {
-      currentTurn = appData.currentTurn;
-    }
-    let actionPoints = {}; // объект { squadIndex: { ap, maxAp } }
 
-    function saveData() { 
-      safeLocalStorage('setItem', STORAGE_KEY, JSON.stringify(appData));
-    }
+// ===== ФУНКЦИИ (глобальные) – они должны быть вне условия =====
+function saveData() { 
+  safeLocalStorage('setItem', STORAGE_KEY, JSON.stringify(appData));
+}
 function resetAllData() {
   if (confirm('Сбросить все сохранённые данные и выбор фракции?')) {
     safeLocalStorage('removeItem', STORAGE_KEY);
@@ -555,7 +558,7 @@ function getMaxAP(squad) {
   else base = 6;
   return Math.max(0, base - (squad._tempAPReduction || 0));
 }
-    function ensureAP(idx) {
+function ensureAP(idx) {
   if (!actionPoints[idx]) {
     const squad = appData.squads[idx];
     actionPoints[idx] = {
@@ -564,15 +567,14 @@ function getMaxAP(squad) {
     };
   }
 }
-    function getAP(squadIndex) {
+function getAP(squadIndex) {
   return actionPoints[squadIndex] ? actionPoints[squadIndex].ap : 0;
 }
-
-    function renderFactionInfoForFilter() {
+function renderFactionInfoForFilter() {
   const faction = document.getElementById('battleFactionFilter').value;
   const container = document.getElementById('factionEmblem');
   if (!faction) {
-    renderFactionInfo(); // вернём основную выбранную фракцию
+    renderFactionInfo();
     return;
   }
   const data = appData.factions[faction];
@@ -590,7 +592,7 @@ function spendAP(squadIndex, cost) {
   updateUI();
   return true;
 }
-    function resetAP() {
+function resetAP() {
   appData.squads.forEach((s, idx) => {
     actionPoints[idx] = {
       ap: getMaxAP(s),
@@ -598,11 +600,11 @@ function spendAP(squadIndex, cost) {
     };
   });
 }
-    function getShotsUsed(squad) {
+function getShotsUsed(squad) {
   return (squad.actionsThisTurn && squad.actionsThisTurn.shots) ? squad.actionsThisTurn.shots : 0;
 }
 
-    function showWeatherModal() {
+function showWeatherModal() {
   const modal = document.getElementById('weatherModal');
   const content = document.getElementById('weatherOptions');
   content.innerHTML = `
@@ -635,103 +637,33 @@ function spendAP(squadIndex, cost) {
     appData.weather = weather;
     modal.classList.remove('active');
     saveData();
-    // Продолжаем загрузку (вызовется continueAfterFactionChoice или initAfterFactionChoice)
-    if (typeof continueAfterFactionChoice === 'function') {
-     if (!appData.weather) {
-  showWeatherModal();
-} else {
-  continueAfterFactionChoice(); 
-}
-    if (!appData.weather) {
-  showWeatherModal();
-} else {
-  initAfterFactionChoice();
-}
-    }
+    location.reload();   // ← просто перезагружаем страницу
   };
 }
-    
-function getMaxShots(squad) {
-  if (squad.name.includes('ДОТ')) return 5;   // ПТО(1) + 2 пулемёта по 2
-  if (squad.name.includes('САУ')) return 3;   // орудие(1) + пулемёт(2)
-  if (squad.armor) {
-    const hasGun = squad.crewInstances && squad.crewInstances.some(ci => {
-      const cw = getFactionCrewWeapons(squad.faction).find(w => w.name === ci.weaponName);
-      return cw && (cw.type === 'at_gun' || cw.type === 'mortar' || cw.type === 'tank_gun');
-    });
-    return hasGun ? 1 : 2;
-  } else if (squad.crewInstances && squad.crewInstances.some(ci => {
-    const cw = getFactionCrewWeapons(squad.faction).find(w => w.name === ci.weaponName);
-    return cw && (cw.type === 'mortar' || cw.type === 'at_gun');
-  })) {
-    return 1;
-  } else {
-    return 2;
-  }
-}
 
-function getWeaponShotCount(squad, weaponKey) {
-  if (!squad.actionsThisTurn) squad.actionsThisTurn = {};
-  if (!squad.actionsThisTurn.shotCounts) squad.actionsThisTurn.shotCounts = {};
-  return squad.actionsThisTurn.shotCounts[weaponKey] || 0;
-}
-
-function incrementWeaponShotCount(squad, weaponKey) {
-  if (!squad.actionsThisTurn) squad.actionsThisTurn = {};
-  if (!squad.actionsThisTurn.shotCounts) squad.actionsThisTurn.shotCounts = {};
-  squad.actionsThisTurn.shotCounts[weaponKey] = (squad.actionsThisTurn.shotCounts[weaponKey] || 0) + 1;
-}
-
-function getWeaponMaxShots(crewWeapon) {
-  // mg – 2, всё остальное (ПТО, миномёт, орудие) – 1
-  if (crewWeapon.type === 'mg') return 2;
-  return 1;
-}
-    
-function canShoot(squad) {
-  return getShotsUsed(squad) < getMaxShots(squad);
-}
-    
-function nextTurn() {
-  currentTurn++;
-    appData.currentTurn = currentTurn;
-  // Обработка возвращения бойцов
-  appData.squads.forEach(s => {
-    s.fighters.forEach(f => {
-      if (f.isAway && f.turnsToReturn > 0) {
-        f.turnsToReturn--;
-        if (f.turnsToReturn === 0) {
-  f.isAway = false;
-  if (f.hp > 0) {  // <-- добавлена проверка, что боец жив
-    const ammoType = f.ammoType || '1';
-    if (ammoType === '1') {
-      s.ammoSmall += 30;
-      log(`${f.name} вернулся с патронами (+30).`);
-    } else if (ammoType === '2') {
-      s.ammoOrdnance += 10;
-      log(`${f.name} вернулся со снарядами (+10).`);
-    } else if (ammoType === '3') {
-      s.grenades += 5;
-      log(`${f.name} вернулся с гранатами (+5).`);
+// ===== ИНИЦИАЛИЗАЦИЯ ПЕРЕМЕННЫХ И ЗАПУСК ИНТЕРФЕЙСА (только если погода уже выбрана) =====
+if (appData.weather) {
+    let currentSquadIndex = 0;
+    let currentSquad = appData.squads.length > 0 ? appData.squads[0] : null;
+    let morale = currentSquad ? (currentSquad.currentMorale ?? currentSquad.baseMorale) : 0;
+    let suppressed = false, routed = false;
+    let currentTurn = 1;
+    if (appData.currentTurn !== undefined) {
+      currentTurn = appData.currentTurn;
     }
-  } else {
-    log(`${f.name} погиб в пути, боеприпасы не доставлены.`);
-  }
-  delete f.ammoType;
+    let actionPoints = {};
+
+    // Остальные глобальные функции (getMaxShots, canShoot и т.д.) должны быть определены раньше или здесь, но они уже есть выше.
+    // Здесь только запуск интерфейса
+    renderSquadSelector();
+    updateUI();
+    renderTemplateSelection();
+    renderFactionInfo();
+    resetAP();
+} else {
+    showWeatherModal();
 }
-      }
-    });
-  });
-    // Обработка эффекта "Por la revolución!" – штраф ОД на этот ход
-  appData.squads.forEach(s => {
-    // сбрасываем предыдущее временное уменьшение
-    s._tempAPReduction = 0;
-    if (s.effects?.porLaRevolucion?.active && !s.effects.porLaRevolucion.used) {
-      s._tempAPReduction = 2;   // -1 ОД = -2 полу-ОД
-      s.effects.porLaRevolucion.used = true;
-      log(`Отряд "${s.name}" теряет 1 ОД в этом ходу (Por la revolución!)`);
-      }
-  });
+
   resetAP();
   // Сброс счётчиков действий (для лимита выстрелов)
   appData.squads.forEach(s => { s.actionsThisTurn = {}; });
@@ -1222,7 +1154,7 @@ if (currentSquad.name.includes('ДОТ') && currentSquad.crewInstances && curren
     if (!cw || cw.type !== 'mg') return;
     const alive = ci.fighterIndices.filter(i => currentSquad.fighters[i]?.hp > 0).length;
     if (alive === 0) return;
-    const used = getWeaponShotCount(currentSquad, ci.weaponName);
+    const used = getWeaponShotCount(currentSquad, ci.weaponName + '_' + idx);
     const maxShots = getWeaponMaxShots(cw);
     const disabled = (used >= maxShots || getAP(currentSquadIndex) < 2 || getEffectiveMorale() <= 1) ? 'disabled' : '';
     const ammoOk = currentSquad.ammoSmall > 0;
@@ -1337,7 +1269,7 @@ function moveSquad(terrainKey) {
   if (!cw || cw.type !== 'mg') return;
 
   // Проверка лимита выстрелов
-  const used = getWeaponShotCount(currentSquad, ci.weaponName);
+  const used = getWeaponShotCount(currentSquad, ci.weaponName + '_' + ciIndex);
   if (used >= getWeaponMaxShots(cw)) {
     log(`${cw.name}: лимит выстрелов исчерпан.`);
     return;
@@ -1360,7 +1292,7 @@ function moveSquad(terrainKey) {
   }
   shots = Math.min(shots, currentSquad.ammoSmall);
   currentSquad.ammoSmall -= shots;
-  incrementWeaponShotCount(currentSquad, ci.weaponName);
+  incrementWeaponShotCount(currentSquad, ci.weaponName + '_' + ciIndex);
 
   // Расчёт эффективности и урона
   const dist = parseInt(document.getElementById('targetDistance').value) || 5;
