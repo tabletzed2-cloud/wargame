@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.16 — альфа </title>
+  <title>Боевой модуль v11.17 — ночь </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -92,8 +92,17 @@
       <button onclick="closeDetectionModal()" style="background:#555;">Отмена</button>
     </div>
   </div>
+    <div id="weatherModal" class="detection-modal">
+  <div class="detection-modal-content">
+    <h3>Погода и время суток</h3>
+    <div id="weatherOptions"></div>
+    <div style="margin-top:16px; text-align:center;">
+      <button id="weatherConfirmBtn">Начать бой</button>
+    </div>
+  </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.16 — альфа </h2>
+</div>
+  <h2>⚔️ Боевой модуль v11.17 — ночь </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -482,12 +491,14 @@ appData.templates.forEach(t => {
       if (s.embarkedSquadIndex === undefined) s.embarkedSquadIndex = null;
       if (s.hidden === undefined) s.hidden = false;
       if (s.panzerblindeCharges === undefined) s.panzerblindeCharges = 0;
-if (s.atRifleGrenades === undefined) s.atRifleGrenades = 0;
-if (s.flemishFury === undefined) s.flemishFury = false;
-if (s.flemishFuryUsed === undefined) s.flemishFuryUsed = false;
-if (s.effects === undefined) s.effects = {};
-     if (s.ammoRegenCounter === undefined) s.ammoRegenCounter = 0; 
-if (s.attackCounter === undefined) s.attackCounter = 0;});
+      if (s.atRifleGrenades === undefined) s.atRifleGrenades = 0;
+      if (s.flemishFury === undefined) s.flemishFury = false;
+      if (s.flemishFuryUsed === undefined) s.flemishFuryUsed = false;
+      if (s.effects === undefined) s.effects = {};
+      if (s.ammoRegenCounter === undefined) s.ammoRegenCounter = 0; 
+      if (s.attackCounter === undefined) s.attackCounter = 0;
+      if (s.flareCharges === undefined && s.name.includes('Штаб')) s.flareCharges = 4;
+    });
           appData.templates.forEach(t => { 
       if (t.icon === undefined) t.icon = ""; 
       if (t.armor === undefined) t.armor = null;
@@ -512,6 +523,8 @@ if (t.movedThisTurn === undefined) t.movedThisTurn = false;
       if (squad.crewInstances) {
         squad.crewInstances.forEach(ci => { if (ci.active === undefined) ci.active = true; });
       }
+      if (appData.flareActive === undefined) appData.flareActive = false;
+appData.flareCharges = appData.flareCharges || {};
     });
 if (appData.currentTurn === undefined) appData.currentTurn = 1;
     
@@ -589,6 +602,55 @@ function spendAP(squadIndex, cost) {
   return (squad.actionsThisTurn && squad.actionsThisTurn.shots) ? squad.actionsThisTurn.shots : 0;
 }
 
+    function showWeatherModal() {
+  const modal = document.getElementById('weatherModal');
+  const content = document.getElementById('weatherOptions');
+  content.innerHTML = `
+    <div class="detection-option">
+      <label>Время суток:</label>
+      <select id="timeOfDaySelect">
+        <option value="day">День</option>
+        <option value="night">Ночь</option>
+      </select>
+    </div>
+    <div class="detection-option">
+      <label>Погода:</label>
+      <select id="weatherSelect">
+        <option value="clear">Ясно</option>
+        <option value="rain">Дождь</option>
+        <option value="fog">Туман</option>
+      </select>
+    </div>
+    <div class="detection-option" style="color:#aaa;">
+      Ночь: -2 к обнаружению, -2 к меткости<br>
+      Туман: -2 к обнаружению, -2 к меткости<br>
+      Дождь: -1 к обнаружению
+    </div>
+  `;
+  modal.classList.add('active');
+  document.getElementById('weatherConfirmBtn').onclick = function() {
+    const time = document.getElementById('timeOfDaySelect').value;
+    const weather = document.getElementById('weatherSelect').value;
+    appData.timeOfDay = time;
+    appData.weather = weather;
+    modal.classList.remove('active');
+    saveData();
+    // Продолжаем загрузку (вызовется continueAfterFactionChoice или initAfterFactionChoice)
+    if (typeof continueAfterFactionChoice === 'function') {
+     if (!appData.weather) {
+  showWeatherModal();
+} else {
+  continueAfterFactionChoice(); 
+}
+    if (!appData.weather) {
+  showWeatherModal();
+} else {
+  initAfterFactionChoice();
+}
+    }
+  };
+}
+    
 function getMaxShots(squad) {
   if (squad.name.includes('ДОТ')) return 5;   // ПТО(1) + 2 пулемёта по 2
   if (squad.name.includes('САУ')) return 3;   // орудие(1) + пулемёт(2)
@@ -673,7 +735,8 @@ function nextTurn() {
   resetAP();
   // Сброс счётчиков действий (для лимита выстрелов)
   appData.squads.forEach(s => { s.actionsThisTurn = {}; });
-appData.squads.forEach(s => { s.movedThisTurn = false; });
+  appData.squads.forEach(s => { s.movedThisTurn = false; });
+  appData.flareActive = false;
   
   updateUI();
   log(`=== ХОД ${currentTurn} ===`);
@@ -1112,7 +1175,9 @@ function renderActiveCardButtons() {
     const disabled = !(ap >= cost && getEffectiveMorale() > 1);
     html += `<button onclick="throwMolotovAtVehicle()" style="background:#e67e22;" ${disabled ? 'disabled' : ''}>🔥 Бутылка по технике</button> `;
   }
-
+  if (currentSquad.name.includes('Штаб') && currentSquad.flareCharges > 0) {
+  html += `<button onclick="useFlare()" style="background:#f1c40f; color:#000;">🚀 Осветительная ракета (${currentSquad.flareCharges})</button> `;
+  }
   // Ампуломёт по технике
   const hasAmpulomet = currentSquad.crewInstances && currentSquad.crewInstances.some(ci => {
     if (ci.active === false) return false;
@@ -1493,7 +1558,14 @@ function usePanzerblinde() {
   saveData();
   updateUI();
 }
-
+function useFlare() {
+  if (!currentSquad || currentSquad.flareCharges <= 0) return;
+  currentSquad.flareCharges--;
+  appData.flareActive = true;
+  log('Осветительная ракета запущена! Ночные модификаторы отменены на этот ход.');
+  saveData();
+  updateUI();
+}
 function useATGrenade() {
   if (!currentSquad || currentSquad.atRifleGrenades <= 0) return;
   if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'special'))) {
@@ -1854,7 +1926,7 @@ function showDetectionDialog(mode) {
     html += `<div class="detection-option"><input type="checkbox" id="det_${c.id}" value="${c.mod}" ${checked}><label for="det_${c.id}">${c.label} (${c.mod >= 0 ? '+' + c.mod : c.mod})</label></div>`;
   });
   document.getElementById('detectionOptions').innerHTML = html;
-  document.getElementById('detectionModal').classList.add('active');
+  document.getElementById('').classList.add('active');
 
   // Назначаем обработчик кнопки
   document.getElementById('detectionExecuteBtn').onclick = function() {
@@ -1862,7 +1934,7 @@ function showDetectionDialog(mode) {
   };
 }
 
-function closeDetectionModal() {
+function close() {
   document.getElementById('detectionModal').classList.remove('active');
 }
 
@@ -1872,6 +1944,9 @@ function executeDetectionCheck(mode) {
 
   // Считаем сумму отмеченных модификаторов
   let mod = 0;
+  if (appData.timeOfDay === 'night' && !appData.flareActive) mod -= 2;
+if (appData.weather === 'fog') mod -= 2;
+if (appData.weather === 'rain') mod -= 1;
   const checkboxes = document.querySelectorAll('#detectionOptions input[type="checkbox"]:checked');
   checkboxes.forEach(cb => {
     mod += parseInt(cb.value);
@@ -2554,6 +2629,8 @@ function attackSmallArms() {
     currentSquad.fighters.forEach((f, idx) => {
       if (f.hp === 0 || crewMemberIndices.has(idx)) return;
       const roll = rollD10();
+      if (appData.timeOfDay === 'night' && !appData.flareActive) accMod -= 2;
+      if (appData.weather === 'fog') accMod -= 2;
       let effRoll = roll + accMod;
       if (isSuppressed) effRoll -= 1;
       if (effRoll >= cover) { totalHits++; log(`${f.name}: залп отчаяния d10=${roll} -> попал`); }
