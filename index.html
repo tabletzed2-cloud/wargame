@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.20 — ДОТ </title>
+  <title>Боевой модуль v11.21 — ДОТ </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -93,7 +93,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.20 — ДОТ </h2>
+  <h2>⚔️ Боевой модуль v11.21 — ДОТ </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -1385,7 +1385,7 @@ if (btnOrdnance) {
   btnOrdnance.style.opacity = disabled ? '0.5' : '1';
 }
   // ПТО
-  const btnVehicle = document.getElementById('attackVehicle');
+  const btnVehicle = document.getElementById('');
   if (btnVehicle) {
     const cost = getActionCost(currentSquad, 'shoot');
     // Для ПТО нужно проверить наличие орудий
@@ -2019,7 +2019,12 @@ function attackVehicle() {
     return;
   }
 
-  if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'shoot'))) {
+  // Для ДОТа стоимость выстрела из ПТО – 4 полу-ОД (2 ОД)
+const apCost = currentSquad.name.includes('ДОТ') ? 4 : getActionCost(currentSquad, 'shoot');
+if (!spendAP(currentSquadIndex, apCost)) {
+    log('Недостаточно ОД для стрельбы из ПТО.');
+    return;
+}
     log('Недостаточно ОД для стрельбы из ПТО.');
     return;
   }
@@ -2703,7 +2708,8 @@ function attackOrdnance() {
     return;
   }
 
-  if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'shoot'))) {
+ const apCost = (currentSquad.name.includes('ДОТ') || currentSquad.name.includes('САУ')) ? 4 : getActionCost(currentSquad, 'shoot');
+if (!spendAP(currentSquadIndex, apCost)) {
     log('Недостаточно ОД для стрельбы из орудий.');
     return;
   }
