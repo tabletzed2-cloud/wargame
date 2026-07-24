@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.22 — миномет </title>
+  <title>Боевой модуль v11.23 — ночь </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -93,7 +93,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.22 — миномет </h2>
+  <h2>⚔️ Боевой модуль v11.23 — ночь </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -633,6 +633,7 @@ function canShoot(squad) {
 }
     
 function nextTurn() {
+  appData.flareActive = false;
   currentTurn++;
     appData.currentTurn = currentTurn;
   // Обработка возвращения бойцов
@@ -1053,10 +1054,17 @@ function sniperShot() {
   const cover = parseInt(document.getElementById('coverTarget').value) || 6;
   const isSuppressed = getEffectiveMorale() <= getSuppressionThreshold();
   const accMod = (sniperWeapon.accuracyBonus || 0);
+  // Осветительная ракета убирает штраф "Ночи" для снайпера
+let nightPenalty = 0;
+if (appData.flareActive && appData.flareTurn === currentTurn) {
+  const nightMod = (appData.modifiers || []).find(m => m.name === 'Ночь' && m.active);
+  if (nightMod) nightPenalty = -nightMod.accuracyMod; // +1
+}
+const effectiveAccMod = accMod + nightPenalty;
   const damage = sniperWeapon.damagePerHit || 3;
 
   const roll = rollD10();
-  let effRoll = roll + accMod;
+  let effRoll = roll + effectiveAccMod;
   if (isSuppressed) effRoll -= 1;
   if (dist > (sniperWeapon.effectiveRange || 0)) effRoll -= Math.floor((dist - (sniperWeapon.effectiveRange || 0)) / 2);
 
@@ -2019,16 +2027,28 @@ function attackVehicle() {
     return;
   }
 
-  // Для ДОТа стоимость выстрела из ПТО – 4 полу-ОД (2 ОД)
-const apCost = currentSquad.name.includes('ДОТ') ? 4 : getActionCost(currentSquad, 'shoot');
-if (!spendAP(currentSquadIndex, apCost)) {
+  // Стоимость выстрела для ДОТа – 4 полу-ОД (2 ОД), для остальных – стандартно
+  const apCost = currentSquad.name.includes('ДОТ') ? 4 : getActionCost(currentSquad, 'shoot');
+  if (!spendAP(currentSquadIndex, apCost)) {
     log('Недостаточно ОД для стрельбы из ПТО.');
     return;
-}
-  
+  }
+
   const targetState = prompt('Состояние цели:\n1 - неподвижна, открыто\n2 - неподвижна, пересечёнка\n3 - подвижна, пересечёнка', '1');
   let hitTarget = targetState === '2' ? 6 : targetState === '3' ? 7 : 4;
   log('=== АТАКА ПО БРОНЕТЕХНИКЕ ===');
+
+  // Общий модификатор точности из карт и модификаторов
+  const activeMods = [
+    ...(appData.activeCards || []).filter(c => c.active),
+    ...(appData.modifiers || []).filter(m => m.active)
+  ];
+  let accMod = activeMods.reduce((s, m) => s + (m.accuracyMod || 0), 0);
+  // Осветительная ракета убирает штраф "Ночи"
+  if (appData.flareActive && appData.flareTurn === currentTurn) {
+    const nightMod = (appData.modifiers || []).find(m => m.name === 'Ночь' && m.active);
+    if (nightMod) accMod -= nightMod.accuracyMod; // убираем -1
+  }
 
   atGuns.forEach(ci => {
     const cw = crewWeapons.find(w => w.name === ci.weaponName);
@@ -2044,22 +2064,23 @@ if (!spendAP(currentSquadIndex, apCost)) {
     currentSquad.ammoOrdnance -= shots;
     for (let i = 0; i < shots; i++) {
       const roll = rollD10();
-      if (roll >= hitTarget) {
+      const effRoll = roll + accMod;        // <-- теперь учитываем точность
+      if (effRoll >= hitTarget) {
         const loc = rollD6(); const locName = ['Рикошет','Корпус','Гусеницы','Башня','Двигатель','Укладка/бак'][loc-1];
-        log(`✅ ${cw.name}: Попадание! (d10=${roll}) Локация: ${locName}. Пробитие ${penMM} мм.`);
+        log(`✅ ${cw.name}: Попадание! (d10=${roll}+${accMod}=${effRoll}) Локация: ${locName}. Пробитие ${penMM} мм.`);
       } else {
-        log(`❌ ${cw.name}: Промах (d10=${roll})`);
+        log(`❌ ${cw.name}: Промах (d10=${roll}+${accMod}=${effRoll})`);
       }
     }
   });
 
   // Не увеличиваем общий счётчик для ДОТ/САУ, у них свои лимиты на каждое орудие
-if (currentSquad.actionsThisTurn && !currentSquad.name.includes('ДОТ') && !currentSquad.name.includes('САУ')) {
+  if (currentSquad.actionsThisTurn && !currentSquad.name.includes('ДОТ') && !currentSquad.name.includes('САУ')) {
     currentSquad.actionsThisTurn.shots = (currentSquad.actionsThisTurn.shots || 0) + 1;
-}
+  }
   updateUI();
   saveData();
-    }
+}
   
     function attackAmpulometAtVehicle() {
   if (!currentSquad) return;
@@ -2222,6 +2243,15 @@ function throwGrenades() {
   if (currentSquad.grenades <= 0) { log('Нет гранат!'); return; }
   const activeMods = [...(appData.activeCards || []).filter(c => c.active), ...(appData.modifiers || []).filter(m => m.active)];
   let accMod = activeMods.reduce((s, m) => s + (m.accuracyMod || 0), 0);
+  if (appData.flareActive && appData.flareTurn === currentTurn) {
+  const nightMod = (appData.modifiers || []).find(m => m.name === 'Ночь' && m.active);
+  if (nightMod) accMod -= nightMod.accuracyMod;
+}
+  // Осветительная ракета убирает штраф "Ночи"
+if (appData.flareActive && appData.flareTurn === currentTurn) {
+  const nightMod = (appData.modifiers || []).find(m => m.name === 'Ночь' && m.active);
+  if (nightMod) accMod -= nightMod.accuracyMod; // отменяем -1 (прибавляем 1)
+}
   const isSuppressed = getEffectiveMorale() <= getSuppressionThreshold();
   
   const hasDynamic = currentSquad.effects?.dynamic?.active;
@@ -2368,7 +2398,11 @@ function rollD4() {
   const activeMods = [...(appData.activeCards || []).filter(c => c.active), ...(appData.modifiers || []).filter(m => m.active)];
   const shotMod = activeMods.reduce((s, m) => s + (m.shotMod || 0), 0);
   const accMod = activeMods.reduce((s, m) => s + (m.accuracyMod || 0), 0);
-
+// Осветительная ракета убирает штраф "Ночи"
+if (appData.flareActive && appData.flareTurn === currentTurn) {
+  const nightMod = (appData.modifiers || []).find(m => m.name === 'Ночь' && m.active);
+  if (nightMod) accMod -= nightMod.accuracyMod; // -(-1) = +1
+}
   const molotovCrews = (currentSquad.crewInstances || []).filter(ci => {
     if (ci.active === false || ci.status === 'destroyed' || ci.status === 'blinded') return;
     const cw = crewWeapons.find(w => w.name === ci.weaponName);
@@ -2455,6 +2489,10 @@ function throwMolotovAtVehicle() {
   const cover = parseInt(document.getElementById('coverTarget').value) || 6;
   const activeMods = [...(appData.activeCards || []).filter(c => c.active), ...(appData.modifiers || []).filter(m => m.active)];
   const accMod = activeMods.reduce((s, m) => s + (m.accuracyMod || 0), 0);
+  if (appData.flareActive && appData.flareTurn === currentTurn) {
+  const nightMod = (appData.modifiers || []).find(m => m.name === 'Ночь' && m.active);
+  if (nightMod) accMod -= nightMod.accuracyMod;
+}
   const isSuppressed = getEffectiveMorale() <= getSuppressionThreshold();
   const thrower = currentSquad.fighters.find(f => f.hp > 0 && !f.isAway);
 if (!thrower) { log('Нет живых бойцов.'); return; }
