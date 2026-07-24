@@ -467,22 +467,20 @@ appData.squads.forEach(s => {
   if (s.ammoOrdnance === undefined) s.ammoOrdnance = 0;
   if (s.grenades === undefined) s.grenades = s.fighters.length * 2;
   if (s.suppressed === undefined) s.suppressed = false;
-  });
+    });
 appData.templates.forEach(t => {
   if (t.ammoSmall === undefined) t.ammoSmall = 200;
   if (t.ammoOrdnance === undefined) t.ammoOrdnance = 0;
   if (t.grenades === undefined) t.grenades = t.fighters.length * 2;
   if (t.suppressed === undefined) t.suppressed = false;
-});
+  });
   if (appData.flareActive === undefined) appData.flareActive = false;
     appData.squads.forEach(s => { if (s.smokeGrenades === undefined) s.smokeGrenades = 0; });
 appData.templates.forEach(t => { if (t.smokeGrenades === undefined) t.smokeGrenades = 0; });
   if (appData.flareTurn === undefined) appData.flareTurn = 0;
   appData.squads.forEach(s => { if (s.flares === undefined) s.flares = 0; });
-    if (s.smokeGrenades === undefined) s.smokeGrenades = 0
   appData.templates.forEach(t => { if (t.flares === undefined) t.flares = 0; });
-    if (t.smokeGrenades === undefined) t.smokeGrenades = 0;
-      
+          
     appData.modifiers = appData.modifiers || [];
     appData.activeCards = appData.activeCards || [];
     appData.activeCards.forEach(c => { if (c.active === undefined) c.active = true; });
@@ -504,7 +502,9 @@ if (s.flemishFuryUsed === undefined) s.flemishFuryUsed = false;
 if (s.effects === undefined) s.effects = {};
      if (s.ammoRegenCounter === undefined) s.ammoRegenCounter = 0; 
 if (s.attackCounter === undefined) s.attackCounter = 0;
-    if (s.flares === undefined) s.flares = 0;});
+    if (s.flares === undefined) s.flares = 0;
+    if (s.smokeGrenades === undefined) s.smokeGrenades = 0;
+    });
     appData.flareActive = appData.flareActive || false;
 appData.flareTurn = appData.flareTurn || 0;
           appData.templates.forEach(t => { 
@@ -521,6 +521,7 @@ if (t.effects === undefined) t.effects = {};
 if (t.noiseMarker === undefined) t.noiseMarker = false;
 if (t.movedThisTurn === undefined) t.movedThisTurn = false;
       if (t.flares === undefined) t.flares = 0;
+            if (t.smokeGrenades === undefined) t.smokeGrenades = 0;
          });
 
     appData.squads.forEach(squad => {
