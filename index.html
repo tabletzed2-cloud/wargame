@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.29 — подавление </title>
+  <title>Боевой модуль v11.30 — дым </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -289,7 +289,8 @@ if (!selectedFaction) showFactionModal();
   { "name": "Noodrem Аварийный тормоз", "desc": "Техника отъезжает на 1 гекс без траты ОД, следующий ход не двигается.", "effect": "Экстренный манёвр", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/4FArrbf.png", "subfaction": "common", "informational": true },
   { "name": "Велостоянка", "desc": "Маркер на гексе с велосипедами, враг вызывает -1 духа.", "effect": "-1 духа врагу", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/FKGiGJN.png", "subfaction": "common", "informational": true },
   { "name": "Торговый дух", "desc": "Обменять одну карточку снаряжения на случайную.", "effect": "Обмен карты", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/SY8Y04E.png", "subfaction": "common", "informational": true },
-  { "name": "Ночь", "desc": "Все отряды получают -1 к меткости и -2 к обнаружению. Выбранный отряд получает 6 осветительных ракет.", "effect": "Штраф меткости -1, -2 к обнаружению. 6 осветительных ракет у выбранного отряда.", "shotMod": 0, "accuracyMod": -1, "moraleMod": 0, "icon": "https://i.pinimg.com/originals/67/6d/86/676d866b93a12b4f5fd223ecaa658749.jpg?nii=t", "subfaction": "global", "global": true, "flares": 6 }         
+  { "name": "Ночь", "desc": "Все отряды получают -1 к меткости и -2 к обнаружению. Выбранный отряд получает 6 осветительных ракет.", "effect": "Штраф меткости -1, -2 к обнаружению. 6 осветительных ракет у выбранного отряда.", "shotMod": 0, "accuracyMod": -1, "moraleMod": 0, "icon": "https://i.pinimg.com/originals/67/6d/86/676d866b93a12b4f5fd223ecaa658749.jpg?nii=t", "subfaction": "global", "global": true, "flares": 6 },         
+  { "name": "Дымовые гранаты", "desc": "Выбранный отряд получает по 1 дымовой гранате на бойца. Если есть ≥3 гранат, можно создать дымовую завесу (0,5 ОД).","effect": "Выдача дымовых гранат, возможность создать завесу (d12 направление).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true }
             ] 
           },
           "A.I.R.F.": {
@@ -328,8 +329,10 @@ if (!selectedFaction) showFactionModal();
               { "name": "Ампуломёт АМ-1", "desc": "Добавляет расчёт ампуломёта из 3 человек. Дальность 8 гексов, 3 выстрела, урон d4. При 3 попаданиях в гекс – он загорается.", "effect": "Создаёт отряд «Расчёт ампуломёта АМ-1»", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
               { "name": "Ранцевый огнемёт РОКС-3", "desc": "Сапёрное отделение или штаб сапёров получает огнемёт (3 струи). Струя поражает всех в гексе (d6=2-6, урон 2).", "effect": "Заменяет оружие одного бойца на РОКС-3 (3 заряда)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
               { "name": "Огненное поле", "desc": "Перед игрой отметьте гекс в 2 гексах от стартовых позиций. В любой момент подожгите его, нанеся d6 урона врагу и заставив отступить.", "effect": "Информационная – позволяет поджечь выбранный гекс", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "informational": true },
-              { "name": "Ночь", "desc": "Все отряды получают -1 к меткости и -2 к обнаружению. Выбранный отряд получает 6 осветительных ракет.", "effect": "Штраф меткости -1, -2 к обнаружению. 6 осветительных ракет у выбранного отряда.", "shotMod": 0, "accuracyMod": -1, "moraleMod": 0, "icon": "https://i.pinimg.com/originals/67/6d/86/676d866b93a12b4f5fd223ecaa658749.jpg?nii=t", "subfaction": "global", "global": true, "flares": 6 }
-            ]
+              { "name": "Ночь", "desc": "Все отряды получают -1 к меткости и -2 к обнаружению. Выбранный отряд получает 6 осветительных ракет.", "effect": "Штраф меткости -1, -2 к обнаружению. 6 осветительных ракет у выбранного отряда.", "shotMod": 0, "accuracyMod": -1, "moraleMod": 0, "icon": "https://i.pinimg.com/originals/67/6d/86/676d866b93a12b4f5fd223ecaa658749.jpg?nii=t", "subfaction": "global", "global": true, "flares": 6 },
+              { "name": "Дымовые гранаты", "desc": "Выбранный отряд получает по 1 дымовой гранате на бойца. Если есть ≥3 гранат, можно создать дымовую завесу (0,5 ОД).","effect": "Выдача дымовых гранат, возможность создать завесу (d12 направление).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true }
+            ] 
+               ]
           }
         },
         "squads": [],
@@ -472,9 +475,14 @@ appData.templates.forEach(t => {
   if (t.suppressed === undefined) t.suppressed = false;
 });
   if (appData.flareActive === undefined) appData.flareActive = false;
+    appData.squads.forEach(s => { if (s.smokeGrenades === undefined) s.smokeGrenades = 0; });
+appData.templates.forEach(t => { if (t.smokeGrenades === undefined) t.smokeGrenades = 0; });
   if (appData.flareTurn === undefined) appData.flareTurn = 0;
   appData.squads.forEach(s => { if (s.flares === undefined) s.flares = 0; });
+    if (s.smokeGrenades === undefined) s.smokeGrenades = 0
   appData.templates.forEach(t => { if (t.flares === undefined) t.flares = 0; });
+    if (t.smokeGrenades === undefined) t.smokeGrenades = 0;
+      
     appData.modifiers = appData.modifiers || [];
     appData.activeCards = appData.activeCards || [];
     appData.activeCards.forEach(c => { if (c.active === undefined) c.active = true; });
@@ -1180,6 +1188,13 @@ if (currentSquad.flares > 0) {
   const disabled = !(ap >= cost && getEffectiveMorale() > 1);
   html += `<button onclick="fireFlare()" ${disabled ? 'disabled' : ''}>🚀 Осветительная ракета (${currentSquad.flares} шт.)</button> `;
 }
+  // Дымовые гранаты
+if (currentSquad.smokeGrenades >= 3 && !currentSquad.armor) {
+  const cost = 1; // 0.5 ОД = 1 полу-ОД
+  const ap = getAP(currentSquadIndex);
+  const disabled = !(ap >= cost && getEffectiveMorale() > 1);
+  html += `<button onclick="deploySmokeScreen()" style="background:#7f8c8d;" ${disabled ? 'disabled' : ''}>💨 Дымовая завеса (3 грн.)</button> `;
+}
   // Огненное поле
   if (appData.fireFieldHex) {
     const cost = getActionCost(currentSquad, 'special');
@@ -1320,7 +1335,8 @@ function moveSquad(terrainKey) {
   saveData();
   updateUI();
 }
-    
+function rollD12() { return Math.floor(Math.random() * 12) + 1; }
+  
     function fireDOTMG(ciIndex) {
   if (!currentSquad || !currentSquad.crewInstances) return;
   const ci = currentSquad.crewInstances[ciIndex];
@@ -1563,6 +1579,30 @@ function fireFlare() {
   saveData();
   updateUI();
 }
+function deploySmokeScreen() {
+  if (!currentSquad || currentSquad.armor) return;
+  if (currentSquad.smokeGrenades < 3) {
+    log('Недостаточно дымовых гранат (нужно минимум 3).');
+    return;
+  }
+  if (!spendAP(currentSquadIndex, 1)) {
+    log('Недостаточно ОД (требуется 0.5 ОД).');
+    return;
+  }
+  currentSquad.smokeGrenades -= 3;
+  const wind = rollD12();
+  let directionText = '';
+  if (wind === 12) {
+    directionText = 'Штиль – завеса остаётся на месте.';
+  } else {
+    const hours = wind; // 1..11, где 1 = 12 часов, 2 = 1 час, ..., 11 = 11 часов
+    directionText = `Ветер в направлении ${hours} часов – завеса смещается на 1 гекс.`;
+  }
+  log(`💨 Дымовая завеса создана! Бросок d12 = ${wind}. ${directionText}`);
+  saveData();
+  updateUI();
+}
+  
 function suppressiveFire() {
   if (!currentSquad) return;
   if (currentSquad.armor) { log('Техника не ведёт огонь на подавление.'); return; }
@@ -3538,6 +3578,22 @@ case 'Огненное поле': {
     appData.fireFieldHex = hex;
     log(`Огненное поле отмечено на гексе ${hex}.`);
   }
+  break;
+}
+          case 'Дымовые гранаты': {
+  const list = appData.squads.filter(s => !s.hidden && !s.armor);
+  if (list.length === 0) {
+    alert('Нет пехотных отрядов для выдачи гранат.');
+    return;
+  }
+  const choice = prompt('Выберите отряд:\n' + list.map((s,i) => `${i}: ${s.name} [${s.faction}]`).join('\n'));
+  if (choice === null) return;
+  const idx = parseInt(choice);
+  if (isNaN(idx) || idx < 0 || idx >= list.length) return;
+  const squad = list[idx];
+  const count = squad.fighters.filter(f => f.hp > 0).length;
+  squad.smokeGrenades += count;
+  log(`Отряд "${squad.name}" получил ${count} дымовых гранат (всего ${squad.smokeGrenades}).`);
   break;
 }
         default:
