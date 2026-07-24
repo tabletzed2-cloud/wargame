@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.27 — осветительная </title>
+  <title>Боевой модуль v11.28 — подавление </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -93,7 +93,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.27 — осветительная </h2>
+  <h2>⚔️ Боевой модуль v11.28 — подавление </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -463,6 +463,9 @@ appData.squads.forEach(s => {
   if (s.ammoSmall === undefined) s.ammoSmall = 200;
   if (s.ammoOrdnance === undefined) s.ammoOrdnance = 0;
   if (s.grenades === undefined) s.grenades = s.fighters.length * 2;
+   if (s.suppressed === undefined) s.suppressed = false;
+// и для шаблонов:
+if (t.suppressed === undefined) t.suppressed = false;
 });
 appData.templates.forEach(t => {
   if (t.ammoSmall === undefined) t.ammoSmall = 200;
@@ -471,6 +474,9 @@ appData.templates.forEach(t => {
 });
   if (appData.flareActive === undefined) appData.flareActive = false;
   if (appData.flareTurn === undefined) appData.flareTurn = 0;
+    if (s.suppressed === undefined) s.suppressed = false;
+// и для шаблонов:
+if (t.suppressed === undefined) t.suppressed = false;
   appData.squads.forEach(s => { if (s.flares === undefined) s.flares = 0; });
   appData.templates.forEach(t => { if (t.flares === undefined) t.flares = 0; });
     appData.modifiers = appData.modifiers || [];
@@ -596,6 +602,7 @@ function spendAP(squadIndex, cost) {
       maxAp: getMaxAP(s)
     };
   });
+      appData.squads.forEach(s => { s.suppressed = false; });
 }
     function getShotsUsed(squad) {
   return (squad.actionsThisTurn && squad.actionsThisTurn.shots) ? squad.actionsThisTurn.shots : 0;
@@ -687,6 +694,7 @@ function nextTurn() {
   // Сброс счётчиков действий (для лимита выстрелов)
   appData.squads.forEach(s => { s.actionsThisTurn = {}; });
 appData.squads.forEach(s => { s.movedThisTurn = false; });
+appData.squads.forEach(s => { s.suppressed = false; });
   
   updateUI();
   log(`=== ХОД ${currentTurn} ===`);
@@ -1084,6 +1092,7 @@ const effectiveAccMod = accMod + nightPenalty;
   } else {
     log(`❌ Промах (d10=${roll}+${accMod}=${effRoll}).`);
   }
+  if (currentSquad.suppressed) accMod -= 2;
 
   saveData();
   updateUI();
@@ -1197,7 +1206,18 @@ if (currentSquad.name.includes('ДОТ') && currentSquad.crewInstances && curren
     html += `<button onclick="fireDOTMG(${idx})" style="background:#8e44ad;" ${disabled} ${!ammoOk ? 'title="Нет патронов"' : ''}>Пулемёт ${idx+1}-й амбразуры (${used}/${maxShots})</button> `;
   });
 }
-
+// Переключение подавления
+const isSuppressed = currentSquad.suppressed;
+html += `<button onclick="toggleSuppression()" style="background:#f39c12;">${isSuppressed ? '🔥 Подавлен (снять)' : '😐 Не подавлен'}</button> `;
+  
+// Огонь на подавление (только для стрелкового оружия, не техника)
+if (!currentSquad.armor && currentSquad.ammoSmall > 0) {
+  const suppCost = 5; // 3 ОД = 6 полу-ОД
+  const ap = getAP(currentSquadIndex);
+  const disabled = !(ap >= suppCost && getEffectiveMorale() > 1 && !currentSquad.suppressed);
+  html += `<button onclick="suppressiveFire()" style="background:#e67e22;" ${disabled ? 'disabled' : ''}>🔫 Подавить (5 ОД, патр. x2)</button> `;
+}
+  
   // Перемещение
 if (getAP(currentSquadIndex) > 0 && !currentSquad.armor) {
     html += `<button onclick="moveSquad('open')">🌄 Бег (откр.)</button> `;
@@ -1297,6 +1317,14 @@ function moveSquad(terrainKey) {
   updateUI();
 }
 
+    function toggleSuppression() {
+  if (!currentSquad) return;
+  currentSquad.suppressed = !currentSquad.suppressed;
+  log(currentSquad.suppressed ? 'Отряд подавлен (-2 меткость).' : 'Подавление снято.');
+  saveData();
+  updateUI();
+}
+    
     function fireDOTMG(ciIndex) {
   if (!currentSquad || !currentSquad.crewInstances) return;
   const ci = currentSquad.crewInstances[ciIndex];
@@ -1536,6 +1564,41 @@ function fireFlare() {
   appData.flareActive = true;
   appData.flareTurn = currentTurn;
   log(`🚀 Осветительная ракета запущена! Штрафы ночи не действуют до конца хода.`);
+  saveData();
+  updateUI();
+}
+   function suppressiveFire() {
+  if (!currentSquad) return;
+  if (currentSquad.armor) { log('Техника не ведёт огонь на подавление.'); return; }
+  if (getEffectiveMorale() <= 1) { log('Отряд бежит!'); return; }
+  if (currentSquad.ammoSmall <= 0) { log('Нет патронов!'); return; }
+
+  // Требуется 5 ОД (10 полу-ОД)
+  if (!spendAP(currentSquadIndex, 10)) {
+    log('Недостаточно ОД (нужно 5 ОД).');
+    return;
+  }
+
+  // Вычисляем базовый расход патронов (как в обычной атаке, но без бросков)
+  // Суммируем по всем бойцам их скорострельность (значение с кубика d6)
+  const weapons = getFactionWeapons(currentSquad.faction);
+  let baseShots = 0;
+  const crewMemberIndices = new Set();
+  if (currentSquad.crewInstances) {
+    currentSquad.crewInstances.forEach(ci => {
+      if (ci.active !== false) ci.fighterIndices.forEach(idx => crewMemberIndices.add(idx));
+    });
+  }
+  currentSquad.fighters.forEach(f => {
+    if (f.hp === 0 || crewMemberIndices.has(currentSquad.fighters.indexOf(f))) return;
+    const w = weapons.find(w => w.name === f.weapon);
+    if (w) baseShots += w.values[rollD6() - 1]; // симулируем бросок для каждого
+  });
+  baseShots = Math.min(baseShots, currentSquad.ammoSmall);
+  const ammoCost = Math.min(baseShots * 2, currentSquad.ammoSmall);
+  currentSquad.ammoSmall -= ammoCost;
+
+  log(`Отряд ведёт огонь на подавление! Потрачено патронов: ${ammoCost} (базовый расход ${baseShots} x2).`);
   saveData();
   updateUI();
 }
@@ -2437,6 +2500,7 @@ if (appData.flareActive && appData.flareTurn === currentTurn) {
   const nightMod = (appData.modifiers || []).find(m => m.name === 'Ночь' && m.active);
   if (nightMod) accMod -= nightMod.accuracyMod; // -(-1) = +1
 }
+      if (currentSquad.suppressed) accMod -= 2;
   const molotovCrews = (currentSquad.crewInstances || []).filter(ci => {
     if (ci.active === false || ci.status === 'destroyed' || ci.status === 'blinded') return;
     const cw = crewWeapons.find(w => w.name === ci.weaponName);
@@ -2579,6 +2643,7 @@ function attackSmallArms() {
     accMod += 1;
     log('Кальвинистская эффективность: +1 меткость (без движения)');
   }
+  if (currentSquad.suppressed) accMod -= 2;
 
   const dist = parseInt(document.getElementById('targetDistance').value) || 5;
   const cover = parseInt(document.getElementById('coverTarget').value) || 6;
