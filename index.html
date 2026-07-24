@@ -463,20 +463,16 @@ appData.squads.forEach(s => {
   if (s.ammoSmall === undefined) s.ammoSmall = 200;
   if (s.ammoOrdnance === undefined) s.ammoOrdnance = 0;
   if (s.grenades === undefined) s.grenades = s.fighters.length * 2;
-   if (s.suppressed === undefined) s.suppressed = false;
-// и для шаблонов:
-if (t.suppressed === undefined) t.suppressed = false;
-});
+  if (s.suppressed === undefined) s.suppressed = false;
+  });
 appData.templates.forEach(t => {
   if (t.ammoSmall === undefined) t.ammoSmall = 200;
   if (t.ammoOrdnance === undefined) t.ammoOrdnance = 0;
   if (t.grenades === undefined) t.grenades = t.fighters.length * 2;
+  if (t.suppressed === undefined) t.suppressed = false;
 });
   if (appData.flareActive === undefined) appData.flareActive = false;
   if (appData.flareTurn === undefined) appData.flareTurn = 0;
-    if (s.suppressed === undefined) s.suppressed = false;
-// и для шаблонов:
-if (t.suppressed === undefined) t.suppressed = false;
   appData.squads.forEach(s => { if (s.flares === undefined) s.flares = 0; });
   appData.templates.forEach(t => { if (t.flares === undefined) t.flares = 0; });
     appData.modifiers = appData.modifiers || [];
