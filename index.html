@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.24 — ночь </title>
+  <title>Боевой модуль v11.26 — осветительная </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -93,7 +93,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.24 — ночь </h2>
+  <h2>⚔️ Боевой модуль v11.26 — осветительная </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -493,7 +493,10 @@ if (s.flemishFury === undefined) s.flemishFury = false;
 if (s.flemishFuryUsed === undefined) s.flemishFuryUsed = false;
 if (s.effects === undefined) s.effects = {};
      if (s.ammoRegenCounter === undefined) s.ammoRegenCounter = 0; 
-if (s.attackCounter === undefined) s.attackCounter = 0;});
+if (s.attackCounter === undefined) s.attackCounter = 0;
+    if (s.flares === undefined) s.flares = 0;});
+    appData.flareActive = appData.flareActive || false;
+appData.flareTurn = appData.flareTurn || 0;
           appData.templates.forEach(t => { 
       if (t.icon === undefined) t.icon = ""; 
       if (t.armor === undefined) t.armor = null;
@@ -503,10 +506,11 @@ if (s.attackCounter === undefined) s.attackCounter = 0;});
 if (t.flemishFury === undefined) t.flemishFury = false;
 if (t.flemishFuryUsed === undefined) t.flemishFuryUsed = false;
 if (t.effects === undefined) t.effects = {};
-            if (t.lastMeleeRolls === undefined) t.lastMeleeRolls = [];
+      if (t.lastMeleeRolls === undefined) t.lastMeleeRolls = [];
       if (t.detected === undefined) t.detected = false;
 if (t.noiseMarker === undefined) t.noiseMarker = false;
 if (t.movedThisTurn === undefined) t.movedThisTurn = false;
+      if (t.flares === undefined) t.flares = 0;
          });
 
     appData.squads.forEach(squad => {
@@ -1522,7 +1526,20 @@ function usePanzerblinde() {
   saveData();
   updateUI();
 }
-
+function fireFlare() {
+  if (!currentSquad || currentSquad.flares <= 0) return;
+  if (!spendAP(currentSquadIndex, 2)) {
+    log('Недостаточно ОД для запуска ракеты (требуется 1 ОД).');
+    return;
+  }
+  currentSquad.flares--;
+  appData.flareActive = true;
+  appData.flareTurn = currentTurn;
+  log(`🚀 Осветительная ракета запущена! Штрафы ночи не действуют до конца хода.`);
+  saveData();
+  updateUI();
+}
+    
 function useATGrenade() {
   if (!currentSquad || currentSquad.atRifleGrenades <= 0) return;
   if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'special'))) {
