@@ -3413,8 +3413,7 @@ case 'Огненное поле': {
 }
         default:
           break;
-      }
-case 'Ночь': {
+          case 'Ночь': {
   // Добавляем глобальный модификатор штрафа меткости
   appData.modifiers.push({ name: 'Ночь', shotMod: 0, accuracyMod: -1, moraleMod: 0, active: true });
   // Выбор отряда для ракет
@@ -3431,6 +3430,8 @@ case 'Ночь': {
   log(`Отряд "${list[idx].name}" получил 6 осветительных ракет.`);
   break;
 }
+      }
+
       // Добавляем карту в список активных (общие карты без цели)
       if (!['Geen Duibreed Terug!'].includes(card.name)) {
         appData.activeCards.push({ ...card, faction, active: true });
