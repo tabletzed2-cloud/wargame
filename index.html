@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.32 — медали </title>
+  <title>Боевой модуль v11.33 — медали </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -93,7 +93,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.32 — медали </h2>
+  <h2>⚔️ Боевой модуль v11.33 — медали </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -255,6 +255,13 @@ if (!selectedFaction) showFactionModal();
         "factions": {
           "BeVe": {
             "icon": "https://i.imgur.com/8yfFp7I.png",
+            "awards": [
+  { "id": "wound", "name": "Нашивка за ранение", "icon": "https://i.imgur.com/placeholder_wound.png" },
+  { "id": "colonial", "name": "Медаль за колониальную службу", "icon": "https://i.imgur.com/placeholder_colonial.png" },
+  { "id": "valor", "name": "Орден Доблести Бенилюкса", "icon": "https://i.imgur.com/placeholder_valor.png" },
+  { "id": "melee", "name": "Медаль за Ближний бой", "icon": "https://i.imgur.com/placeholder_melee.png" },
+  { "id": "leopold", "name": "Медаль Леопольда", "icon": "https://i.imgur.com/placeholder_leopold.png" }
+]
             "weapons": [
               { "name": "Винтовка FN model 24/30", "values": [1,1,1,1,1,1], "effectiveRange": 5, "meleeBonus": 1, "icon": "https://i.imgur.com/wiNFynL.png", "iconSize": "30px"},
               { "name": "Винтовка Geweer M95", "values": [1,1,1,1,1,2], "effectiveRange": 5, "meleeBonus": 1, "icon": "https://i.imgur.com/pUJVSSe.png", "iconSize": "30px"},
@@ -296,6 +303,14 @@ if (!selectedFaction) showFactionModal();
           },
           "A.I.R.F.": {
             "icon": "https://i.imgur.com/V6YvAfB.png",
+            "awards": [
+  { "id": "wound_airf", "name": "Нашивка за ранение", "icon": "https://i.imgur.com/placeholder_wound.png" },
+  { "id": "red_sun", "name": "Орден Красное Солнце Анд", "icon": "https://i.imgur.com/placeholder_red_sun.png" },
+  { "id": "mountain", "name": "Знак «Горный Турист»", "icon": "https://i.imgur.com/placeholder_mountain.png" },
+  { "id": "dagger", "name": "Знак «Кинжал Республики»", "icon": "https://i.imgur.com/placeholder_dagger.png" },
+  { "id": "sapper", "name": "Медаль «За Сапёрную Доблесть»", "icon": "https://i.imgur.com/placeholder_sapper.png" },
+  { "id": "loyalty", "name": "Орден «За верность Республике»", "icon": "https://i.imgur.com/placeholder_loyalty.png" }
+]
             "weapons": [
               { "name": "Винтовка Vz.24", "values": [1,1,1,1,1,1], "effectiveRange": 5, "meleeBonus": 1, "icon": "https://i.imgur.com/MOKxQYc.png", "iconSize": "40px"},
               { "name": "Пистолет Star M1914", "values": [0,1,1,2,2,3], "effectiveRange": 2, "meleeBonus": 0, "icon": "https://i.imgur.com/xB7ekEE.png", "iconSize": "30px"},
@@ -332,7 +347,8 @@ if (!selectedFaction) showFactionModal();
               { "name": "Огненное поле", "desc": "Перед игрой отметьте гекс в 2 гексах от стартовых позиций. В любой момент подожгите его, нанеся d6 урона врагу и заставив отступить.", "effect": "Информационная – позволяет поджечь выбранный гекс", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "informational": true },
               { "name": "Ночь", "desc": "Все отряды получают -1 к меткости и -2 к обнаружению. Выбранный отряд получает 6 осветительных ракет.", "effect": "Штраф меткости -1, -2 к обнаружению. 6 осветительных ракет у выбранного отряда.", "shotMod": 0, "accuracyMod": -1, "moraleMod": 0, "icon": "https://i.pinimg.com/originals/67/6d/86/676d866b93a12b4f5fd223ecaa658749.jpg?nii=t", "subfaction": "global", "global": true, "flares": 6 },
               { "name": "Дымовые гранаты", "desc": "Выбранный отряд получает по 1 дымовой гранате на бойца. Если есть ≥3 гранат, можно создать дымовую завесу (0,5 ОД).","effect": "Выдача дымовых гранат, возможность создать завесу (d12 направление).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true }
-            ] 
+            ]
+
                
           }
         },
@@ -373,6 +389,7 @@ if (!selectedFaction) showFactionModal();
             {"name":"Пулеметчик 2","weapon":"Винтовка FN model 24/30","hp":3,"maxHp":3},
             {"name":"Второй номер 2","weapon":"Винтовка FN model 24/30","hp":3,"maxHp":3}
           ],
+
           "crewInstances":[
             {"weaponName":"Расчёт ПТО Bohler M37","fighterIndices":[3,4,5],"active":true},
             {"weaponName":"Станковый пулемет Schwarzlose M.08/15","fighterIndices":[6,7,8],"active":true},
@@ -507,6 +524,12 @@ if (s.attackCounter === undefined) s.attackCounter = 0;
     if (s.smokeGrenades === undefined) s.smokeGrenades = 0;
       s.fighters.forEach(f => { if (f.awards === undefined) f.awards = []; });
     });
+          appData.squads.forEach(s => {
+  s.fighters.forEach(f => { if (f.awards === undefined) f.awards = []; });
+});
+appData.templates.forEach(t => {
+  t.fighters.forEach(f => { if (f.awards === undefined) f.awards = []; });
+});
     appData.flareActive = appData.flareActive || false;
 appData.flareTurn = appData.flareTurn || 0;
           appData.templates.forEach(t => { 
@@ -954,14 +977,29 @@ function disembarkSquad() {
   if (f.isAway) {
     status = ` (в отлучке, вернётся через ${f.turnsToReturn} ходов)`;
   }
+  
+  // Собираем иконки наград
+  let awardsHtml = '';
+  const factionAwards = (appData.factions[currentSquad.faction] && appData.factions[currentSquad.faction].awards) 
+    ? appData.factions[currentSquad.faction].awards : [];
+  if (f.awards && f.awards.length > 0) {
+    f.awards.forEach(awardId => {
+      const awardDef = factionAwards.find(a => a.id === awardId);
+      if (awardDef && awardDef.icon) {
+        awardsHtml += `<img src="${awardDef.icon}" style="width:20px; height:20px; vertical-align:middle; margin-left:2px;" title="${awardDef.name}">`;
+      }
+    });
+  }
+  
   html += `<div class="card ${cls}">
     <strong>${f.name}</strong> ${(() => {
-  const wep = getFactionWeapons(currentSquad.faction).find(w => w.name === f.weapon);
-  return wep && wep.icon ? `<img src="${wep.icon}" style="height:${wep.iconSize || '30px'}; vertical-align:middle; margin:0 4px;" title="${f.weapon}">` : `[${f.weapon || 'Без оружия'}]`;
-})()} HP: ${f.hp}/${f.maxHp} ${f.isCommander ? '⭐' : ''} ${status}
+      const wep = getFactionWeapons(currentSquad.faction).find(w => w.name === f.weapon);
+      return wep && wep.icon ? `<img src="${wep.icon}" style="height:${wep.iconSize || '30px'}; vertical-align:middle; margin:0 4px;" title="${f.weapon}">` : `[${f.weapon || 'Без оружия'}]`;
+    })()} ${awardsHtml} HP: ${f.hp}/${f.maxHp} ${f.isCommander ? '⭐' : ''} ${status}
     <button onclick="adjustHP(${index}, 1)" style="background:#27ae60; padding:2px 5px; margin-left:8px;">+</button>
     <button onclick="adjustHP(${index}, -1)" style="background:#c0392b; padding:2px 5px;">-</button>
     ${!f.isCommander && f.hp > 0 && !f.isAway ? `<button onclick="sendForAmmo(${index})" style="background:#f39c12;">📦 За боеприпасами</button>` : ''}
+    <button onclick="assignAwardToFighter(${index})" style="background:#f1c40f; padding:2px 5px; margin-left:4px;" title="Наградить">🏅</button>
   </div>`;
 });
             if (currentSquad.embarkedSquadIndex !== null) {
@@ -1689,7 +1727,31 @@ function suppressiveFire() {
   saveData();
   updateUI();
 }
-    
+ function assignAwardToFighter(fighterIndex) {
+  if (!currentSquad) return;
+  const fighter = currentSquad.fighters[fighterIndex];
+  if (!fighter) return;
+  
+  const faction = currentSquad.faction;
+  const factionData = appData.factions[faction];
+  if (!factionData || !factionData.awards) {
+    alert('Для этой фракции не определены награды.');
+    return;
+  }
+  
+  const awardsList = factionData.awards;
+  let listText = awardsList.map((a, i) => `${i+1}: ${a.name}`).join('\n');
+  const choice = prompt(`Выберите награду для бойца "${fighter.name}":\n${listText}`);
+  if (!choice) return;
+  const idx = parseInt(choice) - 1;
+  if (isNaN(idx) || idx < 0 || idx >= awardsList.length) return;
+  
+  if (!fighter.awards) fighter.awards = [];
+  fighter.awards.push(awardsList[idx].id);
+  saveData();
+  updateUI();
+  log(`Боец "${fighter.name}" награждён: ${awardsList[idx].name}`);
+}   
 function useATGrenade() {
   if (!currentSquad || currentSquad.atRifleGrenades <= 0) return;
   if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'special'))) {
@@ -1954,6 +2016,10 @@ function meleeAttack() {
     if (f.awards && f.awards.includes('Медаль за Ближний бой')) {
   bonus += 1;
   // опционально: log(`${f.name}: +1 за Медаль за Ближний бой`);
+}
+    if (f.awards && f.awards.includes('melee')) { // id 'melee' для BeVe
+  bonus += 1;
+  log(`${f.name}: +1 за Медаль за Ближний бой`);
 }
     let roll = rollD6() + bonus;
     let baseDie = roll - bonus;
