@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.31 — косметический </title>
+  <title>Боевой модуль v11.32 — медали </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -93,7 +93,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.31 — косметический </h2>
+  <h2>⚔️ Боевой модуль v11.32 — медали </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -101,6 +101,7 @@
     <button class="tablinks" onclick="openTab(event,'crewTab')">💣 Расчёты</button>
     <button class="tablinks" onclick="openTab(event,'cardsTab')">🃏 Карты</button>
     <button class="tablinks" onclick="openTab(event,'activeEffectsTab')">✨ Эффекты</button>
+    <button class="tablinks" onclick="openTab(event,'awardsTab')">🏅 Награды</button>
     <button class="tablinks" onclick="openTab(event,'saveTab')">💾 Шаблоны</button>
   </div>
 
@@ -504,6 +505,7 @@ if (s.effects === undefined) s.effects = {};
 if (s.attackCounter === undefined) s.attackCounter = 0;
     if (s.flares === undefined) s.flares = 0;
     if (s.smokeGrenades === undefined) s.smokeGrenades = 0;
+      s.fighters.forEach(f => { if (f.awards === undefined) f.awards = []; });
     });
     appData.flareActive = appData.flareActive || false;
 appData.flareTurn = appData.flareTurn || 0;
@@ -522,6 +524,7 @@ if (t.noiseMarker === undefined) t.noiseMarker = false;
 if (t.movedThisTurn === undefined) t.movedThisTurn = false;
       if (t.flares === undefined) t.flares = 0;
             if (t.smokeGrenades === undefined) t.smokeGrenades = 0;
+            t.fighters.forEach(f => { if (f.awards === undefined) f.awards = []; });
          });
 
     appData.squads.forEach(squad => {
@@ -1948,6 +1951,10 @@ function meleeAttack() {
       bonus -= 1;
       log('Кальвинистская сдержанность: -1 в защите');
     }
+    if (f.awards && f.awards.includes('Медаль за Ближний бой')) {
+  bonus += 1;
+  // опционально: log(`${f.name}: +1 за Медаль за Ближний бой`);
+}
     let roll = rollD6() + bonus;
     let baseDie = roll - bonus;
     currentSquad.lastMeleeRolls.push(baseDie);
@@ -2707,7 +2714,64 @@ if (effRoll >= cover) {
   saveData();
   updateUI();
 }
-
+function renderAwardsOverview() {
+  const container = document.getElementById('awardsOverview');
+  if (!container) return;
+  let html = '';
+  appData.squads.filter(s => !s.hidden).forEach(squad => {
+    html += `<div style="margin:8px 0; background:#2a2a2a; padding:8px; border-radius:4px;">
+      <strong>${squad.name} [${squad.faction}]</strong><br>`;
+    squad.fighters.forEach(f => {
+      html += `${f.name}: ${(f.awards && f.awards.length > 0) ? f.awards.join(', ') : 'нет наград'}<br>`;
+    });
+    html += '</div>';
+  });
+  container.innerHTML = html || '<p>Нет отрядов.</p>';
+}
+    
+function addAwardToFighter(fighterIndex) {
+  if (!currentSquad) return;
+  const fighter = currentSquad.fighters[fighterIndex];
+  if (!fighter) return;
+  
+  const faction = currentSquad.faction;
+  let awardsList = [];
+  if (faction === 'BeVe') {
+    awardsList = [
+      'Нашивка за ранение',
+      'Медаль за колониальную службу',
+      'Орден Доблести Бенилюкса',
+      'Медаль за Ближний бой',
+      'Медаль Леопольда'
+    ];
+  } else if (faction === 'A.I.R.F.') {
+    awardsList = [
+      'Нашивка за ранение',
+      'Орден Красное Солнце Анд',
+      'Знак "Горный Турист"',
+      'Знак «Кинжал Республики»',
+      'Медаль «За Сапёрную Доблесть»',
+      'Орден «За верность Республике»'
+    ];
+  } else {
+    alert('Награды не определены для этой фракции');
+    return;
+  }
+  
+  const award = prompt('Выберите награду:\n' + awardsList.map((a, i) => `${i+1}: ${a}`).join('\n'));
+  if (!award) return;
+  const idx = parseInt(award) - 1;
+  if (isNaN(idx) || idx < 0 || idx >= awardsList.length) return;
+  
+  if (!fighter.awards) fighter.awards = [];
+  fighter.awards.push(awardsList[idx]);
+  saveData();
+  updateUI();
+  // Если вкладка «Состав» открыта – обновить
+  if (document.getElementById('rosterTab').style.display === 'block') {
+    buildRosterEditor();
+  }
+}
     
 function attackSmallArms() {
   if (!currentSquad) return;
@@ -3054,16 +3118,19 @@ if (currentSquad.actionsThisTurn && !currentSquad.name.includes('ДОТ') && !cu
       container.innerHTML = html;
       const weapons = getFactionWeapons(currentSquad.faction);
       const rosterDiv = document.getElementById('rosterEditor');
-      rosterDiv.innerHTML = currentSquad.fighters.map((f,i)=> {
-        const opts = weapons.map(w=>`<option value="${w.name}" ${f.weapon===w.name?'selected':''}>${w.name}</option>`).join('');
-        return `<div class="fighter-row">
-          <input value="${f.name}" onchange="currentSquad.fighters[${i}].name=this.value" style="width:100px">
-          <select onchange="currentSquad.fighters[${i}].weapon=this.value">${opts}</select>
-          HP:<input type="number" value="${f.hp}" min="0" max="${f.maxHp}" onchange="currentSquad.fighters[${i}].hp=Math.min(this.value,currentSquad.fighters[${i}].maxHp)" style="width:50px">
-          Макс:<input type="number" value="${f.maxHp}" min="1" onchange="currentSquad.fighters[${i}].maxHp=parseInt(this.value)" style="width:50px">
-          Ком:<input type="checkbox" ${f.isCommander?'checked':''} onchange="currentSquad.fighters[${i}].isCommander=this.checked">
-        </div>`;
-      }).join('');
+      rosterDiv.innerHTML = currentSquad.fighters.map((f,i) => {
+  const opts = weapons.map(w=>`<option value="${w.name}" ${f.weapon===w.name?'selected':''}>${w.name}</option>`).join('');
+  const awardsStr = (f.awards && f.awards.length > 0) ? f.awards.join(', ') : 'нет';
+  return `<div class="fighter-row">
+    <input value="${f.name}" onchange="currentSquad.fighters[${i}].name=this.value" style="width:100px">
+    <select onchange="currentSquad.fighters[${i}].weapon=this.value">${opts}</select>
+    HP:<input type="number" value="${f.hp}" min="0" max="${f.maxHp}" onchange="currentSquad.fighters[${i}].hp=Math.min(this.value,currentSquad.fighters[${i}].maxHp)" style="width:50px">
+    Макс:<input type="number" value="${f.maxHp}" min="1" onchange="currentSquad.fighters[${i}].maxHp=parseInt(this.value)" style="width:50px">
+    Ком:<input type="checkbox" ${f.isCommander?'checked':''} onchange="currentSquad.fighters[${i}].isCommander=this.checked">
+    🏅 <span id="awards-${i}">${awardsStr}</span>
+    <button onclick="addAwardToFighter(${i})" style="font-size:0.8em;">+</button>
+  </div>`;
+}).join('');
       renderCrewAssignmentsList();
     }
 
@@ -3751,6 +3818,7 @@ container.innerHTML = filteredTemplates.map(t => {
       else if (tabName === 'activeEffectsTab') { renderActiveEffects(); }
       else if (tabName === 'saveTab') renderTemplates();
       else if (tabName === 'battleTab') { renderSquadSelector(); renderTemplateSelection(); updateUI(); renderEmbarkPanel(); renderFactionInfo(); }
+      else if (tabName === 'awardsTab') { renderAwardsOverview(); }
     }
 
     // Инициализация
@@ -3760,5 +3828,9 @@ container.innerHTML = filteredTemplates.map(t => {
     renderFactionInfo();
     resetAP();
   </script>
+  <div id="awardsTab" class="tabcontent">
+  <h3>🏅 Награды отрядов</h3>
+  <div id="awardsOverview"></div>
+</div>
 </body>
 </html>
