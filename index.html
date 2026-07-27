@@ -986,7 +986,7 @@ function disembarkSquad() {
     f.awards.forEach(awardId => {
       const awardDef = factionAwards.find(a => a.id === awardId);
       if (awardDef && awardDef.icon) {
-        awardsHtml += `<img src="${awardDef.icon}" style="width:20px; height:20px; vertical-align:middle; margin-left:2px;" title="${awardDef.name}">`;
+        awardsHtml += `<img src="${awardDef.icon}" style="width:30px; height:45px; vertical-align:middle; margin-left:2px;" title="${awardDef.name}">`;
       }
     });
   }
