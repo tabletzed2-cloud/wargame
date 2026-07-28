@@ -991,7 +991,6 @@ function disembarkSquad() {
   // Собираем иконки наград
 const factionAwards = (appData.factions[currentSquad.faction] && appData.factions[currentSquad.faction].awards) 
     ? appData.factions[currentSquad.faction].awards : [];
-...
 f.awards.forEach(awardId => {
   const awardDef = factionAwards.find(a => a.id === awardId);
   if (awardDef) {
