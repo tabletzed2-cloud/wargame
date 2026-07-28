@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.35 — медали </title>
+  <title>Боевой модуль v11.36 — медали </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -93,7 +93,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.35 — медали </h2>
+  <h2>⚔️ Боевой модуль v11.36 — медали </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -1151,7 +1151,6 @@ const effectiveAccMod = accMod + nightPenalty;
   } else {
     log(`❌ Промах (d10=${roll}+${accMod}=${effRoll}).`);
   }
-  if (currentSquad.suppressed) accMod -= 2;
 
   saveData();
   updateUI();
@@ -1504,7 +1503,7 @@ if (btnOrdnance) {
   btnOrdnance.style.opacity = disabled ? '0.5' : '1';
 }
   // ПТО
-  const btnVehicle = document.getElementById('');
+  const btnVehicle = document.getElementById('attackVehicle');
   if (btnVehicle) {
     const cost = getActionCost(currentSquad, 'shoot');
     // Для ПТО нужно проверить наличие орудий
@@ -1587,7 +1586,7 @@ function useLastBreath() {
   }
   log('=== ДЛИННОЕ ДЫХАНИЕ ===');
   let totalDamage = 0;
-  f => {
+  currentSquad.fighters.forEach(f => {
     if (f.hp < f.maxHp) {
       const roll = rollD6();
       if (roll >= 5) {
@@ -2026,10 +2025,6 @@ function meleeAttack() {
       bonus -= 1;
       log('Кальвинистская сдержанность: -1 в защите');
     }
-    if (f.awards && f.awards.includes('Медаль за Ближний бой')) {
-  bonus += 1;
-  // опционально: log(`${f.name}: +1 за Медаль за Ближний бой`);
-}
     if (f.awards && f.awards.includes('melee')) { // id 'melee' для BeVe
   bonus += 1;
   log(`${f.name}: +1 за Медаль за Ближний бой`);
