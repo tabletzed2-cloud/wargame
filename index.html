@@ -562,14 +562,23 @@ appData.squads.forEach(squad => {
 });
 
 // Миграция: добавляем desc в награды, если их нет
-Object.values(appData.factions).forEach(f => {
-  if (f.awards) f.awards.forEach(a => {
-    if (!a.criteria || a.criteria === undefined) a.criteria = ''; // если нет или пусто – оставляем пустым, но гарантируем наличие
-    // Но лучше вообще убрать заполнение criteria, потому что оно должно браться из getDefaultData
-    // Однако для совместимости оставьте так:
-    if (a.bonus === undefined) a.bonus = a.desc || '';
-    if (a.iconWidth === undefined) a.iconWidth = a.iconSize || '40px';
-    if (a.iconHeight === undefined) a.iconHeight = a.iconSize || '40px';
+// Миграция наград: заполняем критерии, бонусы и размеры из дефолтных данных
+const defaultData = getDefaultData();
+Object.keys(appData.factions).forEach(factionKey => {
+  const faction = appData.factions[factionKey];
+  if (!faction.awards) return;
+  const defaultFaction = defaultData.factions[factionKey];
+  if (!defaultFaction || !defaultFaction.awards) return;
+  faction.awards.forEach(a => {
+    const defAward = defaultFaction.awards.find(da => da.id === a.id);
+    if (!defAward) return;
+    // Критерии: если нет или пусто – берём из дефолтных
+    if (!a.criteria || a.criteria === '') a.criteria = defAward.criteria || '';
+    // Бонус: если нет или пусто – из дефолтных, иначе оставляем старый
+    if (!a.bonus || a.bonus === '') a.bonus = defAward.bonus || a.desc || '';
+    // Размеры иконок
+    if (!a.iconWidth) a.iconWidth = defAward.iconWidth || a.iconSize || '40px';
+    if (!a.iconHeight) a.iconHeight = defAward.iconHeight || a.iconSize || '40px';
   });
 });
 
