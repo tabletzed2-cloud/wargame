@@ -564,7 +564,9 @@ appData.squads.forEach(squad => {
 // Миграция: добавляем desc в награды, если их нет
 Object.values(appData.factions).forEach(f => {
   if (f.awards) f.awards.forEach(a => {
-    if (a.criteria === undefined) a.criteria = '';
+    if (!a.criteria || a.criteria === undefined) a.criteria = ''; // если нет или пусто – оставляем пустым, но гарантируем наличие
+    // Но лучше вообще убрать заполнение criteria, потому что оно должно браться из getDefaultData
+    // Однако для совместимости оставьте так:
     if (a.bonus === undefined) a.bonus = a.desc || '';
     if (a.iconWidth === undefined) a.iconWidth = a.iconSize || '40px';
     if (a.iconHeight === undefined) a.iconHeight = a.iconSize || '40px';
