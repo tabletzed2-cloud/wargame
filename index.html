@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.37 — медали </title>
+  <title>Боевой модуль v11.39 — медали </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -93,7 +93,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.37 — медали </h2>
+  <h2>⚔️ Боевой модуль v11.39 — медали </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -256,11 +256,11 @@ if (!selectedFaction) showFactionModal();
           "BeVe": {
             "icon": "https://i.imgur.com/8yfFp7I.png",
             "awards": [
-  { "id": "wound", "name": "Нашивка за ранение", "icon": "https://i.imgur.com/M7IOyK6.png", "iconSize": "40px", "bonus": "Один раз за бой восстановить 1 HP", "criteria": "Боец с 1 HP в конце боя, отряд не бежал" },
-  { "id": "colonial", "name": "Медаль за колониальную службу", "icon": "https://i.imgur.com/gnEpBuT.png", "iconSize": "55px", "bonus": "+1 к духу в жарком климате", "criteria": "Выдаётся игроком перед боем" },
-  { "id": "valor", "name": "Орден Доблести Бенилюкса", "icon": "https://i.imgur.com/9jX5NTD.png", "iconSize": "55px", "bonus": "+1 доп. попадание при стрельбе", "criteria": "Отряд уничтожил/обратил в бегство 5 отрядов" },
-  { "id": "melee", "name": "Медаль за Ближний бой", "icon": "https://i.imgur.com/ZxtNkQV.png", "iconSize": "60px", "bonus": "+1 в рукопашной", "criteria": "Отряд отразил 3 рукопашные/гранатные атаки" },
-  { "id": "leopold", "name": "Медаль Леопольда", "icon": "https://i.imgur.com/MU2oxsM.png","iconSize": "60px", "bonus": "+1 к укрытию в обороне для отряда", "criteria": "Все выжившие имеют 1 HP, отряд не отступил, бой выигран" }
+  { "id": "wound", "name": "Нашивка за ранение", "icon": "https://i.imgur.com/M7IOyK6.png", "iconWidth": "45px", "iconHeight": "45px", "bonus": "Один раз за бой восстановить 1 HP", "": "Боец с 1 HP в конце боя, отряд не бежал" },
+  { "id": "colonial", "name": "Медаль за колониальную службу", "icon": "https://i.imgur.com/gnEpBuT.png",, "iconWidth": "40px", "iconHeight": "50px", "bonus": "+1 к духу в жарком климате", "": "Выдаётся игроком перед боем" },
+  { "id": "valor", "name": "Орден Доблести Бенилюкса", "icon": "https://i.imgur.com/9jX5NTD.png", "iconWidth": "40px", "iconHeight": "50px", "iconHeight": "55px", "bonus": "+1 доп. попадание при стрельбе", "": "Отряд уничтожил/обратил в бегство 5 отрядов" },
+  { "id": "melee", "name": "Медаль за Ближний бой", "icon": "https://i.imgur.com/ZxtNkQV.png", "iconWidth": "40px", "iconHeight": "55px", "bonus": "+1 в рукопашной", "": "Отряд отразил 3 рукопашные/гранатные атаки" },
+  { "id": "leopold", "name": "Медаль Леопольда", "icon": "https://i.imgur.com/MU2oxsM.png", "iconWidth": "40px", "iconHeight": "55px", "bonus": "+1 к укрытию в обороне для отряда", "": "Все выжившие имеют 1 HP, отряд не отступил, бой выигран" }
 ],
             "weapons": [
               { "name": "Винтовка FN model 24/30", "values": [1,1,1,1,1,1], "effectiveRange": 5, "meleeBonus": 1, "icon": "https://i.imgur.com/wiNFynL.png", "iconSize": "30px"},
@@ -304,12 +304,12 @@ if (!selectedFaction) showFactionModal();
           "A.I.R.F.": {
             "icon": "https://i.imgur.com/V6YvAfB.png",
             "awards": [
-  { "id": "wound_airf", "name": "Нашивка за ранение", "icon": "", "iconSize": "40px", "bonus": "Один раз за бой восстановить 1 HP", "criteria": "Боец с 1 HP в конце боя, отряд не бежал" },
-  { "id": "red_sun", "name": "Орден Красное Солнце Анд", "icon": "", "iconSize": "40px",  "bonus": "+1 к укрытию на открытой местности", "criteria": "Вручается командиру взвода если потери взвода после боя составили меньше 50% личного состава" },
-  { "id": "mountain", "name": "Знак «Горный Турист»", "icon": "", "iconSize": "40px", "bonus": "Рывок на 1 гекс в гористой и холмистой местности, 1 раз за бой", "criteria": "Выдается в начале игры одному солдату на выбор" },
-  { "id": "dagger", "name": "Знак «Кинжал Республики»", "icon": "", "iconSize": "40px", "bonus": "Может перебросить провал на обнаружение", "criteria": "Выдается всем выжившим бойцам отряда, подобравшихся незамеченными к противнику на дистанцию рывка в рукопашную атаку 2-3 гекса" },
-  { "id": "sapper", "name": "Медаль «За Сапёрную Доблесть»", "icon": "", "iconSize": "40px", "bonus": "При провале подрыва не погибает а получает только 1 ед. урона", "criteria": "Получает сапер, который успешно подорвал бронетехнику или ДОТ при этом выжил" },
-  { "id": "loyalty", "name": "Орден «За верность Республике»", "icon": "", "iconSize": "40px", "bonus": "+1 к боевому духу всех отрядов во взводе", "criteria": "Выдается командиру взвода если ни один его отряд не бежал с поля боя. +1 к боевому духу всех отрядов во взводе" }
+  { "id": "wound_airf", "name": "Нашивка за ранение", "icon": "", "iconWidth": "40px", "iconHeight": "55px", "bonus": "Один раз за бой восстановить 1 HP", "": "Боец с 1 HP в конце боя, отряд не бежал" },
+  { "id": "red_sun", "name": "Орден Красное Солнце Анд", "icon": "", "iconWidth": "40px", "iconHeight": "55px",  "bonus": "+1 к укрытию на открытой местности", "": "Вручается командиру взвода если потери взвода после боя составили меньше 50% личного состава" },
+  { "id": "mountain", "name": "Знак «Горный Турист»", "icon": "", "iconWidth": "40px", "iconHeight": "55px", "bonus": "Рывок на 1 гекс в гористой и холмистой местности, 1 раз за бой", "": "Выдается в начале игры одному солдату на выбор" },
+  { "id": "dagger", "name": "Знак «Кинжал Республики»", "icon": "", "iconWidth": "40px", "iconHeight": "55px", "bonus": "Может перебросить провал на обнаружение", "": "Выдается всем выжившим бойцам отряда, подобравшихся незамеченными к противнику на дистанцию рывка в рукопашную атаку 2-3 гекса" },
+  { "id": "sapper", "name": "Медаль «За Сапёрную Доблесть»", "icon": "", "iconWidth": "40px", "iconHeight": "55px", "bonus": "При провале подрыва не погибает а получает только 1 ед. урона", "": "Получает сапер, который успешно подорвал бронетехнику или ДОТ при этом выжил" },
+  { "id": "loyalty", "name": "Орден «За верность Республике»", "icon": "", "iconWidth": "40px", "iconHeight": "55px", "bonus": "+1 к боевому духу всех отрядов во взводе", "": "Выдается командиру взвода если ни один его отряд не бежал с поля боя. +1 к боевому духу всех отрядов во взводе" }
 ],
             "weapons": [
               { "name": "Винтовка Vz.24", "values": [1,1,1,1,1,1], "effectiveRange": 5, "meleeBonus": 1, "icon": "https://i.imgur.com/MOKxQYc.png", "iconSize": "40px"},
@@ -564,9 +564,10 @@ appData.squads.forEach(squad => {
 // Миграция: добавляем desc в награды, если их нет
 Object.values(appData.factions).forEach(f => {
   if (f.awards) f.awards.forEach(a => {
-    if (a.criteria === undefined) a.criteria = '';
+    if (a. === undefined) a. = '';
     if (a.bonus === undefined) a.bonus = a.desc || '';
-    if (a.iconSize === undefined) a.iconSize = '50px';
+    if (a.iconWidth === undefined) a.iconWidth = a.iconSize || '40px';
+    if (a.iconHeight === undefined) a.iconHeight = a.iconSize || '40px';
   });
 });
 
@@ -997,9 +998,10 @@ currentSquad.fighters.forEach((f, index) => {
     f.awards.forEach(awardId => {
       const awardDef = factionAwards.find(a => a.id === awardId);
       if (awardDef && awardDef.icon) {
-        const imgSize = awardDef.iconSize || '40px';
+       const imgWidth = awardDef.iconWidth || awardDef.iconSize || '40px';
+       const imgHeight = awardDef.iconHeight || awardDef.iconSize || '40px';
         const titleText = `${awardDef.name}\nЗа что: ${awardDef.criteria || '—'}\nБонус: ${awardDef.bonus || '—'}`;
-        awardsHtml += `<img src="${awardDef.icon}" style="width:${imgSize}; height:${imgSize}; vertical-align:middle; margin-left:2px;" title="${titleText}">`;
+        awardsHtml += `<img src="${awardDef.icon}" style="width:${imgWidth}; height:${imgHeight}; vertical-align:middle; margin-left:2px;" title="${titleText}">`;
       }
     });
   }
@@ -3839,15 +3841,16 @@ function editCard(faction, idx) {
     html += `<h4 style="margin-top:12px;">${faction}</h4>`;
     factionAwards.forEach(award => {
       const imgTag = award.icon 
-        ? `<img src="${award.icon}" style="width:${award.iconSize || '60px'}; height:${award.iconSize || '60px'}; object-fit:contain; vertical-align:middle; margin-right:10px;">` 
-        : '';
+  ? `<img src="${award.icon}" style="width:${award.iconWidth || award.iconSize || '60px'}; height:${award.iconHeight || award.iconSize || '60px'}; object-fit:contain; vertical-align:middle; margin-right:10px;">` 
+  : '';
       html += `
         <div style="background:#2a2a2a; padding:10px; margin:6px 0; border-radius:8px; display:flex; align-items:center;">
           ${imgTag}
-          <div style="flex:1;">
-            <strong>${award.name}</strong><br>
-            <span style="color:#aaa;">За что: ${award.criteria || '—'}</span><br>
-            </div>
+<div style="flex:1;">
+  <strong>${award.name}</strong><br>
+  <span style="color:#aaa;">За что: ${award.criteria || '—'}</span><br>
+  <span style="color:#f1c40f;">Бонус: ${award.bonus || '—'}</span>
+</div>
         </div>`;
     });
   });
