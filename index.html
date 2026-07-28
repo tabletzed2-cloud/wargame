@@ -981,25 +981,29 @@ function disembarkSquad() {
       if (currentSquad.armor) {
         html += `<div style="margin-bottom:6px; font-size:0.9rem; color:#aaa;">🛡️ Броня: Лоб ${currentSquad.armor.front}мм / Борт ${currentSquad.armor.side}мм / Корма ${currentSquad.armor.rear}мм` + (currentSquad.armor.turret !== null && currentSquad.armor.turret !== undefined ? ` / Башня ${currentSquad.armor.turret}мм` : '') + `</div>`;
       }
-      currentSquad.fighters.forEach((f, index) => {
+const factionAwards = (appData.factions[currentSquad.faction] && appData.factions[currentSquad.faction].awards) 
+  ? appData.factions[currentSquad.faction].awards : [];
+
+currentSquad.fighters.forEach((f, index) => {
   const cls = f.hp === 0 ? 'dead' : '';
   let status = '';
   if (f.isAway) {
     status = ` (в отлучке, вернётся через ${f.turnsToReturn} ходов)`;
   }
   
-  // Собираем иконки наград
-const factionAwards = (appData.factions[currentSquad.faction] && appData.factions[currentSquad.faction].awards) 
-    ? appData.factions[currentSquad.faction].awards : [];
-f.awards.forEach(awardId => {
-  const awardDef = factionAwards.find(a => a.id === awardId);
-  if (awardDef) {
-    const imgSize = awardDef.iconSize || '40px';
-    const titleText = `${awardDef.name}\nЗа что: ${awardDef.criteria || '—'}\nБонус: ${awardDef.bonus || '—'}`;
-    awardsHtml += `<img src="${awardDef.icon}" style="width:${imgSize}; height:${imgSize}; vertical-align:middle; margin-left:2px;" title="${titleText}">`;
+  // Собираем иконки наград (только один блок, без дублирования)
+  let awardsHtml = '';
+  if (f.awards && f.awards.length > 0) {
+    f.awards.forEach(awardId => {
+      const awardDef = factionAwards.find(a => a.id === awardId);
+      if (awardDef && awardDef.icon) {
+        const imgSize = awardDef.iconSize || '40px';
+        const titleText = `${awardDef.name}\nЗа что: ${awardDef.criteria || '—'}\nБонус: ${awardDef.bonus || '—'}`;
+        awardsHtml += `<img src="${awardDef.icon}" style="width:${imgSize}; height:${imgSize}; vertical-align:middle; margin-left:2px;" title="${titleText}">`;
+      }
+    });
   }
-});
-  
+
   html += `<div class="card ${cls}">
     <strong>${f.name}</strong> ${(() => {
       const wep = getFactionWeapons(currentSquad.faction).find(w => w.name === f.weapon);
@@ -1583,7 +1587,7 @@ function useLastBreath() {
   }
   log('=== ДЛИННОЕ ДЫХАНИЕ ===');
   let totalDamage = 0;
-  currentSquad.fighters.forEach(f => {
+  f => {
     if (f.hp < f.maxHp) {
       const roll = rollD6();
       if (roll >= 5) {
