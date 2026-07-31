@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.41 — медали </title>
+  <title>Боевой модуль v11.42 — фикс </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -93,7 +93,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.41 — медали </h2>
+  <h2>⚔️ Боевой модуль v11.42 — фикс </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -128,9 +128,10 @@
   <button onclick="moveToNextSquad()">→ Следующий отряд</button>
   <button onclick="skipSquad()">⏩ Пропустить отряд</button>
 </div>
-    <div class="section">
-      <label>Дистанция до цели (гексы): <input type="number" id="targetDistance" value="5" min="1" style="width:60px"></label>
-    </div>
+<div style="display:none">
+  <label>Дистанция: <input type="number" id="targetDistance" value="5" min="1"></label>
+  <label>Укрытие: <input type="number" id="coverTarget" value="6" min="2" max="10"></label>
+</div>
     <div id="activeCardsBattle" style="margin:6px 0; padding:6px; background:#2a2a2a; border-radius:4px;">
   <strong>Активные карты:</strong> <span id="activeCardsListBattle">Нет</span>
       <div id="activeCardButtons" style="margin:6px 0;"></div>
@@ -151,14 +152,13 @@
     <button onclick="healAll()">🩹 Вылечить всех</button>
     <button onclick="resetAll()">🔄 Сбросить</button>
     <hr>
-    <label>Укрытие цели (d10 >= <input type="number" id="coverTarget" value="6" min="2" max="10" style="width:50px">)</label>
-    <button id="attackSmallArms" onclick="attackSmallArms()">🔫 Стрелковое / Пулемёты</button>
-    <button id="attackOrdnance" onclick="attackOrdnance()">💥 Орудия / Миномёты</button>
-    <button id="attackVehicle" onclick="attackVehicle()">🚀 Атака ПТО по технике</button>
-    <button onclick="attackMolotovCrew()" id="btnMolotovCrew" style="display:none; background:#e67e22;">🔥 Бутылкомет по технике</button>
-    <button id="throwGrenades" onclick="throwGrenades()">💣 Бросок гранат</button>
+    <button onclick="openTargetModal('smallArms')">🔫 Стрелковое / Пулемёты</button>
+    <button onclick="openTargetModal('ordnance')">💥 Орудия / Миномёты</button>
+    <button onclick="openTargetModal('vehicle')">🚀 Атака ПТО по технике</button>
+    <button onclick="openTargetModal('molotovCrew')" id="btnMolotovCrew" style="display:none; background:#e67e22;">🔥 Бутылкомет по технике</button>
+    <button onclick="openTargetModal('grenades')">💣 Бросок гранат</button>
     <button id="satchelCharge" onclick="satchelCharge()">🧨 Связка гранат</button>
-    <button id="sniperShot" onclick="sniperShot()" style="display:none;">🎯 Снайперский выстрел</button>
+    <button id="sniperShot" onclick="openTargetModal('sniper')" style="display:none;">🎯 Снайперский выстрел</button>
     <button id="meleeAttack" onclick="meleeAttack()">⚔️ Рукопашная</button>
     <hr>
     <label>Входящий урон: <input type="number" id="incomingDamage" value="0" min="0" style="width:60px"></label>
@@ -253,6 +253,17 @@ if (!selectedFaction) showFactionModal();
     function getDefaultData() {
       return {
         "factions": {
+          "_global": {
+  "icon": "",
+  "awards": [],
+  "weapons": [],
+  "crewWeapons": [],
+  "cardLibrary": [
+    // перенести сюда "Ночь" и "Дымовые гранаты" из BeVe/A.I.R.F.
+    { "name": "Дымовые гранаты", "desc": "Выбранный отряд получает по 1 дымовой гранате на бойца. Если есть ≥3 гранат, можно создать дымовую завесу (0,5 ОД).","effect": "Выдача дымовых гранат, возможность создать завесу (d12 направление).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
+    { "name": "Ночь", "desc": "Все отряды получают -1 к меткости и -2 к обнаружению. Выбранный отряд получает 6 осветительных ракет.", "effect": "Штраф меткости -1, -2 к обнаружению. 6 осветительных ракет у выбранного отряда.", "shotMod": 0, "accuracyMod": -1, "moraleMod": 0, "icon": "https://i.pinimg.com/originals/67/6d/86/676d866b93a12b4f5fd223ecaa658749.jpg?nii=t", "subfaction": "global", "global": true, "flares": 6 }
+  ]
+}
           "BeVe": {
             "icon": "https://i.imgur.com/8yfFp7I.png",
             "awards": [
@@ -296,10 +307,8 @@ if (!selectedFaction) showFactionModal();
   { "name": "Скоординированный заградительный огонь", "desc": "Отделение поддержки подавляет 2 смежных гекса.", "effect": "Подавление 2 гексов", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "informational": true },
   { "name": "Noodrem Аварийный тормоз", "desc": "Техника отъезжает на 1 гекс без траты ОД, следующий ход не двигается.", "effect": "Экстренный манёвр", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/4FArrbf.png", "subfaction": "common", "informational": true },
   { "name": "Велостоянка", "desc": "Маркер на гексе с велосипедами, враг вызывает -1 духа.", "effect": "-1 духа врагу", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/FKGiGJN.png", "subfaction": "common", "informational": true },
-  { "name": "Торговый дух", "desc": "Обменять одну карточку снаряжения на случайную.", "effect": "Обмен карты", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/SY8Y04E.png", "subfaction": "common", "informational": true },
-  { "name": "Ночь", "desc": "Все отряды получают -1 к меткости и -2 к обнаружению. Выбранный отряд получает 6 осветительных ракет.", "effect": "Штраф меткости -1, -2 к обнаружению. 6 осветительных ракет у выбранного отряда.", "shotMod": 0, "accuracyMod": -1, "moraleMod": 0, "icon": "https://i.pinimg.com/originals/67/6d/86/676d866b93a12b4f5fd223ecaa658749.jpg?nii=t", "subfaction": "global", "global": true, "flares": 6 },         
-  { "name": "Дымовые гранаты", "desc": "Выбранный отряд получает по 1 дымовой гранате на бойца. Если есть ≥3 гранат, можно создать дымовую завесу (0,5 ОД).","effect": "Выдача дымовых гранат, возможность создать завесу (d12 направление).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true }
-            ] 
+  { "name": "Торговый дух", "desc": "Обменять одну карточку снаряжения на случайную.", "effect": "Обмен карты", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/SY8Y04E.png", "subfaction": "common", "informational": true }     
+           ] 
           },
           "A.I.R.F.": {
             "icon": "https://i.imgur.com/V6YvAfB.png",
@@ -344,12 +353,9 @@ if (!selectedFaction) showFactionModal();
               { "name": "Фосфорные гранаты", "desc": "Выбранный отряд получает 7 фосфорных гранат вместо обычных. При попадании 4+ бойцов создаётся дымовая завеса.", "effect": "7 фосфорных гранат, дымовая завеса при попадании 4+ бойцов", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
               { "name": "Ампуломёт АМ-1", "desc": "Добавляет расчёт ампуломёта из 3 человек. Дальность 8 гексов, 3 выстрела, урон d4. При 3 попаданиях в гекс – он загорается.", "effect": "Создаёт отряд «Расчёт ампуломёта АМ-1»", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
               { "name": "Ранцевый огнемёт РОКС-3", "desc": "Сапёрное отделение или штаб сапёров получает огнемёт (3 струи). Струя поражает всех в гексе (d6=2-6, урон 2).", "effect": "Заменяет оружие одного бойца на РОКС-3 (3 заряда)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
-              { "name": "Огненное поле", "desc": "Перед игрой отметьте гекс в 2 гексах от стартовых позиций. В любой момент подожгите его, нанеся d6 урона врагу и заставив отступить.", "effect": "Информационная – позволяет поджечь выбранный гекс", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "informational": true },
-              { "name": "Ночь", "desc": "Все отряды получают -1 к меткости и -2 к обнаружению. Выбранный отряд получает 6 осветительных ракет.", "effect": "Штраф меткости -1, -2 к обнаружению. 6 осветительных ракет у выбранного отряда.", "shotMod": 0, "accuracyMod": -1, "moraleMod": 0, "icon": "https://i.pinimg.com/originals/67/6d/86/676d866b93a12b4f5fd223ecaa658749.jpg?nii=t", "subfaction": "global", "global": true, "flares": 6 },
-              { "name": "Дымовые гранаты", "desc": "Выбранный отряд получает по 1 дымовой гранате на бойца. Если есть ≥3 гранат, можно создать дымовую завесу (0,5 ОД).","effect": "Выдача дымовых гранат, возможность создать завесу (d12 направление).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true }
-            ]
-
-               
+              { "name": "Огненное поле", "desc": "Перед игрой отметьте гекс в 2 гексах от стартовых позиций. В любой момент подожгите его, нанеся d6 урона врагу и заставив отступить.", "effect": "Информационная – позволяет поджечь выбранный гекс", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "informational": true }
+               ]
+              
           }
         },
         "squads": [],
@@ -746,6 +752,12 @@ function nextTurn() {
   // Сброс счётчиков действий (для лимита выстрелов)
   appData.squads.forEach(s => { s.actionsThisTurn = {}; });
 appData.squads.forEach(s => { s.movedThisTurn = false; });
+  appData.squads.forEach(s => {
+  if (s.noiseMarker) {
+    s.noiseMarker = false;
+    s.detected = false; // отряд снова скрыт
+  }
+});
 appData.squads.forEach(s => { s.suppressed = false; });
   
   updateUI();
@@ -1060,6 +1072,14 @@ if (currentSquad.effects?.geenDuibreed) {
 const eff = morale + mod + extraMorale;
       const pct = Math.max(0, eff / base * 100);
       document.getElementById('moraleContainer').innerHTML = `<div>Дух: ${morale}/${base} ${mod !== 0 ? `(эфф. ${eff})` : ''}</div><div class="morale-bar" style="width:${pct}%; background:${eff <= 0 ? '#c0392b' : eff <= base/2 ? '#f39c12' : '#27ae60'}"></div>`;
+     if (eff <= 1) {
+  if (!currentSquad.suppressed) {
+    currentSquad.suppressed = true;
+    log(`⚠️ Отряд "${currentSquad.name}" подавлен (боевой дух ≤ 1)!`);
+  }
+} else if (currentSquad.suppressed && eff > 1) {
+  currentSquad.suppressed = false;
+}
       // Обновляем отображение ОД и хода
       document.getElementById('apDisplay').innerText = getAP(currentSquadIndex);
       document.getElementById('maxApDisplay').innerText = actionPoints[currentSquadIndex] ? actionPoints[currentSquadIndex].maxAp : 0;
@@ -1101,6 +1121,13 @@ function renderFactionInfo() {
     ${iconUrl ? `<img src="${iconUrl}" style="height:40px; border-radius:4px;" alt="${selectedFaction}">` : ''}
     <span style="font-weight:bold; font-size:1.1rem;">Выбрана фракция: ${selectedFaction}${subText}</span>
   `;
+}
+    
+function handleFighterDeath(squad) {
+  if (!squad || squad.fighters.length === 0) return;
+  const total = squad.fighters.length;
+  squad.ammoSmall = Math.max(0, squad.ammoSmall - Math.ceil(squad.ammoSmall / total));
+  squad.grenades = Math.max(0, squad.grenades - Math.ceil(squad.grenades / total));
 }
     
 function sniperShot() {
@@ -1156,7 +1183,11 @@ const effectiveAccMod = accMod + nightPenalty;
   let effRoll = roll + effectiveAccMod;
   if (isSuppressed) effRoll -= 1;
   if (dist > (sniperWeapon.effectiveRange || 0)) effRoll -= Math.floor((dist - (sniperWeapon.effectiveRange || 0)) / 2);
-
+  const modParts = [];
+if (accMod) modParts.push(`точность ${accMod > 0 ? '+' + accMod : accMod}`);
+if (typeof shotMod !== 'undefined' && shotMod) modParts.push(`скорострельность ${shotMod > 0 ? '+' + shotMod : shotMod}`);
+if (modParts.length) log(`🎯 Модификаторы: ${modParts.join(', ')}`);
+  
   log(`=== СНАЙПЕРСКИЙ ВЫСТРЕЛ (${sniper.name}) ===`);
   if (effRoll >= cover) {
     log(`🎯 Попадание! d10=${roll}+${accMod} = ${effRoll}, урон: ${damage}`);
@@ -1204,7 +1235,7 @@ function renderActiveCardButtons() {
     html += `<button onclick="usePanzerblinde()" style="background:#5d3a1a;">✨ Ослепить танк (${currentSquad.panzerblindeCharges} залп.)</button> `;
   }
   if (currentSquad.atRifleGrenades > 0) {
-    html += `<button onclick="useATGrenade()" style="background:#8e44ad;">🧨 Винтовочная граната (${currentSquad.atRifleGrenades} шт., 50мм)</button> `;
+    html += `<button onclick="openTargetModal('atGrenade')" style="background:#8e44ad;">🧨 Винтовочная граната (${currentSquad.atRifleGrenades} шт., 50мм)</button> `;
   }
   if (currentSquad.flemishFury && !currentSquad.flemishFuryUsed) {
     html += `<button onclick="activateFlemishFury()" style="background:#c0392b;">🔥 Фламандская фурия</button> `;
@@ -1229,7 +1260,7 @@ function renderActiveCardButtons() {
     const cost = getActionCost(currentSquad, 'shoot');
     const ap = getAP(currentSquadIndex);
     const disabled = !(ap >= cost && canShoot(currentSquad) && getEffectiveMorale() > 1);
-    html += `<button onclick="attackAmpulometAtVehicle()" style="background:#8e44ad;" ${disabled ? 'disabled' : ''}>💥 Ампуломёт по технике</button> `;
+    html += `<button onclick="openTargetModal('ampulomet')" style="background:#8e44ad;" ${disabled ? 'disabled' : ''}>💥 Ампуломёт по технике</button> `;
   }
 
   // Термитный заряд
@@ -1693,6 +1724,10 @@ function suppressiveFire() {
     const nightMod = (appData.modifiers || []).find(m => m.name === 'Ночь' && m.active);
     if (nightMod) accMod -= nightMod.accuracyMod;
   }
+  const modParts = [];
+if (accMod) modParts.push(`точность ${accMod > 0 ? '+' + accMod : accMod}`);
+if (typeof shotMod !== 'undefined' && shotMod) modParts.push(`скорострельность ${shotMod > 0 ? '+' + shotMod : shotMod}`);
+if (modParts.length) log(`🎯 Модификаторы: ${modParts.join(', ')}`);
   const isSuppressed = getEffectiveMorale() <= getSuppressionThreshold();
 
   // Собираем индексы бойцов, не входящих в расчёты
@@ -1862,6 +1897,8 @@ function updateActiveCardsBattle() {
       const newHp = f.hp + delta;
       if (newHp < 0 || newHp > f.maxHp) return;
       f.hp = newHp;
+      if (newHp === 0 && f.hp > 0) handleFighterDeath(currentSquad);
+      if (newHp === 0 && f.hp !== newHp) handleFighterDeath(currentSquad);
       updateUI();
       saveData();
       if (f.hp === 0) log(`${f.name} потерял сознание (HP 0).`);
@@ -2106,7 +2143,36 @@ function toggleDeploy() {
   updateUI();
 }
     let detectionMode = ''; // 'check' или 'hide'
+let pendingAttack = null;
 
+function openTargetModal(attackType) {
+  pendingAttack = attackType;
+  document.getElementById('modalDistance').value = document.getElementById('targetDistance').value;
+  document.getElementById('modalCover').value = document.getElementById('coverTarget').value;
+  document.getElementById('targetModal').classList.add('active');
+}
+
+function closeTargetModal() {
+  document.getElementById('targetModal').classList.remove('active');
+}
+
+function executeAttack() {
+  document.getElementById('targetDistance').value = document.getElementById('modalDistance').value;
+  document.getElementById('coverTarget').value = document.getElementById('modalCover').value;
+  closeTargetModal();
+  switch (pendingAttack) {
+    case 'smallArms': attackSmallArms(); break;
+    case 'ordnance': attackOrdnance(); break;
+    case 'vehicle': attackVehicle(); break;
+    case 'sniper': sniperShot(); break;
+    case 'molotovCrew': attackMolotovCrew(); break;
+    case 'ampulomet': attackAmpulometAtVehicle(); break;
+    case 'atGrenade': useATGrenade(); break;
+    // гранаты и связка обрабатываются без модалки
+  }
+  pendingAttack = null;
+}
+    
 function showDetectionDialog(mode) {
   if (!currentSquad) return;
   detectionMode = mode;
@@ -2116,18 +2182,18 @@ function showDetectionDialog(mode) {
 
   // Список условий с модификаторами
   const conditions = [
-    { id: 'fired', label: 'Отряд вёл стрельбу', mod: 3 },
+    { id: 'fired', label: 'Ваш отряд вёл стрельбу', mod: 3 },
     { id: 'armor', label: 'Бронетехника/автотранспорт', mod: currentSquad.armor ? 3 : 2 },
-    { id: 'controlled', label: 'Сектор под контролем', mod: 2 },
+    { id: 'controlled', label: 'Сектор под контролем противника', mod: 2 },
     { id: 'fastmove', label: 'Передвигается ускоренно', mod: 1 },
     { id: 'platoon', label: 'Размер отряда взвод и больше', mod: 1 },
-    { id: 'night', label: 'Ночь/туман/дымовая завеса', mod: -2 },
+    { id: 'night', label: 'Дымовая завеса', mod: -2 },
     { id: 'building', label: 'Отряд в здании/окопе', mod: -2 },
     { id: 'stationary', label: 'Отряд неподвижен', mod: -2 },
     { id: 'forest', label: 'В лесу/кустах/залег', mod: -1 },
-    { id: 'scout', label: 'Разведчики', mod: -1 },
+    { id: 'scout', label: 'Разведчики/Камуфляж/Снайпер', mod: -1 },
     { id: 'sneak', label: 'Скрытное перемещение', mod: -1 },
-    { id: 'enemyfight', label: 'Противник ведёт бой', mod: -1 }
+    { id: 'enemyfight', label: 'Противник ведёт бой на другом секторе', mod: -1 }
   ];
 
   let html = '';
@@ -2323,7 +2389,11 @@ function attackVehicle() {
     const nightMod = (appData.modifiers || []).find(m => m.name === 'Ночь' && m.active);
     if (nightMod) accMod -= nightMod.accuracyMod; // убираем -1
   }
-
+const modParts = [];
+if (accMod) modParts.push(`точность ${accMod > 0 ? '+' + accMod : accMod}`);
+if (typeof shotMod !== 'undefined' && shotMod) modParts.push(`скорострельность ${shotMod > 0 ? '+' + shotMod : shotMod}`);
+if (modParts.length) log(`🎯 Модификаторы: ${modParts.join(', ')}`);
+  
   atGuns.forEach(ci => {
     const cw = crewWeapons.find(w => w.name === ci.weaponName);
     if (!cw) return;
@@ -2526,6 +2596,10 @@ if (appData.flareActive && appData.flareTurn === currentTurn) {
   const nightMod = (appData.modifiers || []).find(m => m.name === 'Ночь' && m.active);
   if (nightMod) accMod -= nightMod.accuracyMod; // отменяем -1 (прибавляем 1)
 }
+  const modParts = [];
+if (accMod) modParts.push(`точность ${accMod > 0 ? '+' + accMod : accMod}`);
+if (typeof shotMod !== 'undefined' && shotMod) modParts.push(`скорострельность ${shotMod > 0 ? '+' + shotMod : shotMod}`);
+if (modParts.length) log(`🎯 Модификаторы: ${modParts.join(', ')}`);
   const isSuppressed = getEffectiveMorale() <= getSuppressionThreshold();
   
   const hasDynamic = currentSquad.effects?.dynamic?.active;
@@ -2878,6 +2952,10 @@ function attackSmallArms() {
     log('Кальвинистская эффективность: +1 меткость (без движения)');
   }
   if (currentSquad.suppressed) accMod -= 2;
+  const modParts = [];
+if (accMod) modParts.push(`точность ${accMod > 0 ? '+' + accMod : accMod}`);
+if (typeof shotMod !== 'undefined' && shotMod) modParts.push(`скорострельность ${shotMod > 0 ? '+' + shotMod : shotMod}`);
+if (modParts.length) log(`🎯 Модификаторы: ${modParts.join(', ')}`);
 
   const dist = parseInt(document.getElementById('targetDistance').value) || 5;
   const cover = parseInt(document.getElementById('coverTarget').value) || 6;
@@ -3061,7 +3139,11 @@ function attackOrdnance() {
   const shotMod = activeMods.reduce((s, m) => s + (m.shotMod || 0), 0);
   const dist = parseInt(document.getElementById('targetDistance').value) || 5;
   const isSuppressed = getEffectiveMorale() <= getSuppressionThreshold();
-
+const modParts = [];
+if (accMod) modParts.push(`точность ${accMod > 0 ? '+' + accMod : accMod}`);
+if (typeof shotMod !== 'undefined' && shotMod) modParts.push(`скорострельность ${shotMod > 0 ? '+' + shotMod : shotMod}`);
+if (modParts.length) log(`🎯 Модификаторы: ${modParts.join(', ')}`);
+  
   // Проверяем, есть ли хотя бы одно доступное орудие (не исчерпан лимит)
   let anyAvailable = false;
   if (currentSquad.crewInstances) {
@@ -3162,6 +3244,7 @@ if (currentSquad.actionsThisTurn && !currentSquad.name.includes('ДОТ') && !cu
         if (alive.length === 0) break;
         const target = alive[Math.floor(Math.random() * alive.length)];
         target.hp--;
+        if (target.hp === 0) handleFighterDeath(currentSquad);
         log(`${target.name} ранен (HP: ${target.hp}/${target.maxHp})`);
         if (target.hp === 0) {
           log(`☠️ ${target.name} погиб!`);
@@ -3176,7 +3259,13 @@ if (currentSquad.actionsThisTurn && !currentSquad.name.includes('ДОТ') && !cu
       }
       updateUI(); saveData();
     }
-
+function handleFighterDeath(squad) {
+  if (!squad || squad.fighters.length === 0) return;
+  const total = squad.fighters.length;
+  squad.ammoSmall = Math.max(0, squad.ammoSmall - Math.ceil(squad.ammoSmall / total));
+  squad.grenades = Math.max(0, squad.grenades - Math.ceil(squad.grenades / total));
+}
+    
     // =================== ВКЛАДКА СОСТАВ ===================
     function buildRosterEditor() {
       const container = document.getElementById('rosterContent');
@@ -3313,6 +3402,10 @@ function renderCardSelectionForBattle() {
     // Глобальные карты показываем всегда, независимо от фракции
 if (card.global) {
   // ничего не пропускаем
+  const globalFaction = appData.factions['_global'];
+if (globalFaction && globalFaction.cardLibrary) {
+  globalFaction.cardLibrary.forEach(card => allCards.push({ ...card, faction: '_global' }));
+}
 } else {
   if (selectedFaction === 'BeVe' && selectedSubFaction) {
     if (faction !== 'BeVe') return;
@@ -3755,6 +3848,10 @@ case 'Огненное поле': {
           case 'Ночь': {
   // Добавляем глобальный модификатор штрафа меткости
   appData.modifiers.push({ name: 'Ночь', shotMod: 0, accuracyMod: -1, moraleMod: 0, active: true });
+            if (appData.activeCards.some(c => c.name === 'Ночь' && c.active)) {
+  alert('Карта «Ночь» уже активна!');
+  return;
+}
   // Выбор отряда для ракет
   const list = appData.squads.filter(s => !s.hidden);
   if (list.length === 0) {
@@ -3949,6 +4046,24 @@ container.innerHTML = filteredTemplates.map(t => {
   <div id="awardsTab" class="tabcontent">
   <h3>🏅 Справочник наград</h3>
   <div id="awardsReference"></div>
+</div>
+  <div id="targetModal" class="detection-modal">
+  <div class="detection-modal-content">
+    <h3>Параметры стрельбы</h3>
+    <label>Дистанция (гексы): <input type="number" id="modalDistance" value="5" min="1"></label><br>
+    <label>Укрытие цели (d10 >= <input type="number" id="modalCover" value="6" min="2" max="10">)</label><br>
+    <button onclick="executeAttack()">Огонь</button>
+    <button onclick="closeTargetModal()">Отмена</button>
+  </div>
+    </div>
+  <div id="targetModal" class="detection-modal">
+  <div class="detection-modal-content">
+    <h3>Параметры стрельбы</h3>
+    <label>Дистанция (гексы): <input type="number" id="modalDistance" value="5" min="1" style="width:60px"></label><br><br>
+    <label>Укрытие цели (d10 >= <input type="number" id="modalCover" value="6" min="2" max="10" style="width:50px">)</label><br><br>
+    <button onclick="executeAttack()">🔥 Огонь</button>
+    <button onclick="closeTargetModal()" style="background:#555;">Отмена</button>
+  </div>
 </div>
 </body>
 </html>
