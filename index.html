@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.46 — фикс карт  </title>
+  <title>Боевой модуль v11.47 — фикс карт  </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -93,7 +93,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.46 — фикс карт </h2>
+  <h2>⚔️ Боевой модуль v11.47 — фикс карт </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -495,12 +495,17 @@ appData.squads.forEach(s => {
   if (s.ammoOrdnance === undefined) s.ammoOrdnance = 0;
   if (s.grenades === undefined) s.grenades = s.fighters.length * 2;
   if (s.suppressed === undefined) s.suppressed = false;
+  if (s.ippUses === undefined) s.ippUses = 0;
+  // adrenalineUsed намеренно не инициализируем – появится только после активации карты
+  if (s.mortarStrike === undefined) s.mortarStrike = null;
     });
 appData.templates.forEach(t => {
   if (t.ammoSmall === undefined) t.ammoSmall = 200;
   if (t.ammoOrdnance === undefined) t.ammoOrdnance = 0;
   if (t.grenades === undefined) t.grenades = t.fighters.length * 2;
   if (t.suppressed === undefined) t.suppressed = false;
+  if (t.ippUses === undefined) t.ippUses = 0;
+  if (t.mortarStrike === undefined) t.mortarStrike = null;
   });
   if (appData.flareActive === undefined) appData.flareActive = false;
     appData.squads.forEach(s => { if (s.smokeGrenades === undefined) s.smokeGrenades = 0; });
@@ -784,13 +789,22 @@ appData.squads.forEach(s => {
       }
       ms.duration--;
     } else if (currentTurn === ms.startTurn + 1 && ms.duration > 0) {
-      // второй день обстрела
       log(`--- МИНОМЕТНЫЙ ОБСТРЕЛ ГЕКСА ${ms.hex} (второй день) ---`);
       for (let i = 0; i < ms.shotsPerTurn; i++) {
-        // ... аналогично первому
+        const roll = rollD12();
+        let targetHex = ms.hex;
+        if (roll === 1) targetHex = 'выше';
+        else if (roll >= 2 && roll <= 6) {
+          const directions = ['правый верхний', 'правый', 'правый нижний', 'нижний', 'левый нижний', 'левый'];
+          targetHex = directions[roll - 2] + ' от ' + ms.hex;
+        }
+        const hit = roll >= 7 && roll <= 12;
+        const dmg = rollD10();
+        log(`Выстрел ${i+1}: d12=${roll} ${hit ? 'попадание в гекс ' + ms.hex : 'сместился на ' + targetHex}, урон ${dmg}`);
       }
       ms.duration--;
       if (ms.duration === 0) delete s.mortarStrike;
+    }
     } else if (currentTurn < ms.startTurn) {
       log(`До минометного обстрела гекса ${ms.hex} осталось ${ms.startTurn - currentTurn} ходов.`);
     }
@@ -1374,6 +1388,7 @@ function renderActiveCardButtons() {
   if (currentSquad.adrenalineUsed !== undefined && !currentSquad.adrenalineUsed) {
     specialHtml += `<button onclick="useAdrenaline()">💉 Адреналин (+1 ОД)</button> `;
   }
+ 
   // Миномётный обстрел (только для штаба)
   if (currentSquad.name.includes('Штаб') && !currentSquad.mortarStrike) {
     specialHtml += `<button onclick="activateMortarStrike()">💣 Запросить миномётный обстрел</button> `;
