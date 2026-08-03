@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.44 — фикс </title>
+  <title>Боевой модуль v11.45 — фикс </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -93,7 +93,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.44 — фикс </h2>
+  <h2>⚔️ Боевой модуль v11.45 — фикс </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -1298,7 +1298,7 @@ if (currentSquad.smokeGrenades >= 3 && !currentSquad.armor) {
     html += `<button onclick="useFireField()" style="background:#e67e22;" ${disabled ? 'disabled' : ''}>🔥 Поджечь огненное поле (${appData.fireFieldHex})</button> `;
   }
 // Для ДОТа – отдельные кнопки для каждого пулемёта
-if (currentSquad.name.includes('ДОТ') && currentSquad.crewInstances && currentSquad.crewInstances.length > 0) {
+if (currentSquad.name.includes('ДОТ') && currentSquad.crewInstances && !currentSquad.name.includes('САУ') && currentSquad.crewInstances.length > 0) {
   currentSquad.crewInstances.forEach((ci, idx) => {
     if (ci.active === false || ci.status === 'destroyed' || ci.status === 'blinded') return;
     const cw = getFactionCrewWeapons(currentSquad.faction).find(w => w.name === ci.weaponName);
@@ -1317,7 +1317,7 @@ const isSuppressed = currentSquad.suppressed;
 html += `<button onclick="toggleSuppression()" style="background:#f39c12;">${isSuppressed ? '🔥 Подавлен (снять)' : '😐 Не подавлен'}</button> `;
   
 // Огонь на подавление (только для стрелкового оружия, не техника)
-if (!currentSquad.armor && currentSquad.ammoSmall > 0) {
+if (!currentSquad.armor && !currentSquad.name.includes('ДОТ') && currentSquad.ammoSmall > 0) {
   const suppCost = 5; // 2,5 ОД = 5 полу-ОД
   const ap = getAP(currentSquadIndex);
   const disabled = !(ap >= suppCost && getEffectiveMorale() > 1 && !currentSquad.suppressed);
