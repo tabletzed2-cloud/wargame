@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.45 — фикс </title>
+  <title>Боевой модуль v11.46 — фикс карт  </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -93,7 +93,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.45 — фикс </h2>
+  <h2>⚔️ Боевой модуль v11.46 — фикс карт </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -131,10 +131,16 @@
 <div style="display:none">
   <label>Дистанция: <input type="number" id="targetDistance" value="5" min="1"></label>
   <label>Укрытие: <input type="number" id="coverTarget" value="6" min="2" max="10"></label>
-</div>
-    <div id="activeCardsBattle" style="margin:6px 0; padding:6px; background:#2a2a2a; border-radius:4px;">
+  </div>
+  <div id="activeCardsBattle" style="margin:6px 0; padding:6px; background:#2a2a2a; border-radius:4px;">
   <strong>Активные карты:</strong> <span id="activeCardsListBattle">Нет</span>
-      <div id="activeCardButtons" style="margin:6px 0;"></div>
+</div>
+    <div id="shootingPanel" style="margin:6px 0; padding:6px; background:#2a2a2a; border-radius:4px;"></div>
+<div id="movementPanel" style="margin:6px 0; padding:6px; background:#2a2a2a; border-radius:4px;"></div>
+<div id="specialPanel" style="margin:6px 0; padding:6px; background:#2a2a2a; border-radius:4px;"></div>
+if (currentSquad.adrenalineUsed !== undefined && !currentSquad.adrenalineUsed) {
+  specialHtml += `<button onclick="useAdrenaline()">💉 Адреналин (+1 ОД)</button> `;
+}
 </div>
     <div id="moraleContainer"></div>
     <div id="statusContainer"></div>
@@ -151,16 +157,7 @@
     </div>
     <button onclick="healAll()">🩹 Вылечить всех</button>
     <button onclick="resetAll()">🔄 Сбросить</button>
-    <hr>
-    <button onclick="openTargetModal('smallArms')">🔫 Стрелковое / Пулемёты</button>
-    <button onclick="openTargetModal('ordnance')">💥 Орудия / Миномёты</button>
-    <button onclick="openTargetModal('vehicle')">🚀 Атака ПТО по технике</button>
-    <button onclick="openTargetModal('molotovCrew')" id="btnMolotovCrew" style="display:none; background:#e67e22;">🔥 Бутылкомет по технике</button>
-    <button onclick="throwGrenades()">💣 Бросок гранат</button>
-    <button id="satchelCharge" onclick="satchelCharge()">🧨 Связка гранат</button>
-    <button id="sniperShot" onclick="openTargetModal('sniper')" style="display:none;">🎯 Снайперский выстрел</button>
-    <button id="meleeAttack" onclick="meleeAttack()">⚔️ Рукопашная</button>
-    <hr>
+
     <label>Входящий урон: <input type="number" id="incomingDamage" value="0" min="0" style="width:60px"></label>
     <button onclick="receiveDamage()">💥 Получить урон</button>
     <div class="log" id="log"></div>
@@ -260,6 +257,13 @@ if (!selectedFaction) showFactionModal();
   "crewWeapons": [],
   "cardLibrary": [
     { "name": "Дымовые гранаты", "desc": "Выбранный отряд получает по 1 дымовой гранате на бойца. Если есть ≥3 гранат, можно создать дымовую завесу (0,5 ОД).","effect": "Выдача дымовых гранат, возможность создать завесу (d12 направление).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
+    { "name": "Минометный обстрел (ротный 82мм)", "desc": "Командир взвода запрашивает минометный обстрел у штаба роты.", "effect": "Появляется кнопка «Минометный обстрел» у штаба. Через 2 хода начинается обстрел (2 хода, 6 выстрелов).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true, "oneTime": true },
+    { "name": "Грязь", "desc": "Из-за плохой погоды оружие загрязнилось и клинит. Вся автоматика получает -1 к скорострельности.", "effect": "Автоматическое оружие: -1 к скорострельности.", "shotMod": -1, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
+    { "name": "Чистое оружие", "desc": "Командир строго следит, чтобы оружие блестело! Вся автоматика получает +1 к скорострельности.", "effect": "Автоматическое оружие: +1 к скорострельности.", "shotMod": 1, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
+    { "name": "Ящик с патронами", "desc": "В начале боя каждый отряд получает дополнительный боезапас +40 патронов.", "effect": "+40 патронов каждому отряду.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
+    { "name": "Индивидуальный перевязочный пакет", "desc": "Каждому бойцу перед боем выдаётся ИПП.", "effect": "У выбранных отрядов появляется кнопка «ИПП» (восстанавливает 1 HP одноразово).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
+    { "name": "Небоевая потеря", "desc": "Происходит несчастный случай, боец получает ранение.", "effect": "1 случайный боец получает 3 урона (если отрядов >6 – 2 бойца из разных отрядов).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
+    { "name": "Адреналин", "desc": "Всплеск адреналина придаёт сил бойцам.", "effect": "У всех отрядов появляется кнопка «Адреналин» (+1 ОД, одноразово).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
     { "name": "Ночь", "desc": "Все отряды получают -1 к меткости и -2 к обнаружению. Выбранный отряд получает 6 осветительных ракет.", "effect": "Штраф меткости -1, -2 к обнаружению. 6 осветительных ракет у выбранного отряда.", "shotMod": 0, "accuracyMod": -1, "moraleMod": 0, "icon": "https://i.pinimg.com/originals/67/6d/86/676d866b93a12b4f5fd223ecaa658749.jpg?nii=t", "subfaction": "global", "global": true, "flares": 6 }
   ]
 },
@@ -340,18 +344,19 @@ if (!selectedFaction) showFactionModal();
               { "name": "¡No pasarán!", "desc": "+1 к скорострельности каждого бойца и -1 к меткости на одну атаку, игнорирует подавление. Придаётся стрелковым и пулемётным отделениям, одноразовая.", "effect": "+1 скорострельность, -1 меткость (1 атака), игнорирует подавление", "shotMod": 1, "accuracyMod": -1, "moraleMod": 0, "icon": "", "subfaction": "common", "oneTime": true },
               { "name": "Испанская ярость", "desc": "+1 в рукопашной. Активируется 1 раз у каждого отряда кроме бронетехники.", "effect": "+1 рукопашная (1 раз)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "oneTime": true },
               { "name": "Оружие солидарности", "desc": "Штабу взвода придаётся 1 случайное оружие из советского арсенала (АВС-36, ППД-40, ДП-27).", "effect": "Случайное советское оружие штабу", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
-              { "name": "Горные охотники", "desc": "Одно пехотное отделение игнорирует штраф гор и получает +1 меткость с высоты.", "effect": "+1 меткость при стрельбе с высоты (требует подтверждения)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/efWukUF.png", "subfaction": "common" },
+              { "name": "Горные охотники", "desc": "Выберите 3 отряда. При попадании в зону обнаружения вражеского штаба эти отряды не отображаются противнику, пока сами не провалят обнаружение.", "effect": "Условная", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/efWukUF.png", "subfaction": "common", "informational": true },
               { "name": "Реконкиста", "desc": "+1 к рукопашной против BeVe в городском бою.", "effect": "+1 рукопашная против BeVe (городской бой)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
               { "name": "Залп отчаяния", "desc": "Если у отряда кончились патроны, все живые бойцы делают последний залп со скорострельностью 1, одноразовая.", "effect": "Последний залп при 0 патронах (одноразово)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "oneTime": true },
               { "name": "Шахтерский динамит", "desc": "Выбранному отряду выдаётся +2 гранаты на бойца, но при броске 1 на d6 боец получает 3 урона. Урон гранат становится d6+1.", "effect": "+2 гранаты/бойца, урон d6+1, риск 1→3 урона", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/p3tabc7.png", "subfaction": "common" },
               { "name": "Бутылки с зажигательной смесью", "desc": "Все гранаты отряда заменяются на бутылки с зажигательной смесью (1/бойца). Попадание как у гранаты, по танку загорание на 4-6, по пехоте 3 урона.", "effect": "Замена гранат на коктейли Молотова", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/SnonpVt.png", "subfaction": "common" },
               { "name": "Бутылкомет Цукермана", "desc": "Взводу добавляется расчёт бутылкомёта. Попадание d10 5-10, дальность 3 гекса, эффект как у бутылок.", "effect": "Добавляет орудие «Бутылкомет Цукермана»", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
-              { "name": "Плохой порох", "desc": "1 случайный боец за атаку получает -1 к скорострельности (пассивный эффект для всех отрядов).", "effect": "-1 скорострельность одному бойцу за атаку", "shotMod": -1, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
+              { "name": "Плохой порох", "desc": "Все отряды с стрелковым/пулемётным оружием получают -1 попадание при стрельбе.", "effect": "-1 попадание при стрельбе (пассивно).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "global": false, "passive": true },
               { "name": "¡Huelga!", "desc": "Все отряды получают боезапас на 25% меньше (патроны, гранаты, снаряды).", "effect": "-25% боезапаса всем отрядам", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
               { "name": "Термитный заряд", "desc": "Сапёрное отделение или штаб сапёров получает 3 термитных заряда для уничтожения техники или амбразур ДОТ.", "effect": "3 заряда (d6=2-6 успех, при 4-6 гибель бойца)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/QJ8IjZX.png", "subfaction": "common" },
               { "name": "Фосфорные гранаты", "desc": "Выбранный отряд получает 7 фосфорных гранат вместо обычных. При попадании 4+ бойцов создаётся дымовая завеса.", "effect": "7 фосфорных гранат, дымовая завеса при попадании 4+ бойцов", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
               { "name": "Ампуломёт АМ-1", "desc": "Добавляет расчёт ампуломёта из 3 человек. Дальность 8 гексов, 3 выстрела, урон d4. При 3 попаданиях в гекс – он загорается.", "effect": "Создаёт отряд «Расчёт ампуломёта АМ-1»", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
               { "name": "Ранцевый огнемёт РОКС-3", "desc": "Сапёрное отделение или штаб сапёров получает огнемёт (3 струи). Струя поражает всех в гексе (d6=2-6, урон 2).", "effect": "Заменяет оружие одного бойца на РОКС-3 (3 заряда)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
+              { "name": "Горное пончо", "desc": "В гористо-холмистой местности все отряды при проверке обнаружения пробрасывают с модификатором «Камуфляж».", "effect": "Условная", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "informational": true },
               { "name": "Огненное поле", "desc": "Перед игрой отметьте гекс в 2 гексах от стартовых позиций. В любой момент подожгите его, нанеся d6 урона врагу и заставив отступить.", "effect": "Информационная – позволяет поджечь выбранный гекс", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "informational": true }
                ]
               
@@ -758,6 +763,39 @@ appData.squads.forEach(s => { s.movedThisTurn = false; });
   }
 });
 appData.squads.forEach(s => { s.suppressed = false; });
+appData.squads.forEach(s => {
+  if (s.mortarStrike) {
+    const ms = s.mortarStrike;
+    if (currentTurn === ms.startTurn) {
+      // первый день обстрела
+      log(`--- МИНОМЕТНЫЙ ОБСТРЕЛ ГЕКСА ${ms.hex} ---`);
+      for (let i = 0; i < ms.shotsPerTurn; i++) {
+        const roll = rollD12();
+        let targetHex = ms.hex;
+        if (roll === 1) targetHex = 'выше';
+        else if (roll >= 2 && roll <= 6) {
+          // по часовой стрелке: 2 -> правый верхний, 3 -> правый, 4 -> правый нижний, 5 -> нижний, 6 -> левый нижний
+          const directions = ['правый верхний', 'правый', 'правый нижний', 'нижний', 'левый нижний', 'левый'];
+          targetHex = directions[roll - 2] + ' от ' + ms.hex;
+        }
+        const hit = roll >= 7 && roll <= 12;
+        const dmg = rollD10();
+        log(`Выстрел ${i+1}: d12=${roll} ${hit ? 'попадание в гекс ' + ms.hex : 'сместился на ' + targetHex}, урон ${dmg}`);
+      }
+      ms.duration--;
+    } else if (currentTurn === ms.startTurn + 1 && ms.duration > 0) {
+      // второй день обстрела
+      log(`--- МИНОМЕТНЫЙ ОБСТРЕЛ ГЕКСА ${ms.hex} (второй день) ---`);
+      for (let i = 0; i < ms.shotsPerTurn; i++) {
+        // ... аналогично первому
+      }
+      ms.duration--;
+      if (ms.duration === 0) delete s.mortarStrike;
+    } else if (currentTurn < ms.startTurn) {
+      log(`До минометного обстрела гекса ${ms.hex} осталось ${ms.startTurn - currentTurn} ходов.`);
+    }
+  }
+});
   
   updateUI();
   log(`=== ХОД ${currentTurn} ===`);
@@ -1224,145 +1262,179 @@ function changeCrewStatus(ciIndex, newStatus) {
 }
     
 function renderActiveCardButtons() {
-  const container = document.getElementById('activeCardButtons');
-  if (!container || !currentSquad) { container.innerHTML = ''; return; }
-  let html = '';
+  const shootDiv = document.getElementById('shootingPanel');
+  const moveDiv = document.getElementById('movementPanel');
+  const specialDiv = document.getElementById('specialPanel');
+  if (!shootDiv || !moveDiv || !specialDiv) return;
 
-  // Пассивные/специальные кнопки
-  if (currentSquad.panzerblindeCharges > 0) {
-    html += `<button onclick="usePanzerblinde()" style="background:#5d3a1a;">✨ Ослепить танк (${currentSquad.panzerblindeCharges} залп.)</button> `;
+  let shootHtml = '';
+  let moveHtml = '';
+  let specialHtml = '';
+
+  // ========== ПАНЕЛЬ СТРЕЛЬБЫ ==========
+  // Основные атаки
+  shootHtml += `<button onclick="openTargetModal('smallArms')">🔫 Стрелковое / Пулемёты</button> `;
+  shootHtml += `<button onclick="openTargetModal('ordnance')">💥 Орудия / Миномёты</button> `;
+  shootHtml += `<button onclick="openTargetModal('vehicle')">🚀 Атака ПТО по технике</button> `;
+  if (currentSquad.crewInstances && currentSquad.crewInstances.some(ci => { const cw = getFactionCrewWeapons(currentSquad.faction).find(w => w.name === ci.weaponName); return cw && cw.isMolotov; })) {
+    shootHtml += `<button onclick="openTargetModal('molotovCrew')" id="btnMolotovCrew">🔥 Бутылкомет по технике</button> `;
   }
-  if (currentSquad.atRifleGrenades > 0) {
-    html += `<button onclick="openTargetModal('atGrenade')" style="background:#8e44ad;">🧨 Винтовочная граната (${currentSquad.atRifleGrenades} шт., 50мм)</button> `;
+  // Гранаты и связка (без модального окна)
+  shootHtml += `<button onclick="throwGrenades()">💣 Бросок гранат</button> `;
+  shootHtml += `<button onclick="satchelCharge()">🧨 Связка гранат</button> `;
+  // Снайпер
+  if (currentSquad && currentSquad.fighters.some(f => { const w = getFactionWeapons(currentSquad.faction).find(w => w.name === f.weapon); return w && w.sniper; })) {
+    shootHtml += `<button id="sniperShot" onclick="openTargetModal('sniper')">🎯 Снайперский выстрел</button> `;
   }
-  if (currentSquad.flemishFury && !currentSquad.flemishFuryUsed) {
-    html += `<button onclick="activateFlemishFury()" style="background:#c0392b;">🔥 Фламандская фурия</button> `;
+  // Рукопашная
+  shootHtml += `<button onclick="meleeAttack()">⚔️ Рукопашная</button> `;
+  // Пулемёты ДОТа (отдельные кнопки)
+  if (currentSquad.name.includes('ДОТ') && currentSquad.crewInstances) {
+    currentSquad.crewInstances.forEach((ci, idx) => {
+      if (ci.active === false || ci.status === 'destroyed' || ci.status === 'blinded') return;
+      const cw = getFactionCrewWeapons(currentSquad.faction).find(w => w.name === ci.weaponName);
+      if (!cw || cw.type !== 'mg') return;
+      const alive = ci.fighterIndices.filter(i => currentSquad.fighters[i]?.hp > 0).length;
+      if (alive === 0) return;
+      const used = getWeaponShotCount(currentSquad, ci.uniqueKey);
+      const maxShots = getWeaponMaxShots(cw);
+      const disabled = (used >= maxShots || getAP(currentSquadIndex) < 2 || getEffectiveMorale() <= 1 || ci.deployed === false) ? 'disabled' : '';
+      shootHtml += `<button onclick="fireDOTMG(${idx})" ${disabled}>Пулемёт ${idx+1}-й амбразуры (${used}/${maxShots})</button> `;
+    });
   }
-  if (currentSquad.effects?.lastBreath && currentSquad.fighters.every(f => f.hp === 0)) {
-    html += `<button onclick="useLastBreath()" style="background:#8b0000;">💀 Длинное дыхание</button> `;
-  }
-  if (currentSquad.effects?.molotov && currentSquad.grenades > 0) {
-    const cost = getActionCost(currentSquad, 'special');
+  // Огонь на подавление (не ДОТ)
+  if (!currentSquad.armor && !currentSquad.name.includes('ДОТ') && currentSquad.ammoSmall > 0) {
+    const suppCost = 5;
     const ap = getAP(currentSquadIndex);
-    const disabled = !(ap >= cost && getEffectiveMorale() > 1);
-    html += `<button onclick="throwMolotovAtVehicle()" style="background:#e67e22;" ${disabled ? 'disabled' : ''}>🔥 Бутылка по технике</button> `;
+    const disabled = !(ap >= suppCost && getEffectiveMorale() > 1 && !currentSquad.suppressed);
+    shootHtml += `<button onclick="openTargetModal('suppressiveFire')" ${disabled ? 'disabled' : ''}>🔫 Подавить (2,5 ОД, патр. x2)</button> `;
+  }
+  // Состояние подавления (индикатор)
+  const isSuppressed = currentSquad.suppressed;
+  shootHtml += `<button onclick="toggleSuppression()" style="background:#f39c12;">${isSuppressed ? '🔥 Подавлен (снять)' : '😐 Не подавлен'}</button> `;
+
+  // ========== ПАНЕЛЬ ДВИЖЕНИЯ ==========
+  if (getAP(currentSquadIndex) > 0 && !currentSquad.armor) {
+    moveHtml += `<button onclick="moveSquad('open')">🌄 Бег (откр.)</button> `;
+    moveHtml += `<button onclick="moveSquad('forest')">🌲 Лес</button> `;
+    moveHtml += `<button onclick="moveSquad('road')">🛣️ Дорога</button> `;
+    moveHtml += `<button onclick="moveSquad('bad')">🌋 Тяжёлая</button> `;
+    moveHtml += `<button onclick="moveSquad('crouch')">🐍 Переползание</button> `;
+  }
+  if (currentSquad.armor && getAP(currentSquadIndex) > 0) {
+    moveHtml += `<button onclick="moveSquad('open')">🌄 Открытая</button> `;
+    moveHtml += `<button onclick="moveSquad('forest')">🌲 Лес</button> `;
+    moveHtml += `<button onclick="moveSquad('road')">🛣️ Дорога</button> `;
+    moveHtml += `<button onclick="moveSquad('bad')">🌋 Тяжёлая</button> `;
+  }
+  if (currentSquad.armor && getAP(currentSquadIndex) > 0) {
+    moveHtml += `<button onclick="vehicleTurn()">🔄 Разворот</button> `;
+    moveHtml += `<button onclick="vehicleAcquireTarget()">🎯 Наведение на цель</button> `;
+    if (currentSquad.name.includes('САУ')) {
+      moveHtml += `<button onclick="vehicleDeploy()">⚙️ Развёртывание/Свёртывание</button> `;
+    }
+  }
+  // Развёртывание/свёртывание для расчётов (теперь индивидуальное)
+  if (currentSquad.crewInstances && currentSquad.crewInstances.length > 0) {
+    currentSquad.crewInstances.forEach((ci, idx) => {
+      if (ci.active === false) return;
+      const cw = getFactionCrewWeapons(currentSquad.faction).find(w => w.name === ci.weaponName);
+      if (!cw) return;
+      const deployed = ci.deployed !== false;
+      moveHtml += `${cw.name}: ${deployed ? '🟢 Развернуто' : '🔴 Свернуто'} `;
+      moveHtml += `<button onclick="toggleCrewDeploy(${idx})">${deployed ? 'Свернуть' : 'Развернуть'}</button> `;
+    });
+  }
+  // Кнопки обнаружения
+  if (!currentSquad.detected) {
+    moveHtml += `<button onclick="showDetectionDialog('check')">🔍 Проверить обнаружение</button> `;
+    moveHtml += `<button onclick="manualDetect()">👁️ Обнаружить вручную</button> `;
+  } else {
+    moveHtml += `<button onclick="showDetectionDialog('hide')">🥷 Скрыться</button> `;
   }
 
-  // Ампуломёт по технике
-  const hasAmpulomet = currentSquad.crewInstances && currentSquad.crewInstances.some(ci => {
-    if (ci.active === false) return false;
-    const cw = getFactionCrewWeapons(currentSquad.faction).find(w => w.name === ci.weaponName);
-    return cw && cw.isAmpulomet;
-  });
-  if (hasAmpulomet && currentSquad.ammoOrdnance > 0) {
-    const cost = getActionCost(currentSquad, 'shoot');
-    const ap = getAP(currentSquadIndex);
-    const disabled = !(ap >= cost && canShoot(currentSquad) && getEffectiveMorale() > 1);
-    html += `<button onclick="openTargetModal('ampulomet')" style="background:#8e44ad;" ${disabled ? 'disabled' : ''}>💥 Ампуломёт по технике</button> `;
+  // ========== СПЕЦИАЛЬНАЯ ПАНЕЛЬ ==========
+  // Осветительные ракеты
+  if (currentSquad.flares > 0) {
+    specialHtml += `<button onclick="fireFlare()">🚀 Осветительная ракета (${currentSquad.flares} шт.)</button> `;
   }
-
-  // Термитный заряд
-  if (currentSquad.thermiteCharges && currentSquad.thermiteCharges > 0) {
-    const cost = getActionCost(currentSquad, 'special');
-    const ap = getAP(currentSquadIndex);
-    const disabled = !(ap >= cost && getEffectiveMorale() > 1);
-    html += `<button onclick="useThermiteCharge()" style="background:#8b0000;" ${disabled ? 'disabled' : ''}>🧨 Термитный заряд (${currentSquad.thermiteCharges})</button> `;
-  }
-
-  // Огнемёт
-  if (currentSquad.effects?.flamethrower?.charges > 0) {
-    const cost = getActionCost(currentSquad, 'special');
-    const ap = getAP(currentSquadIndex);
-    const disabled = !(ap >= cost && getEffectiveMorale() > 1);
-    html += `<button onclick="useFlamethrower()" style="background:#d35400;" ${disabled ? 'disabled' : ''}>🔥 Огнемёт (${currentSquad.effects.flamethrower.charges} струй)</button> `;
-  }
-// Осветительные ракеты
-if (currentSquad.flares > 0) {
-  const cost = 2; // 1 ОД
-  const ap = getAP(currentSquadIndex);
-  const disabled = !(ap >= cost && getEffectiveMorale() > 1);
-  html += `<button onclick="fireFlare()" ${disabled ? 'disabled' : ''}>🚀 Осветительная ракета (${currentSquad.flares} шт.)</button> `;
-}
   // Дымовые гранаты
-if (currentSquad.smokeGrenades >= 3 && !currentSquad.armor) {
-  const cost = 1; // 0.5 ОД = 1 полу-ОД
-  const ap = getAP(currentSquadIndex);
-  const disabled = !(ap >= cost && getEffectiveMorale() > 1);
-  html += `<button onclick="deploySmokeScreen()" style="background:#7f8c8d;" ${disabled ? 'disabled' : ''}>💨 Дымовая завеса (3 грн.)</button> `;
-}
+  if (currentSquad.smokeGrenades >= 3 && !currentSquad.armor) {
+    specialHtml += `<button onclick="deploySmokeScreen()">💨 Дымовая завеса (3 грн.)</button> `;
+  }
   // Огненное поле
   if (appData.fireFieldHex) {
-    const cost = getActionCost(currentSquad, 'special');
-    const ap = getAP(currentSquadIndex);
-    const disabled = !(ap >= cost && getEffectiveMorale() > 1);
-    html += `<button onclick="useFireField()" style="background:#e67e22;" ${disabled ? 'disabled' : ''}>🔥 Поджечь огненное поле (${appData.fireFieldHex})</button> `;
+    specialHtml += `<button onclick="useFireField()">🔥 Поджечь огненное поле (${appData.fireFieldHex})</button> `;
   }
-// Для ДОТа – отдельные кнопки для каждого пулемёта
-if (currentSquad.name.includes('ДОТ') && currentSquad.crewInstances && !currentSquad.name.includes('САУ') && currentSquad.crewInstances.length > 0) {
-  currentSquad.crewInstances.forEach((ci, idx) => {
-    if (ci.active === false || ci.status === 'destroyed' || ci.status === 'blinded') return;
-    const cw = getFactionCrewWeapons(currentSquad.faction).find(w => w.name === ci.weaponName);
-    if (!cw || cw.type !== 'mg') return;
-    const alive = ci.fighterIndices.filter(i => currentSquad.fighters[i]?.hp > 0).length;
-    if (alive === 0) return;
-    const used = getWeaponShotCount(currentSquad, ci.uniqueKey);
-    const maxShots = getWeaponMaxShots(cw);
-    const disabled = (used >= maxShots || getAP(currentSquadIndex) < 2 || getEffectiveMorale() <= 1) ? 'disabled' : '';
-    const ammoOk = currentSquad.ammoSmall > 0;
-    html += `<button onclick="fireDOTMG(${idx})" style="background:#8e44ad;" ${disabled} ${!ammoOk ? 'title="Нет патронов"' : ''}>Пулемёт ${idx+1}-й амбразуры (${used}/${maxShots})</button> `;
-  });
-}
-// Переключение подавления
-const isSuppressed = currentSquad.suppressed;
-html += `<button onclick="toggleSuppression()" style="background:#f39c12;">${isSuppressed ? '🔥 Подавлен (снять)' : '😐 Не подавлен'}</button> `;
-  
-// Огонь на подавление (только для стрелкового оружия, не техника)
-if (!currentSquad.armor && !currentSquad.name.includes('ДОТ') && currentSquad.ammoSmall > 0) {
-  const suppCost = 5; // 2,5 ОД = 5 полу-ОД
-  const ap = getAP(currentSquadIndex);
-  const disabled = !(ap >= suppCost && getEffectiveMorale() > 1 && !currentSquad.suppressed);
-  html += `<button onclick="openTargetModal('suppressiveFire')" style="background:#e67e22;" ${disabled ? 'disabled' : ''}>🔫 Подавить (2,5 ОД, патр. x2)</button> `;
-}
-  
-  // Перемещение
-if (getAP(currentSquadIndex) > 0 && !currentSquad.armor) {
-    html += `<button onclick="moveSquad('open')">🌄 Бег (откр.)</button> `;
-    html += `<button onclick="moveSquad('forest')">🌲 Лес</button> `;
-    html += `<button onclick="moveSquad('road')">🛣️ Дорога</button> `;
-    html += `<button onclick="moveSquad('bad')">🌋 Тяжёлая</button> `;
-    html += `<button onclick="moveSquad('crouch')">🐍 Переползание</button> `;
-}
-    if (currentSquad.armor) {
-  html += `<div style="margin-top:8px; font-size:0.8rem; color:#aaa;">Стоимость перемещения (за 1 гекс): Откр/Дорога – 2 полу-ОД за 3 гекса, Лес – 2 полу-ОД, Тяжёлая – 2 полу-ОД</div>`;
-}
-if (getAP(currentSquadIndex) > 0 && currentSquad.armor) {
-    html += `<button onclick="moveSquad('open')">🌄 Открытая</button> `;
-    html += `<button onclick="moveSquad('forest')">🌲 Лес</button> `;
-    html += `<button onclick="moveSquad('road')">🛣️ Дорога</button> `;
-    html += `<button onclick="moveSquad('bad')">🌋 Тяжёлая</button> `;
-}
-  if (currentSquad.armor && getAP(currentSquadIndex) > 0) {
-    html += `<button onclick="vehicleTurn()" style="background:#7f8c8d;">🔄 Разворот</button> `;
-    html += `<button onclick="vehicleAcquireTarget()" style="background:#7f8c8d;">🎯 Наведение на цель</button> `;
-    if (currentSquad.name.includes('САУ')) {
-        html += `<button onclick="vehicleDeploy()" style="background:#7f8c8d;">⚙️ Развёртывание/Свёртывание</button> `;
-    }
-}
-  // Развёртывание/свёртывание для расчётов
-if (currentSquad.crewInstances && currentSquad.crewInstances.length > 0 && getAP(currentSquadIndex) > 0) {
-  html += `<button onclick="toggleDeploy()" style="background:#7f8c8d;">⚙️ Развернуть/Свернуть</button> `;
-}
-   // Кнопки обнаружения
-  if (!currentSquad.detected) {
-    html += `<button onclick="showDetectionDialog('check')" style="background:#2980b9;">🔍 Проверить обнаружение</button> `;
-    html += `<button onclick="manualDetect()" style="background:#c0392b;">👁️ Обнаружить вручную</button> `;
-  } else {
-    html += `<button onclick="showDetectionDialog('hide')" style="background:#27ae60;">🥷 Скрыться</button> `;
+  // ИПП
+  if (currentSquad.ippUses > 0) {
+    specialHtml += `<button onclick="useIPP()">🩹 ИПП (${currentSquad.ippUses} шт.)</button> `;
+  }
+  // Адреналин
+  if (currentSquad.adrenalineUsed !== undefined && !currentSquad.adrenalineUsed) {
+    specialHtml += `<button onclick="useAdrenaline()">💉 Адреналин (+1 ОД)</button> `;
+  }
+  // Миномётный обстрел (только для штаба)
+  if (currentSquad.name.includes('Штаб') && !currentSquad.mortarStrike) {
+    specialHtml += `<button onclick="activateMortarStrike()">💣 Запросить миномётный обстрел</button> `;
   }
 
-    container.innerHTML = html;
+  // Вставляем сгенерированный HTML
+  shootDiv.innerHTML = shootHtml || '—';
+  moveDiv.innerHTML = moveHtml || '—';
+  specialDiv.innerHTML = specialHtml || '—';
 }
-    
+
+function activateMortarStrike() {
+  // Использует уже существующий currentSquad (штаб)
+  if (!currentSquad || currentSquad.mortarStrike) return;
+  const hex = prompt('Введите гекс для обстрела (например, B4):');
+  if (!hex) return;
+  currentSquad.mortarStrike = {
+    hex: hex,
+    startTurn: currentTurn + 2,
+    duration: 2,
+    shotsPerTurn: 6
+  };
+  log(`Миномётный обстрел гекса ${hex} начнётся через 2 хода.`);
+  saveData();
+  updateUI();
+}
+
+function useIPP() {
+  if (!currentSquad || currentSquad.ippUses <= 0) return;
+  const wounded = currentSquad.fighters.filter(f => f.hp < f.maxHp && f.hp > 0);
+  if (wounded.length === 0) { log('Нет раненых бойцов.'); return; }
+  const target = wounded[Math.floor(Math.random() * wounded.length)];
+  target.hp = Math.min(target.maxHp, target.hp + 1);
+  currentSquad.ippUses--;
+  log(`${target.name} использовал ИПП (+1 HP). Осталось ИПП: ${currentSquad.ippUses}`);
+  saveData();
+  updateUI();
+}
+
+function useAdrenaline() {
+  if (!currentSquad || currentSquad.adrenalineUsed) return;
+  currentSquad.adrenalineUsed = true;
+  if (!actionPoints[currentSquadIndex]) ensureAP(currentSquadIndex);
+  actionPoints[currentSquadIndex].ap = Math.min(
+    actionPoints[currentSquadIndex].maxAp,
+    actionPoints[currentSquadIndex].ap + 2
+  );
+  log('Адреналин! +1 ОД.');
+  updateUI();
+}
+
+function toggleCrewDeploy(ciIndex) {
+  if (!currentSquad || !currentSquad.crewInstances) return;
+  const ci = currentSquad.crewInstances[ciIndex];
+  if (ci.deployed === undefined) ci.deployed = true;
+  ci.deployed = !ci.deployed;
+  log(`${ci.weaponName}: ${ci.deployed ? 'развёрнуто' : 'свёрнуто'}.`);
+  saveData();
+  updateUI();
+}              
+              
 function moveSquad(terrainKey) {
   if (!currentSquad) return;
   if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); return; }
@@ -1775,6 +1847,7 @@ function suppressiveFire() {
         log(`${f.name}: выстрел ${i+1}/${shots} – мимо (d10=${roll}+${accMod}=${effRoll})`);
       }
     }
+
     log(`${f.name}: скорострельность ${shots}, попаданий ${fighterHits}, потрачено патронов ${ammoCost}`);
   });
 
@@ -1784,6 +1857,9 @@ function suppressiveFire() {
   }
 
   log(`───────────────`);
+    if (currentSquad.effects?.badPowder) {
+    totalHits = Math.max(0, totalHits - 1);
+  }
   log(`🔫 Всего выстрелов: ${totalShots}, попаданий: ${totalHits}`);
   log('Цель подавлена (противник должен включить состояние «Подавлен» на своём отряде).');
   saveData();
@@ -2131,19 +2207,6 @@ function vehicleDeploy() {
     updateUI();
 }
 
-function toggleDeploy() {
-  if (!currentSquad || !currentSquad.crewInstances) return;
-  if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'deploy'))) {
-    log('Недостаточно ОД для развёртывания/свёртывания.');
-    return;
-  }
-  // Переключаем состояние: если не было свойства deployed, считаем что развёрнуты
-  if (currentSquad.deployed === undefined) currentSquad.deployed = true;
-  currentSquad.deployed = !currentSquad.deployed;
-  log(`${currentSquad.name} теперь ${currentSquad.deployed ? 'развёрнут' : 'свёрнут'} (0.5 ОД).`);
-  saveData();
-  updateUI();
-}
     let detectionMode = ''; // 'check' или 'hide'
 let pendingAttack = null;
 
@@ -2446,6 +2509,7 @@ if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'shoot'))) {
 
   const ampulometCrews = (currentSquad.crewInstances || []).filter(ci => {
     if (ci.active === false || ci.status === 'destroyed' || ci.status === 'blinded') return false;
+    if (ci.deployed === false) return;
     const cw = crewWeapons.find(w => w.name === ci.weaponName);
     return cw && cw.isAmpulomet;
   });
@@ -2593,11 +2657,6 @@ function throwGrenades() {
   if (appData.flareActive && appData.flareTurn === currentTurn) {
   const nightMod = (appData.modifiers || []).find(m => m.name === 'Ночь' && m.active);
   if (nightMod) accMod -= nightMod.accuracyMod;
-}
-  // Осветительная ракета убирает штраф "Ночи"
-if (appData.flareActive && appData.flareTurn === currentTurn) {
-  const nightMod = (appData.modifiers || []).find(m => m.name === 'Ночь' && m.active);
-  if (nightMod) accMod -= nightMod.accuracyMod; // отменяем -1 (прибавляем 1)
 }
   const modParts = [];
 if (accMod) modParts.push(`точность ${accMod > 0 ? '+' + accMod : accMod}`);
@@ -2756,6 +2815,7 @@ if (appData.flareActive && appData.flareTurn === currentTurn) {
       if (currentSquad.suppressed) accMod -= 2;
   const molotovCrews = (currentSquad.crewInstances || []).filter(ci => {
     if (ci.active === false || ci.status === 'destroyed' || ci.status === 'blinded') return;
+    if (ci.deployed === false) return;
     const cw = crewWeapons.find(w => w.name === ci.weaponName);
     return cw && cw.isMolotov;
   });
@@ -2889,6 +2949,32 @@ function renderAwardsOverview() {
     html += '</div>';
   });
   container.innerHTML = html || '<p>Нет отрядов.</p>';
+}
+
+    function useIPP() {
+  if (!currentSquad || currentSquad.ippUses <= 0) return;
+  // восстанавливаем 1 HP случайному раненому бойцу
+  const wounded = currentSquad.fighters.filter(f => f.hp < f.maxHp && f.hp > 0);
+  if (wounded.length === 0) return;
+  const target = wounded[Math.floor(Math.random() * wounded.length)];
+  target.hp = Math.min(target.maxHp, target.hp + 1);
+  currentSquad.ippUses--;
+  log(`${target.name} использовал ИПП (+1 HP). Осталось ИПП: ${currentSquad.ippUses}`);
+  saveData();
+  updateUI();
+}
+
+function useAdrenaline() {
+  if (!currentSquad || currentSquad.adrenalineUsed) return;
+  currentSquad.adrenalineUsed = true;
+  // добавляем 2 полу-ОД (1 ОД)
+  if (!actionPoints[currentSquadIndex]) ensureAP(currentSquadIndex);
+  actionPoints[currentSquadIndex].ap = Math.min(
+    actionPoints[currentSquadIndex].maxAp,
+    actionPoints[currentSquadIndex].ap + 2
+  );
+  log('Адреналин! +1 ОД.');
+  updateUI();
 }
     
 function addAwardToFighter(fighterIndex) {
@@ -3064,6 +3150,7 @@ if (modParts.length) log(`🎯 Модификаторы: ${modParts.join(', ')}`
       if (ci.active === false || ci.status === 'destroyed' || ci.status === 'blinded') return;
       const cw = crewWeapons.find(w => w.name === ci.weaponName);
       if (!cw || cw.type !== 'mg') return;
+      if (ci.deployed === false) return;
       let alive = ci.fighterIndices.filter(idx => currentSquad.fighters[idx]?.hp > 0).length;
       if (isVehicle && currentSquad.embarkedSquadIndex !== null && cw.name.includes('Станковый')) {
         const emb = appData.squads[currentSquad.embarkedSquadIndex];
@@ -3109,6 +3196,9 @@ if (modParts.length) log(`🎯 Модификаторы: ${modParts.join(', ')}`
     else log('Нет доступного стрелкового оружия или пулемётов.');
   } else {
     log(`───────────────`);
+      if (currentSquad.effects?.badPowder) {
+    totalHits = Math.max(0, totalHits - 1);
+  }
     log(`🔫 Всего выстрелов: ${totalShots}, попаданий: ${totalHits}`);
     log(`───────────────`);
   }
@@ -3154,6 +3244,7 @@ if (modParts.length) log(`🎯 Модификаторы: ${modParts.join(', ')}`
       if (ci.active === false || ci.status === 'destroyed' || ci.status === 'blinded') return;
       const cw = crewWeapons.find(w => w.name === ci.weaponName);
       if (!cw || (cw.type !== 'at_gun' && cw.type !== 'mortar')) return;
+        if (ci.deployed === false) return;
       const alive = ci.fighterIndices.filter(idx => currentSquad.fighters[idx]?.hp > 0).length;
       if (alive === 0) return;
       const curThis = getWeaponShotCount(currentSquad, ci.uniqueKey);
@@ -3179,6 +3270,7 @@ if (!spendAP(currentSquadIndex, apCost)) {
     if (ci.active === false || ci.status === 'destroyed' || ci.status === 'blinded') return;
     const cw = crewWeapons.find(w => w.name === ci.weaponName);
     if (!cw || (cw.type !== 'at_gun' && cw.type !== 'mortar')) return;
+      if (ci.deployed === false) return;
     const alive = ci.fighterIndices.filter(idx => currentSquad.fighters[idx]?.hp > 0).length;
     if (alive === 0) return;
 
@@ -3372,6 +3464,7 @@ assignUniqueCrewKeys(currentSquad); renderCrewAssignmentsList(); }
     function saveCrewEdits(faction,idx) { saveData(); loadCrewWeapons(); document.getElementById('crewDetails').style.display='none'; }
     function deleteCrewWeapon(faction,idx) { appData.factions[faction].crewWeapons.splice(idx,1); saveData(); loadCrewWeapons(); }
     function applyCrewChanges() { saveData(); }
+
 
     // =================== ВКЛАДКА КАРТЫ ===================
 function renderCardLibrary() { 
@@ -3696,16 +3789,6 @@ case 'Горные охотники': {
   break;
 }
 
-case 'Плохой порох': {
-  // Удаляем старый модификатор, если он есть
-  appData.modifiers = appData.modifiers.filter(m => m.name !== 'Плохой порох');
-  appData.squads.filter(s => s.faction === 'A.I.R.F.').forEach(s => {
-    if (!s.effects) s.effects = {};
-    s.effects.badPowder = true;
-  });
-  log('Пассивный эффект "Плохой порох" активирован: один случайный боец за атаку получает -1 к скорострельности.');
-  break;
-}
         case '¡Huelga!': {
           appData.squads.filter(s => s.faction === 'A.I.R.F.').forEach(s => {
             s.ammoSmall = Math.floor(s.ammoSmall * 0.75);
@@ -3826,7 +3909,7 @@ case 'Огненное поле': {
   }
   break;
 }
-          case 'Дымовые гранаты': {
+  case 'Дымовые гранаты': {
   const list = appData.squads.filter(s => !s.hidden && !s.armor);
   if (list.length === 0) {
     alert('Нет пехотных отрядов для выдачи гранат.');
@@ -3842,9 +3925,103 @@ case 'Огненное поле': {
   log(`Отряд "${squad.name}" получил ${count} дымовых гранат (всего ${squad.smokeGrenades}).`);
   break;
 }
-        default:
-          break;
-          case 'Ночь': {
+  case 'Минометный обстрел (ротный 82мм)': {
+  // Ищем штаб (любой отряд с «Штаб» в названии)
+  const hq = appData.squads.find(s => s.name.includes('Штаб') && !s.hidden);
+  if (!hq) { alert('Нет штаба в бою!'); return; }
+  if (hq.mortarStrike) { alert('Минометный обстрел уже запланирован.'); return; }
+  const hex = prompt('Введите гекс для обстрела (например, B4):');
+  if (!hex) return;
+  hq.mortarStrike = {
+    hex: hex,
+    startTurn: currentTurn + 2, // начало через 2 хода
+    duration: 2,                // длится 2 хода (currentTurn+2 и currentTurn+3)
+    shotsPerTurn: 6
+  };
+  log(`Минометный обстрел гекса ${hex} начнётся через 2 хода.`);
+  break;
+}
+
+case 'Грязь': {
+  appData.modifiers.push({ name: 'Грязь', shotMod: -1, accuracyMod: 0, moraleMod: 0, active: true });
+  log('Автоматическое оружие получает -1 к скорострельности.');
+  break;
+}
+
+case 'Чистое оружие': {
+  appData.modifiers.push({ name: 'Чистое оружие', shotMod: 1, accuracyMod: 0, moraleMod: 0, active: true });
+  log('Автоматическое оружие получает +1 к скорострельности.');
+  break;
+}
+
+case 'Ящик с патронами': {
+  appData.squads.filter(s => !s.hidden).forEach(s => {
+    s.ammoSmall += 40;
+  });
+  log('Каждый отряд получил +40 патронов.');
+  break;
+}
+
+case 'Индивидуальный перевязочный пакет': {
+  const list = appData.squads.filter(s => !s.hidden && !s.armor);
+  if (list.length === 0) { alert('Нет отрядов.'); return; }
+  const choice = prompt('Выберите два отряда через запятую:\n' + list.map((s,i) => `${i}: ${s.name}`).join('\n'));
+  if (!choice) return;
+  const indices = choice.split(',').map(x => parseInt(x.trim())).filter(i => !isNaN(i) && i >= 0 && i < list.length);
+  indices.forEach(i => {
+    const sq = list[i];
+    sq.ippUses = sq.fighters.length; // каждый боец получает ИПП
+  });
+  log(`Отряды получили ИПП: ${indices.map(i => list[i].name).join(', ')}`);
+  break;
+}
+
+case 'Небоевая потеря': {
+  const targets = appData.squads.filter(s => !s.hidden).sort(() => Math.random() - 0.5);
+  if (targets.length === 0) return;
+  if (targets.length <= 6) {
+    const sq = targets[0];
+    const alive = sq.fighters.filter(f => f.hp > 0);
+    if (alive.length > 0) {
+      const victim = alive[Math.floor(Math.random() * alive.length)];
+      victim.hp = Math.max(0, victim.hp - 3);
+      log(`${victim.name} из отряда "${sq.name}" получил 3 урона (небоевая потеря).`);
+      if (victim.hp === 0) handleFighterDeath(sq);
+    }
+  } else {
+    // два случайных отряда
+    for (let i = 0; i < 2; i++) {
+      const sq = targets[i];
+      const alive = sq.fighters.filter(f => f.hp > 0);
+      if (alive.length > 0) {
+        const victim = alive[Math.floor(Math.random() * alive.length)];
+        victim.hp = Math.max(0, victim.hp - 3);
+        log(`${victim.name} из отряда "${sq.name}" получил 3 урона (небоевая потеря).`);
+        if (victim.hp === 0) handleFighterDeath(sq);
+      }
+    }
+  }
+  break;
+}
+
+case 'Адреналин': {
+  appData.squads.filter(s => !s.hidden).forEach(s => {
+    s.adrenalineUsed = false; // флаг использования
+  });
+  log('Все отряды получили возможность использовать «Адреналин» (одноразово +1 ОД).');
+  break;
+}
+
+// Переработка «Плохой порох»
+case 'Плохой порох': {
+  appData.squads.filter(s => s.faction === 'A.I.R.F.').forEach(s => {
+    if (!s.effects) s.effects = {};
+    s.effects.badPowder = true; // пассивный эффект
+  });
+  log('Пассивный эффект "Плохой порох": -1 попадание при стрельбе для A.I.R.F.');
+  break;
+}         
+                    case 'Ночь': {
   // Добавляем глобальный модификатор штрафа меткости
   appData.modifiers.push({ name: 'Ночь', shotMod: 0, accuracyMod: -1, moraleMod: 0, active: true });
             if (appData.activeCards.some(c => c.name === 'Ночь' && c.active)) {
@@ -3865,6 +4042,9 @@ case 'Огненное поле': {
   log(`Отряд "${list[idx].name}" получил 6 осветительных ракет.`);
   break;
 }
+        default:
+          break;
+
       }
 
       // Добавляем карту в список активных (общие карты без цели)
@@ -4045,16 +4225,6 @@ container.innerHTML = filteredTemplates.map(t => {
   <div id="awardsTab" class="tabcontent">
   <h3>🏅 Справочник наград</h3>
   <div id="awardsReference"></div>
-</div>
-  <div id="targetModal" class="detection-modal">
-  <div class="detection-modal-content">
-    <h3>Параметры стрельбы</h3>
-    <label>Дистанция (гексы): <input type="number" id="modalDistance" value="5" min="1"></label><br>
-    <label>Укрытие цели (d10 >= <input type="number" id="modalCover" value="6" min="2" max="10">)</label><br>
-    <button onclick="executeAttack()">Огонь</button>
-    <button onclick="closeTargetModal()">Отмена</button>
-  </div>
-    </div>
   <div id="targetModal" class="detection-modal">
   <div class="detection-modal-content">
     <h3>Параметры стрельбы</h3>
