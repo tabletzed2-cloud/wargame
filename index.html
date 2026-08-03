@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.48 — фикс карт  </title>
+  <title>Боевой модуль v11.49 — фикс карт  </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -93,7 +93,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.48 — фикс карт </h2>
+  <h2>⚔️ Боевой модуль v11.49 — фикс карт </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -495,6 +495,7 @@ appData.squads.forEach(s => {
   if (s.ippUses === undefined) s.ippUses = 0;
   // adrenalineUsed намеренно не инициализируем – появится только после активации карты
   if (s.mortarStrike === undefined) s.mortarStrike = null;
+  if (s.canCallMortar === undefined) s.canCallMortar = false;
     });
 appData.templates.forEach(t => {
   if (t.ammoSmall === undefined) t.ammoSmall = 200;
@@ -538,7 +539,8 @@ if (s.attackCounter === undefined) s.attackCounter = 0;
     });
           appData.squads.forEach(s => {
   s.fighters.forEach(f => { if (f.awards === undefined) f.awards = []; });
-});
+  s.fighters.forEach(f => { if (f.hasIPP === undefined) f.hasIPP = false; });
+ });
 appData.templates.forEach(t => {
   t.fighters.forEach(f => { if (f.awards === undefined) f.awards = []; });
 });
@@ -1083,6 +1085,7 @@ currentSquad.fighters.forEach((f, index) => {
     <button onclick="adjustHP(${index}, 1)" style="background:#27ae60; padding:2px 5px; margin-left:8px;">+</button>
     <button onclick="adjustHP(${index}, -1)" style="background:#c0392b; padding:2px 5px;">-</button>
     ${!f.isCommander && f.hp > 0 && !f.isAway ? `<button onclick="sendForAmmo(${index})" style="background:#f39c12;">📦 За боеприпасами</button>` : ''}
+    ${f.hasIPP && f.hp > 0 && f.hp < f.maxHp ? `<button onclick="useFighterIPP(${index})" style="background:#27ae60; padding:2px 5px; margin-left:4px;">🩹 ИПП</button>` : ''}
     <button onclick="assignAwardToFighter(${index})" style="background:#f1c40f; padding:2px 5px; margin-left:4px;" title="Наградить">🏅</button>
   </div>`;
 });
@@ -1283,21 +1286,9 @@ function renderActiveCardButtons() {
 
   // ========== ПАНЕЛЬ СТРЕЛЬБЫ ==========
   // Основные атаки
-  shootHtml += `<button onclick="openTargetModal('smallArms')">🔫 Стрелковое / Пулемёты</button> `;
-  shootHtml += `<button onclick="openTargetModal('ordnance')">💥 Орудия / Миномёты</button> `;
-  shootHtml += `<button onclick="openTargetModal('vehicle')">🚀 Атака ПТО по технике</button> `;
-  if (currentSquad.crewInstances && currentSquad.crewInstances.some(ci => { const cw = getFactionCrewWeapons(currentSquad.faction).find(w => w.name === ci.weaponName); return cw && cw.isMolotov; })) {
-    shootHtml += `<button onclick="openTargetModal('molotovCrew')" id="btnMolotovCrew">🔥 Бутылкомет по технике</button> `;
-  }
-  // Гранаты и связка (без модального окна)
-  shootHtml += `<button onclick="throwGrenades()">💣 Бросок гранат</button> `;
-  shootHtml += `<button onclick="satchelCharge()">🧨 Связка гранат</button> `;
-  // Снайпер
-  if (currentSquad && currentSquad.fighters.some(f => { const w = getFactionWeapons(currentSquad.faction).find(w => w.name === f.weapon); return w && w.sniper; })) {
-    shootHtml += `<button id="sniperShot" onclick="openTargetModal('sniper')">🎯 Снайперский выстрел</button> `;
-  }
-  // Рукопашная
-  shootHtml += `<button onclick="meleeAttack()">⚔️ Рукопашная</button> `;
+<label>Входящий урон: <input type="number" id="incomingDamage" value="0" min="0" style="width:60px"></label>
+<button onclick="receiveDamage()">💥 Получить урон</button>
+<div class="log" id="log"></div>
   // Пулемёты ДОТа (отдельные кнопки)
   if (currentSquad.name.includes('ДОТ') && currentSquad.crewInstances) {
     currentSquad.crewInstances.forEach((ci, idx) => {
@@ -1317,11 +1308,11 @@ function renderActiveCardButtons() {
     const suppCost = 5;
     const ap = getAP(currentSquadIndex);
     const disabled = !(ap >= suppCost && getEffectiveMorale() > 1 && !currentSquad.suppressed);
-    shootHtml += `<button onclick="openTargetModal('suppressiveFire')" ${disabled ? 'disabled' : ''}>🔫 Подавить (2,5 ОД, патр. x2)</button> `;
+    shootHtml += `<button onclick="openTargetModal('suppressiveFire')" ${disabled ? 'disabled' : ''}>💫 Подавить (2,5 ОД, патр. x2)</button> `;
   }
   // Состояние подавления (индикатор)
   const isSuppressed = currentSquad.suppressed;
-  shootHtml += `<button onclick="toggleSuppression()" style="background:#f39c12;">${isSuppressed ? '🔥 Подавлен (снять)' : '😐 Не подавлен'}</button> `;
+  shootHtml += `<button onclick="toggleSuppression()" style="background:#f39c12;">${isSuppressed ? '💫 Подавлен (снять)' : '😐 Не подавлен'}</button> `;
 
   // ========== ПАНЕЛЬ ДВИЖЕНИЯ ==========
   if (getAP(currentSquadIndex) > 0 && !currentSquad.armor) {
@@ -1351,7 +1342,7 @@ function renderActiveCardButtons() {
       const cw = getFactionCrewWeapons(currentSquad.faction).find(w => w.name === ci.weaponName);
       if (!cw) return;
       const deployed = ci.deployed !== false;
-      moveHtml += `${cw.name}: ${deployed ? '🟢 Развернуто' : '🔴 Свернуто'} `;
+      moveHtml += `${cw.name}: ${deployed ? '🔵 Развернуто' : '🔴 Свернуто'} `;
       moveHtml += `<button onclick="toggleCrewDeploy(${idx})">${deployed ? 'Свернуть' : 'Развернуть'}</button> `;
     });
   }
@@ -1376,19 +1367,16 @@ function renderActiveCardButtons() {
   if (appData.fireFieldHex) {
     specialHtml += `<button onclick="useFireField()">🔥 Поджечь огненное поле (${appData.fireFieldHex})</button> `;
   }
-  // ИПП
-  if (currentSquad.ippUses > 0) {
-    specialHtml += `<button onclick="useIPP()">🩹 ИПП (${currentSquad.ippUses} шт.)</button> `;
-  }
+
   // Адреналин
   if (currentSquad.adrenalineUsed !== undefined && !currentSquad.adrenalineUsed) {
-    specialHtml += `<button onclick="useAdrenaline()">💉 Адреналин (+1 ОД)</button> `;
+    specialHtml += `<button onclick="useAdrenaline()">💖 Адреналин (+1 ОД)</button> `;
   }
  
   // Миномётный обстрел (только для штаба)
-  if (currentSquad.name.includes('Штаб') && !currentSquad.mortarStrike) {
-    specialHtml += `<button onclick="activateMortarStrike()">💣 Запросить миномётный обстрел</button> `;
-  }
+if (currentSquad.canCallMortar && !currentSquad.mortarStrike) {
+  specialHtml += `<button onclick="activateMortarStrike()">💣 Запросить миномётный обстрел</button> `;
+}
 
   // Вставляем сгенерированный HTML
   shootDiv.innerHTML = shootHtml || '—';
@@ -1412,17 +1400,6 @@ function activateMortarStrike() {
   updateUI();
 }
 
-function useIPP() {
-  if (!currentSquad || currentSquad.ippUses <= 0) return;
-  const wounded = currentSquad.fighters.filter(f => f.hp < f.maxHp && f.hp > 0);
-  if (wounded.length === 0) { log('Нет раненых бойцов.'); return; }
-  const target = wounded[Math.floor(Math.random() * wounded.length)];
-  target.hp = Math.min(target.maxHp, target.hp + 1);
-  currentSquad.ippUses--;
-  log(`${target.name} использовал ИПП (+1 HP). Осталось ИПП: ${currentSquad.ippUses}`);
-  saveData();
-  updateUI();
-}
 
 function useAdrenaline() {
   if (!currentSquad || currentSquad.adrenalineUsed) return;
@@ -1438,7 +1415,15 @@ function useAdrenaline() {
 
 function toggleCrewDeploy(ciIndex) {
   if (!currentSquad || !currentSquad.crewInstances) return;
+  if (!spendAP(currentSquadIndex, 2)) { // 2 полу-ОД = 1 ОД
+  log('Недостаточно ОД (требуется 1 ОД).');
+  return;
+}
   const ci = currentSquad.crewInstances[ciIndex];
+  if (!spendAP(currentSquadIndex, 2)) { // 2 полу-ОД = 1 ОД
+  log('Недостаточно ОД (требуется 1 ОД).');
+  return;
+}
   if (ci.deployed === undefined) ci.deployed = true;
   ci.deployed = !ci.deployed;
   log(`${ci.weaponName}: ${ci.deployed ? 'развёрнуто' : 'свёрнуто'}.`);
@@ -3726,7 +3711,7 @@ case 'Горные охотники': {
         case 'Шахтерский динамит': {
           const list2 = appData.squads.filter(s => s.faction === 'A.I.R.F.' && !s.armor);
           if (list2.length === 0) { alert('Нет пехотных отрядов AIRF.'); return; }
-          const choice2 = prompt('Выберите отряд для "Шахтерский динамит":\n' + list2.map((s,i) => `${i}: ${s.name}`).join('\n'));
+          const choice2 = prompt('Выберите отряд которому выдать шахтерский динамит:\n' + list2.map((s,i) => `${i}: ${s.name}`).join('\n'));
           if (choice2 === null) return;
           const idx2 = parseInt(choice2);
           if (isNaN(idx2) || idx2 < 0 || idx2 >= list2.length) return;
@@ -3922,7 +3907,7 @@ case 'Огненное поле': {
     alert('Нет пехотных отрядов для выдачи гранат.');
     return;
   }
-  const choice = prompt('Выберите отряд:\n' + list.map((s,i) => `${i}: ${s.name} [${s.faction}]`).join('\n'));
+  const choice = prompt('Выберите отряд которому выдать дымовые гранаты:\n' + list.map((s,i) => `${i}: ${s.name} [${s.faction}]`).join('\n'));
   if (choice === null) return;
   const idx = parseInt(choice);
   if (isNaN(idx) || idx < 0 || idx >= list.length) return;
@@ -3933,22 +3918,10 @@ case 'Огненное поле': {
   break;
 }
   case 'Минометный обстрел (ротный 82мм)': {
-  // Ищем штаб (любой отряд с «Штаб» в названии)
-  const hq = appData.squads.find(s => s.name.includes('Штаб') && !s.hidden);
-  if (!hq) { alert('Нет штаба в бою!'); return; }
-  if (hq.mortarStrike) { alert('Минометный обстрел уже запланирован.'); return; }
-  const hex = prompt('Введите гекс для обстрела (например, B4):');
-  if (!hex) return;
-  hq.mortarStrike = {
-    hex: hex,
-    startTurn: currentTurn + 2, // начало через 2 хода
-    duration: 2,                // длится 2 хода (currentTurn+2 и currentTurn+3)
-    shotsPerTurn: 6
-  };
-  log(`Минометный обстрел гекса ${hex} начнётся через 2 хода.`);
+  appData.squads.filter(s => s.name.includes('Штаб') && !s.hidden).forEach(s => s.canCallMortar = true);
+  log('Штабы получили возможность запросить миномётный обстрел.');
   break;
 }
-
 case 'Грязь': {
   appData.modifiers.push({ name: 'Грязь', shotMod: -1, accuracyMod: 0, moraleMod: 0, active: true });
   log('Автоматическое оружие получает -1 к скорострельности.');
@@ -3972,12 +3945,11 @@ case 'Ящик с патронами': {
 case 'Индивидуальный перевязочный пакет': {
   const list = appData.squads.filter(s => !s.hidden && !s.armor);
   if (list.length === 0) { alert('Нет отрядов.'); return; }
-  const choice = prompt('Выберите два отряда через запятую:\n' + list.map((s,i) => `${i}: ${s.name}`).join('\n'));
+  const choice = prompt('Выберите два отряда через запятую для карты «Индивидуальный перевязочный пакет»:\n' + list.map((s,i) => `${i}: ${s.name}`).join('\n'));
   if (!choice) return;
   const indices = choice.split(',').map(x => parseInt(x.trim())).filter(i => !isNaN(i) && i >= 0 && i < list.length);
   indices.forEach(i => {
-    const sq = list[i];
-    sq.ippUses = sq.fighters.length; // каждый боец получает ИПП
+    list[i].fighters.forEach(f => { if (f.hp > 0) f.hasIPP = true; });
   });
   log(`Отряды получили ИПП: ${indices.map(i => list[i].name).join(', ')}`);
   break;
@@ -4028,7 +4000,7 @@ case 'Плохой порох': {
   log('Пассивный эффект "Плохой порох": -1 попадание при стрельбе для A.I.R.F.');
   break;
 }         
-                    case 'Ночь': {
+   case 'Ночь': {
   // Добавляем глобальный модификатор штрафа меткости
   appData.modifiers.push({ name: 'Ночь', shotMod: 0, accuracyMod: -1, moraleMod: 0, active: true });
             if (appData.activeCards.some(c => c.name === 'Ночь' && c.active)) {
@@ -4221,7 +4193,18 @@ container.innerHTML = filteredTemplates.map(t => {
       else if (tabName === 'battleTab') { renderSquadSelector(); renderTemplateSelection(); updateUI(); renderEmbarkPanel(); renderFactionInfo(); }
       else if (tabName === 'awardsTab') { renderAwardsReference(); }
     }
+function useFighterIPP(fighterIndex) {
+  if (!currentSquad) return;
+  const f = currentSquad.fighters[fighterIndex];
+  if (!f || !f.hasIPP || f.hp <= 0 || f.hp >= f.maxHp) return;
+  f.hp = Math.min(f.maxHp, f.hp + 1);
+  f.hasIPP = false;
+  log(`${f.name} использовал ИПП (+1 HP).`);
+  saveData();
+  updateUI();
+}
 
+    
     // Инициализация
     renderSquadSelector();
     updateUI();
