@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.49 — фикс карт  </title>
+  <title>Боевой модуль v11.50 — фикс карт  </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -93,7 +93,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.49 — фикс карт </h2>
+  <h2>⚔️ Боевой модуль v11.50 — фикс карт </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -1285,11 +1285,20 @@ function renderActiveCardButtons() {
   let specialHtml = '';
 
   // ========== ПАНЕЛЬ СТРЕЛЬБЫ ==========
-  // Основные атаки
-<label>Входящий урон: <input type="number" id="incomingDamage" value="0" min="0" style="width:60px"></label>
-<button onclick="receiveDamage()">💥 Получить урон</button>
-<div class="log" id="log"></div>
-  // Пулемёты ДОТа (отдельные кнопки)
+  shootHtml += `<button onclick="openTargetModal('smallArms')">🔫 Стрелковое / Пулемёты</button> `;
+  shootHtml += `<button onclick="openTargetModal('ordnance')">💥 Орудия / Миномёты</button> `;
+  shootHtml += `<button onclick="openTargetModal('vehicle')">🚀 Атака ПТО по технике</button> `;
+  if (currentSquad.crewInstances && currentSquad.crewInstances.some(ci => { const cw = getFactionCrewWeapons(currentSquad.faction).find(w => w.name === ci.weaponName); return cw && cw.isMolotov; })) {
+    shootHtml += `<button onclick="openTargetModal('molotovCrew')" id="btnMolotovCrew">🔥 Бутылкомет по технике</button> `;
+  }
+  shootHtml += `<button onclick="throwGrenades()">💣 Бросок гранат</button> `;
+  shootHtml += `<button onclick="satchelCharge()">🧨 Связка гранат</button> `;
+  if (currentSquad && currentSquad.fighters.some(f => { const w = getFactionWeapons(currentSquad.faction).find(w => w.name === f.weapon); return w && w.sniper; })) {
+    shootHtml += `<button id="sniperShot" onclick="openTargetModal('sniper')">🎯 Снайперский выстрел</button> `;
+  }
+  shootHtml += `<button onclick="meleeAttack()">⚔️ Рукопашная</button> `;
+
+  // Пулемёты ДОТа
   if (currentSquad.name.includes('ДОТ') && currentSquad.crewInstances) {
     currentSquad.crewInstances.forEach((ci, idx) => {
       if (ci.active === false || ci.status === 'destroyed' || ci.status === 'blinded') return;
@@ -1303,14 +1312,14 @@ function renderActiveCardButtons() {
       shootHtml += `<button onclick="fireDOTMG(${idx})" ${disabled}>Пулемёт ${idx+1}-й амбразуры (${used}/${maxShots})</button> `;
     });
   }
-  // Огонь на подавление (не ДОТ)
+
+  // Подавление
   if (!currentSquad.armor && !currentSquad.name.includes('ДОТ') && currentSquad.ammoSmall > 0) {
     const suppCost = 5;
     const ap = getAP(currentSquadIndex);
     const disabled = !(ap >= suppCost && getEffectiveMorale() > 1 && !currentSquad.suppressed);
     shootHtml += `<button onclick="openTargetModal('suppressiveFire')" ${disabled ? 'disabled' : ''}>💫 Подавить (2,5 ОД, патр. x2)</button> `;
   }
-  // Состояние подавления (индикатор)
   const isSuppressed = currentSquad.suppressed;
   shootHtml += `<button onclick="toggleSuppression()" style="background:#f39c12;">${isSuppressed ? '💫 Подавлен (снять)' : '😐 Не подавлен'}</button> `;
 
@@ -1335,18 +1344,16 @@ function renderActiveCardButtons() {
       moveHtml += `<button onclick="vehicleDeploy()">⚙️ Развёртывание/Свёртывание</button> `;
     }
   }
-  // Развёртывание/свёртывание для расчётов (теперь индивидуальное)
-  if (currentSquad.crewInstances && currentSquad.crewInstances.length > 0) {
+  if (currentSquad.crewInstances && currentSquad.crewInstances.length > 0 && !currentSquad.name.includes('ДОТ')) {
     currentSquad.crewInstances.forEach((ci, idx) => {
       if (ci.active === false) return;
       const cw = getFactionCrewWeapons(currentSquad.faction).find(w => w.name === ci.weaponName);
       if (!cw) return;
       const deployed = ci.deployed !== false;
-      moveHtml += `${cw.name}: ${deployed ? '🔵 Развернуто' : '🔴 Свернуто'} `;
+      moveHtml += `${cw.name}: ${deployed ? '🟢 Развернуто' : '🔴 Свернуто'} `;
       moveHtml += `<button onclick="toggleCrewDeploy(${idx})">${deployed ? 'Свернуть' : 'Развернуть'}</button> `;
     });
   }
-  // Кнопки обнаружения
   if (!currentSquad.detected) {
     moveHtml += `<button onclick="showDetectionDialog('check')">🔍 Проверить обнаружение</button> `;
     moveHtml += `<button onclick="manualDetect()">👁️ Обнаружить вручную</button> `;
@@ -1355,30 +1362,22 @@ function renderActiveCardButtons() {
   }
 
   // ========== СПЕЦИАЛЬНАЯ ПАНЕЛЬ ==========
-  // Осветительные ракеты
   if (currentSquad.flares > 0) {
     specialHtml += `<button onclick="fireFlare()">🚀 Осветительная ракета (${currentSquad.flares} шт.)</button> `;
   }
-  // Дымовые гранаты
   if (currentSquad.smokeGrenades >= 3 && !currentSquad.armor) {
     specialHtml += `<button onclick="deploySmokeScreen()">💨 Дымовая завеса (3 грн.)</button> `;
   }
-  // Огненное поле
   if (appData.fireFieldHex) {
     specialHtml += `<button onclick="useFireField()">🔥 Поджечь огненное поле (${appData.fireFieldHex})</button> `;
   }
-
-  // Адреналин
   if (currentSquad.adrenalineUsed !== undefined && !currentSquad.adrenalineUsed) {
-    specialHtml += `<button onclick="useAdrenaline()">💖 Адреналин (+1 ОД)</button> `;
+    specialHtml += `<button onclick="useAdrenaline()">💉 Адреналин (+1 ОД)</button> `;
   }
- 
-  // Миномётный обстрел (только для штаба)
-if (currentSquad.canCallMortar && !currentSquad.mortarStrike) {
-  specialHtml += `<button onclick="activateMortarStrike()">💣 Запросить миномётный обстрел</button> `;
-}
+  if (currentSquad.canCallMortar && !currentSquad.mortarStrike) {
+    specialHtml += `<button onclick="activateMortarStrike()">💣 Запросить миномётный обстрел</button> `;
+  }
 
-  // Вставляем сгенерированный HTML
   shootDiv.innerHTML = shootHtml || '—';
   moveDiv.innerHTML = moveHtml || '—';
   specialDiv.innerHTML = specialHtml || '—';
