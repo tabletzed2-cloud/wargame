@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.50 — фикс карт  </title>
+  <title>Боевой модуль v11.51 — фикс карт  </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -93,7 +93,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.50 — фикс карт </h2>
+  <h2>⚔️ Боевой модуль v11.51 — фикс карт </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -151,7 +151,7 @@
       <input type="number" id="moraleDirectInput" style="width:60px" placeholder="Тек. дух">
       <button onclick="setMoraleDirect()">Уст.</button>
     </div>
-    <button onclick="healAll()">🩹 Вылечить всех</button>
+    <button onclick="healAll()">💖 Вылечить всех</button>
     <button onclick="resetAll()">🔄 Сбросить</button>
 
     <label>Входящий урон: <input type="number" id="incomingDamage" value="0" min="0" style="width:60px"></label>
@@ -1289,7 +1289,7 @@ function renderActiveCardButtons() {
   shootHtml += `<button onclick="openTargetModal('ordnance')">💥 Орудия / Миномёты</button> `;
   shootHtml += `<button onclick="openTargetModal('vehicle')">🚀 Атака ПТО по технике</button> `;
   if (currentSquad.crewInstances && currentSquad.crewInstances.some(ci => { const cw = getFactionCrewWeapons(currentSquad.faction).find(w => w.name === ci.weaponName); return cw && cw.isMolotov; })) {
-    shootHtml += `<button onclick="openTargetModal('molotovCrew')" id="btnMolotovCrew">🔥 Бутылкомет по технике</button> `;
+    shootHtml += `<button onclick="openTargetModal('molotovCrew')" id="btnMolotovCrew">🍾 Бутылкомет по технике</button> `;
   }
   shootHtml += `<button onclick="throwGrenades()">💣 Бросок гранат</button> `;
   shootHtml += `<button onclick="satchelCharge()">🧨 Связка гранат</button> `;
@@ -1320,6 +1320,7 @@ function renderActiveCardButtons() {
     const disabled = !(ap >= suppCost && getEffectiveMorale() > 1 && !currentSquad.suppressed);
     shootHtml += `<button onclick="openTargetModal('suppressiveFire')" ${disabled ? 'disabled' : ''}>💫 Подавить (2,5 ОД, патр. x2)</button> `;
   }
+  // Индикатор подавления
   const isSuppressed = currentSquad.suppressed;
   shootHtml += `<button onclick="toggleSuppression()" style="background:#f39c12;">${isSuppressed ? '💫 Подавлен (снять)' : '😐 Не подавлен'}</button> `;
 
@@ -1341,19 +1342,21 @@ function renderActiveCardButtons() {
     moveHtml += `<button onclick="vehicleTurn()">🔄 Разворот</button> `;
     moveHtml += `<button onclick="vehicleAcquireTarget()">🎯 Наведение на цель</button> `;
     if (currentSquad.name.includes('САУ')) {
-      moveHtml += `<button onclick="vehicleDeploy()">⚙️ Развёртывание/Свёртывание</button> `;
+      moveHtml += `<button onclick="vehicleDeploy()">⚙️ Развёртывание/Свёртывание САУ</button> `;
     }
   }
-  if (currentSquad.crewInstances && currentSquad.crewInstances.length > 0 && !currentSquad.name.includes('ДОТ')) {
+  // Развёртывание орудий (кроме ДОТ и САУ)
+  if (currentSquad.crewInstances && currentSquad.crewInstances.length > 0 && !currentSquad.name.includes('ДОТ') && !currentSquad.name.includes('САУ')) {
     currentSquad.crewInstances.forEach((ci, idx) => {
       if (ci.active === false) return;
       const cw = getFactionCrewWeapons(currentSquad.faction).find(w => w.name === ci.weaponName);
       if (!cw) return;
       const deployed = ci.deployed !== false;
-      moveHtml += `${cw.name}: ${deployed ? '🟢 Развернуто' : '🔴 Свернуто'} `;
+      moveHtml += `${cw.name}: ${deployed ? '🔵 Развернуто' : '🔴 Свернуто'} `;
       moveHtml += `<button onclick="toggleCrewDeploy(${idx})">${deployed ? 'Свернуть' : 'Развернуть'}</button> `;
     });
   }
+  // Обнаружение
   if (!currentSquad.detected) {
     moveHtml += `<button onclick="showDetectionDialog('check')">🔍 Проверить обнаружение</button> `;
     moveHtml += `<button onclick="manualDetect()">👁️ Обнаружить вручную</button> `;
@@ -1374,7 +1377,8 @@ function renderActiveCardButtons() {
   if (currentSquad.adrenalineUsed !== undefined && !currentSquad.adrenalineUsed) {
     specialHtml += `<button onclick="useAdrenaline()">💉 Адреналин (+1 ОД)</button> `;
   }
-  if (currentSquad.canCallMortar && !currentSquad.mortarStrike) {
+  // Миномётный обстрел (только для штаба, если ещё не вызывался)
+  if (currentSquad.canCallMortar && !currentSquad.mortarStrike && !appData.squads.some(s => s.mortarStrike)) {
     specialHtml += `<button onclick="activateMortarStrike()">💣 Запросить миномётный обстрел</button> `;
   }
 
