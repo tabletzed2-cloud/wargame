@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.52 — фикс карт  </title>
+  <title>Боевой модуль v11.53 — фикс карт  </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -93,7 +93,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.52 — фикс карт </h2>
+  <h2>⚔️ Боевой модуль v11.53 — фикс карт </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -3998,34 +3998,28 @@ case 'Плохой порох': {
   log('Пассивный эффект "Плохой порох": -1 попадание при стрельбе для A.I.R.F.');
   break;
 }         
-case 'Ночь': {
-  if (appData.activeCards.some(c => c.name === 'Ночь' && c.active)) {
-    alert('Карта «Ночь» уже активна!');
-    return; // прерываем, не добавляем модификатор и не выдаём ракеты
-  }
-  appData.modifiers.push({ name: 'Ночь', shotMod: 0, accuracyMod: -1, moraleMod: 0, active: true });
-  const list = appData.squads.filter(s => !s.hidden);
-  // ... остальной код
-  break;
-}
-  // Выбор отряда для ракет
-  const list = appData.squads.filter(s => !s.hidden);
-  if (list.length === 0) {
-    alert('Нет отрядов в бою для выдачи ракет.');
-    return;
-  }
-  const choice = prompt('Выберите отряд, который получит 6 осветительных ракет:\n' + list.map((s,i) => `${i}: ${s.name} [${s.faction}]`).join('\n'));
-  if (choice === null) return;
-  const idx = parseInt(choice);
-  if (isNaN(idx) || idx < 0 || idx >= list.length) return;
-  list[idx].flares = 6;
-  log(`Отряд "${list[idx].name}" получил 6 осветительных ракет.`);
-  break;
-}
-        default:
-          break;
-
-      }
+         case 'Ночь': {
+           if (appData.activeCards.some(c => c.name === 'Ночь' && c.active)) {
+             alert('Карта «Ночь» уже активна!');
+             return;
+           }
+           appData.modifiers.push({ name: 'Ночь', shotMod: 0, accuracyMod: -1, moraleMod: 0, active: true });
+           const list = appData.squads.filter(s => !s.hidden);
+           if (list.length === 0) {
+             alert('Нет отрядов в бою для выдачи ракет.');
+             return;
+           }
+           const choice = prompt('Выберите отряд, который получит 6 осветительных ракет:\n' + list.map((s,i) => `${i}: ${s.name} [${s.faction}]`).join('\n'));
+           if (choice === null) return;
+           const idx = parseInt(choice);
+           if (isNaN(idx) || idx < 0 || idx >= list.length) return;
+           list[idx].flares = 6;
+           log(`Отряд "${list[idx].name}" получил 6 осветительных ракет.`);
+           break;
+         }
+         default:
+           break;
+       }
 
       // Добавляем карту в список активных (общие карты без цели)
       if (!['Geen Duibreed Terug!'].includes(card.name)) {
