@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.54 — фикс карт  </title>
+  <title>Боевой модуль v11.55 — фикс карт  </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -93,7 +93,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.54 — фикс карт </h2>
+  <h2>⚔️ Боевой модуль v11.55 — фикс карт </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -274,11 +274,11 @@ if (!selectedFaction) showFactionModal();
 ],
             "weapons": [
               { "name": "Винтовка FN model 24/30", "values": [1,1,1,1,1,1], "effectiveRange": 5, "meleeBonus": 1, "icon": "https://i.imgur.com/wiNFynL.png", "iconSize": "30px"},
-              { "name": "Винтовка Geweer M95", "values": [1,1,1,1,1,2], "effectiveRange": 5, "meleeBonus": 1, "icon": "https://i.imgur.com/pUJVSSe.png", "iconSize": "30px"},
-              { "name": "Автоматическая винтовка Johanson M1941", "values": [0,1,1,2,2,2], "effectiveRange": 5, "meleeBonus": 1, "icon": "https://i.imgur.com/QGzAzk7.png", "iconSize": "30px"},
-              { "name": "Пистолет Browning Hi-Power", "values": [0,1,1,2,2,3], "effectiveRange": 2, "meleeBonus": 0, "icon": "https://i.imgur.com/kZOQk86.png", "iconSize": "30px"},
-              { "name": "Ручной пулемет FN model D", "values": [0,1,1,2,2,3], "effectiveRange": 5, "meleeBonus": 0, "icon": "https://i.imgur.com/ACVEF7D.png", "iconSize": "45px"},
-              { "name": "Ручной пулемет FN model D-exp", "values": [0,2,3,4,5,0], "effectiveRange": 5, "meleeBonus": 0, "icon": "https://i.imgur.com/nnQ7CRv.png", "iconSize": "45px"},
+              { "name": "Винтовка Geweer M95", "values": [1,1,1,1,1,2], "effectiveRange": 5, "meleeBonus": 1, "icon": "https://i.imgur.com/pUJVSSe.png", "iconSize": "30px", "isAutomatic": true},
+              { "name": "Автоматическая винтовка Johanson M1941", "values": [0,1,1,2,2,2], "effectiveRange": 5, "meleeBonus": 1, "icon": "https://i.imgur.com/QGzAzk7.png", "iconSize": "30px", "isAutomatic": true},
+              { "name": "Пистолет Browning Hi-Power", "values": [0,1,1,2,2,3], "effectiveRange": 2, "meleeBonus": 0, "icon": "https://i.imgur.com/kZOQk86.png", "iconSize": "30px", "isAutomatic": true},
+              { "name": "Ручной пулемет FN model D", "values": [0,1,1,2,2,3], "effectiveRange": 5, "meleeBonus": 0, "icon": "https://i.imgur.com/ACVEF7D.png", "iconSize": "45px", "isAutomatic": true},
+              { "name": "Ручной пулемет FN model D-exp", "values": [0,2,3,4,5,0], "effectiveRange": 5, "meleeBonus": 0, "icon": "https://i.imgur.com/nnQ7CRv.png", "iconSize": "45px", "isAutomatic": true},
               { "name": "Geweer OIP M.38", "values": [1,1,1,1,1,2], "effectiveRange": 5, "meleeBonus": 0, "sniper": true, "accuracyBonus": 3, "damagePerHit": 3, "icon": "https://i.imgur.com/l4zDAgG.png", "iconSize": "45px"}
             ],
             "crewWeapons": [
@@ -321,12 +321,12 @@ if (!selectedFaction) showFactionModal();
 ],
             "weapons": [
               { "name": "Винтовка Vz.24", "values": [1,1,1,1,1,1], "effectiveRange": 5, "meleeBonus": 1, "icon": "https://i.imgur.com/MOKxQYc.png", "iconSize": "40px"},
-              { "name": "Пистолет Star M1914", "values": [0,1,1,2,2,3], "effectiveRange": 2, "meleeBonus": 0, "icon": "https://i.imgur.com/xB7ekEE.png", "iconSize": "30px"},
-              { "name": "ПП Star Si-35", "values": [0,1,1,2,2,3], "effectiveRange": 3, "meleeBonus": 1, "icon": "https://i.imgur.com/BK3D3AZ.png", "iconSize": "30px"},
-              { "name": "АВС-36", "values": [1,1,2,2,3,3], "effectiveRange": 6, "meleeBonus": 1, "icon": "", "iconSize": "30px"},
-              { "name": "ППД-40", "values": [0,2,2,3,4,4], "effectiveRange": 3, "meleeBonus": 0, "icon": "", "iconSize": "30px"},
-              { "name": "ДП-27", "values": [0,1,2,3,4,4], "effectiveRange": 5, "meleeBonus": 0, "icon": "", "iconSize": "30px"},
-              { "name": "Ручной пулемет Zb.26", "values": [0,1,1,2,2,3], "effectiveRange": 5, "meleeBonus": 0, "icon": "https://i.imgur.com/YWQNfRQ.png", "iconSize": "60px"},
+              { "name": "Пистолет Star M1914", "values": [0,1,1,2,2,3], "effectiveRange": 2, "meleeBonus": 0, "icon": "https://i.imgur.com/xB7ekEE.png", "iconSize": "30px", "isAutomatic": true},
+              { "name": "ПП Star Si-35", "values": [0,1,1,2,2,3], "effectiveRange": 3, "meleeBonus": 1, "icon": "https://i.imgur.com/BK3D3AZ.png", "iconSize": "30px", "isAutomatic": true},
+              { "name": "АВС-36", "values": [1,1,2,2,3,3], "effectiveRange": 6, "meleeBonus": 1, "icon": "", "iconSize": "30px", "isAutomatic": true},
+              { "name": "ППД-40", "values": [0,2,2,3,4,4], "effectiveRange": 3, "meleeBonus": 0, "icon": "", "iconSize": "30px", "isAutomatic": true},
+              { "name": "ДП-27", "values": [0,1,2,3,4,4], "effectiveRange": 5, "meleeBonus": 0, "icon": "", "iconSize": "30px", "isAutomatic": true},
+              { "name": "Ручной пулемет Zb.26", "values": [0,1,1,2,2,3], "effectiveRange": 5, "meleeBonus": 0, "icon": "https://i.imgur.com/YWQNfRQ.png", "iconSize": "60px", "isAutomatic": true},
               { "name": "РОКС-3", "values": [0,0,0,0,0,0], "effectiveRange": 1, "meleeBonus": 0, "flamethrower": true, "maxShots": 3, "icon": "", "iconSize": "30px"}
             ],
             "crewWeapons": [
@@ -1084,7 +1084,7 @@ currentSquad.fighters.forEach((f, index) => {
     <button onclick="adjustHP(${index}, 1)" style="background:#27ae60; padding:2px 5px; margin-left:8px;">+</button>
     <button onclick="adjustHP(${index}, -1)" style="background:#c0392b; padding:2px 5px;">-</button>
     ${!f.isCommander && f.hp > 0 && !f.isAway ? `<button onclick="sendForAmmo(${index})" style="background:#f39c12;">📦 За боеприпасами</button>` : ''}
-    ${f.hasIPP && f.hp > 0 && f.hp < f.maxHp ? `<button onclick="useFighterIPP(${index})" style="background:#27ae60; padding:2px 5px; margin-left:4px;">🩹 ИПП</button>` : ''}
+    ${f.hasIPP && f.hp > 0 && f.hp < f.maxHp ? `<button onclick="useFighterIPP(${index})" style="background:#27ae60; padding:2px 5px; margin-left:4px;">💗 ИПП</button>` : ''}
     <button onclick="assignAwardToFighter(${index})" style="background:#f1c40f; padding:2px 5px; margin-left:4px;" title="Наградить">🏅</button>
   </div>`;
 });
@@ -1126,9 +1126,7 @@ const eff = morale + mod + extraMorale;
     currentSquad.suppressed = true;
     log(`⚠️ Отряд "${currentSquad.name}" подавлен (боевой дух ≤ 1)!`);
   }
-} else if (currentSquad.suppressed && eff > 1) {
-  currentSquad.suppressed = false;
-}
+
       // Обновляем отображение ОД и хода
       document.getElementById('apDisplay').innerText = getAP(currentSquadIndex);
       document.getElementById('maxApDisplay').innerText = actionPoints[currentSquadIndex] ? actionPoints[currentSquadIndex].maxAp : 0;
@@ -1137,7 +1135,7 @@ const eff = morale + mod + extraMorale;
       const maxShots = getMaxShots(currentSquad);
       const shotsUsed = getShotsUsed(currentSquad);
 document.getElementById('statusContainer').innerHTML = `
-  ${currentSquad.detected ? '<span style="color:#e74c3c;">🔴 ОБНАРУЖЕН!</span>' : currentSquad.noiseMarker ? '<span style="color:#f39c12;">🟡 Шум</span>' : '<span style="color:#27ae60;">🟢 Скрыт</span>'}
+  ${currentSquad.detected ? '<span style="color:#e74c3c;">🔴 ОБНАРУЖЕН!</span>' : currentSquad.noiseMarker ? '<span style="color:#f39c12;">❗ Шум</span>' : '<span style="color:#27ae60;">🟢 Скрыт</span>'}
   | 🔫 Патроны: ${currentSquad.ammoSmall} | 💣 Гранаты: ${currentSquad.grenades} | 🚀 Снаряды: ${currentSquad.ammoOrdnance} | 🎯 Выстрелов: ${shotsUsed}/${maxShots}
 `;
 const hasMolotovCrew = currentSquad && currentSquad.crewInstances && currentSquad.crewInstances.some(ci => {
@@ -1496,6 +1494,7 @@ function moveSquad(terrainKey) {
   saveData();
   updateUI();
 }
+    
 function rollD12() { return Math.floor(Math.random() * 12) + 1; }
   
     function fireDOTMG(ciIndex) {
@@ -1815,6 +1814,13 @@ function suppressiveFire() {
     if (!w) return;
 
     let shots = w.values[rollD6() - 1] + shotMod;
+// Проверка на грязь/чистое оружие
+if (w.isAutomatic) {
+// Пулемёты всегда автоматические
+if (appData.activeCards.some(c => c.name === 'Грязь' && c.active)) shots -= 1;
+if (appData.activeCards.some(c => c.name === 'Чистое оружие' && c.active)) shots += 1;
+shots = Math.max(0, shots);
+}
     if (shots <= 0) return;
     // Ограничение по оставшимся патронам (удвоенный расход будет учтён позже)
     const maxShotsPossible = Math.floor(currentSquad.ammoSmall / 2); // каждый выстрел стоит 2 патрона
@@ -3124,6 +3130,12 @@ if (modParts.length) log(`🎯 Модификаторы: ${modParts.join(', ')}`
       if (!w) return;
       let penalty = (badPowderTarget === index) ? 1 : 0;
       let shots = Math.min(w.values[rollD6() - 1] + shotMod - penalty, currentSquad.ammoSmall);
+ // Проверка на грязь/чистое оружие
+if (w.isAutomatic) {
+  if (appData.activeCards.some(c => c.name === 'Грязь' && c.active)) shots -= 1;
+  if (appData.activeCards.some(c => c.name === 'Чистое оружие' && c.active)) shots += 1;
+}
+shots = Math.max(0, shots); // не уходим в минус
       if (shots <= 0) return;
       currentSquad.ammoSmall -= shots;
       totalShots += shots;
@@ -3165,6 +3177,10 @@ if (modParts.length) log(`🎯 Модификаторы: ${modParts.join(', ')}`
         for (let i = 0; i < dice; i++) shots += rollD6();
       }
       shots = Math.max(0, shots + shotMod);
+      // Пулемёты всегда автоматические
+if (appData.activeCards.some(c => c.name === 'Грязь' && c.active)) shots -= 1;
+if (appData.activeCards.some(c => c.name === 'Чистое оружие' && c.active)) shots += 1;
+shots = Math.max(0, shots);
       if (shots <= 0) return;
       shots = Math.min(shots, currentSquad.ammoSmall);
       incrementWeaponShotCount(currentSquad, ci.uniqueKey);
@@ -3921,13 +3937,11 @@ case 'Огненное поле': {
   break;
 }
 case 'Грязь': {
-  appData.modifiers.push({ name: 'Грязь', shotMod: -1, accuracyMod: 0, moraleMod: 0, active: true });
   log('Автоматическое оружие получает -1 к скорострельности.');
   break;
 }
 
 case 'Чистое оружие': {
-  appData.modifiers.push({ name: 'Чистое оружие', shotMod: 1, accuracyMod: 0, moraleMod: 0, active: true });
   log('Автоматическое оружие получает +1 к скорострельности.');
   break;
 }
