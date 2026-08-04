@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.66 — карточки  </title>
+  <title>Боевой модуль v11.67 — карточки  </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -107,7 +107,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.66 — карточки </h2>
+  <h2>⚔️ Боевой модуль v11.67 — карточки </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -313,7 +313,7 @@ if (!selectedFaction) showFactionModal();
   { "name": "Снайперский прицел OIP M.38", "desc": "Бенилюксская оптика. Снайперское звено доступно для выбора.", "effect": "Добавьте отряд «Снайперское звено OIP» вручную", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/w8S0GF8.png", "subfaction": "common", "informational": true },
   { "name": "Фламандская Фурия", "desc": "В рукопашной можно перебросить d6=1 один раз.", "effect": "Переброс 1 в ближнем бою (бельгийцы)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/JMPfPx8.png", "subfaction": "belgian", "meleeReroll": true },
   { "name": "Длинное дыхание", "desc": "При уничтожении отряда враг рядом получает урон.", "effect": "Маркер возмездия (бельгийцы)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/qbqWUQB.png", "subfaction": "belgian" },
-  { "name": "Geen Duibreed Terug!", "desc": "Бельгийцы получают +2 к духу при живом лейтенанте.", "effect": "+2 дух (бельгийцы)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 2, "icon": "", "subfaction": "belgian", "requiresCommander": true },
+  { "name": "Geen Duibreed Terug!", "desc": "Бельгийцы получают +2 к духу при живом лейтенанте.", "effect": "+2 дух (бельгийцы)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 2, "icon": "https://i.imgur.com/dffr7GY.png", "subfaction": "belgian", "requiresCommander": true },
   { "name": "Кальвинистская бережливость", "desc": "Каждые 3 хода восстанавливается 3 патрона.", "effect": "Восстановление боезапаса (голландцы)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/TAC5DDu.png", "subfaction": "dutch", "ammoRegen": 3 },
   { "name": "Кальвинистская сдержанность", "desc": "Голландцы не могут атаковать в рукопашной, в защите -1.", "effect": "Штраф в ближнем бою (голландцы)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/Ey05OLP.png", "subfaction": "dutch", "meleePenalty": true },
   { "name": "Taalkwetie (Языковой вопрос)", "desc": "Подразделения за пределами 4 гексов от штаба получают -1 ОД.", "effect": "-1ОД дальше 4 гексов", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/Iy3TeCE.jpeg", "subfaction": "common", "informational": true },
@@ -334,12 +334,12 @@ if (!selectedFaction) showFactionModal();
             "icon": "https://i.imgur.com/V6YvAfB.png",
             "awards": [
   { "id": "wound_airf", "name": "Нашивка за ранение", "icon": "", "iconWidth": "40px", "iconHeight": "55px", "bonus": "Один раз за бой восстановить 1 HP", "criteria": "Боец с 1 HP в конце боя, отряд не бежал" },
-  { "id": "red_sun", "name": "Орден Красное Солнце Анд", "icon": "", "iconWidth": "40px", "iconHeight": "55px",  "bonus": "+1 к укрытию на открытой местности", "criteria": "Вручается командиру взвода если потери взвода после боя составили меньше 50% личного состава" },
-  { "id": "mountain", "name": "Знак «Горный Турист»", "icon": "", "iconWidth": "40px", "iconHeight": "55px", "bonus": "Рывок на 1 гекс в гористой и холмистой местности, 1 раз за бой", "criteria": "Выдается в начале игры одному солдату на выбор" },
-  { "id": "dagger", "name": "Знак «Кинжал Республики»", "icon": "", "iconWidth": "40px", "iconHeight": "55px", "bonus": "Может перебросить провал на обнаружение", "criteria": "Выдается всем выжившим бойцам отряда, подобравшихся незамеченными к противнику на дистанцию рывка в рукопашную атаку 2-3 гекса" },
+  { "id": "red_sun", "name": "Орден Красное Солнце Анд", "icon": "https://i.imgur.com/0pfk6Fo.png", "iconWidth": "40px", "iconHeight": "55px",  "bonus": "+1 к укрытию на открытой местности", "criteria": "Вручается командиру взвода если потери взвода после боя составили меньше 50% личного состава" },
+  { "id": "mountain", "name": "Знак «Горный Турист»", "icon": "https://i.imgur.com/xSUOHgj.png", "iconWidth": "40px", "iconHeight": "55px", "bonus": "Рывок на 1 гекс в гористой и холмистой местности, 1 раз за бой", "criteria": "Выдается в начале игры одному солдату на выбор" },
+  { "id": "dagger", "name": "Знак «Кинжал Республики»", "icon": "https://i.imgur.com/BbBP97K.png", "iconWidth": "40px", "iconHeight": "55px", "bonus": "Может перебросить провал на обнаружение", "criteria": "Выдается всем выжившим бойцам отряда, подобравшихся незамеченными к противнику на дистанцию рывка в рукопашную атаку 2-3 гекса" },
   { "id": "sapper", "name": "Медаль «За Сапёрную Доблесть»", "icon": "", "iconWidth": "40px", "iconHeight": "55px", "bonus": "При провале подрыва не погибает а получает только 1 ед. урона", "criteria": "Получает сапер, который успешно подорвал бронетехнику или ДОТ при этом выжил" },
-  { "id": "interbrigade", "name": "Знак «Интербригада»", "icon": "", "iconWidth": "40px", "iconHeight": "55px", "bonus": "+1 к меткости", "criteria": "Выдавался иностранцам добровольцам участвовавшим в конфликтах на стороне Коминтерна." },
-  { "id": "loyalty", "name": "Орден «За верность Республике»", "icon": "", "iconWidth": "40px", "iconHeight": "55px", "bonus": "+1 к боевому духу всех отрядов во взводе", "criteria": "Выдается командиру взвода если ни один его отряд не бежал с поля боя. +1 к боевому духу всех отрядов во взводе" }
+  { "id": "interbrigade", "name": "Знак «Интербригада»", "icon": "https://i.imgur.com/RxXHvpf.png", "iconWidth": "40px", "iconHeight": "55px", "bonus": "+1 к меткости", "criteria": "Выдавался иностранцам добровольцам участвовавшим в конфликтах на стороне Коминтерна." },
+  { "id": "loyalty", "name": "Орден «За верность Республике»", "icon": "https://i.imgur.com/jt7QgKm.png", "iconWidth": "40px", "iconHeight": "55px", "bonus": "+1 к боевому духу всех отрядов во взводе", "criteria": "Выдается командиру взвода если ни один его отряд не бежал с поля боя. +1 к боевому духу всех отрядов во взводе" }
 ],
             "weapons": [
               { "name": "Винтовка Vz.24", "values": [1,1,1,1,1,1], "effectiveRange": 5, "meleeBonus": 1, "icon": "https://i.imgur.com/MOKxQYc.png", "iconSize": "40px"},
@@ -357,19 +357,19 @@ if (!selectedFaction) showFactionModal();
               { "type": "mortar", "name": "Ампуломёт АМ-1", "crewSize": 3, "shotRule": "fixed_per_crew", "shotsFull": 3, "shotsReduced2": 2, "shotsReduced1": 1, "effectiveRange": 8, "splashDamageDice": 1, "isAmpulomet": true, "damageType": "d4", "icon": "" }
             ],
             "cardLibrary": [
-              { "name": "Интербригада", "desc": "Выбранный отряд состоит из ветеранов интербригад, воевавших в Испании.", "effect": "Бойцы отряда получают знак «Интербригада». Информационная – знак выдаётся вручную.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/p545iht.png", "subfaction": "common", "informational": true },
+              { "name": "Интербригада", "desc": "Выбранный отряд состоит из ветеранов интербригад, воевавших в Испании.", "effect": "Бойцы отряда получают знак «Интербригада». Информационная – знак выдаётся вручную.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/BUqCiN4.png", "subfaction": "common", "informational": true },
               { "name": "Por la revolución!", "desc": "+1 в рукопашной, +1 к боевому духу отряда, в следующем ходу -1 ОД, одноразовая.", "effect": "+1 рукопашная, +1 дух, -1 ОД на след. ход (активируется 1 раз для всех стрелковых, штурмовых, сапёрных и штабов)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 1, "icon": "https://i.imgur.com/p545iht.png", "subfaction": "common", "oneTime": true },
               { "name": "¡No pasarán!", "desc": "+1 к скорострельности каждого бойца и -1 к меткости на одну атаку, игнорирует подавление. Придаётся стрелковым и пулемётным отделениям, одноразовая.", "effect": "+1 скорострельность, -1 меткость (1 атака), игнорирует подавление", "shotMod": 1, "accuracyMod": -1, "moraleMod": 0, "icon": "", "subfaction": "common", "oneTime": true },
               { "name": "Испанская ярость", "desc": "+1 в рукопашной. Активируется 1 раз у каждого отряда кроме бронетехники.", "effect": "+1 рукопашная (1 раз)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "oneTime": true },
-              { "name": "Оружие солидарности", "desc": "Штабу взвода придаётся 1 случайное оружие из советского арсенала (АВС-36, ППД-40, ДП-27).", "effect": "Случайное советское оружие штабу", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
-              { "name": "Горные охотники", "desc": "Выберите 3 отряда. При попадании в зону обнаружения вражеского штаба эти отряды не отображаются противнику, пока сами не провалят обнаружение.", "effect": "Условная", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/efWukUF.png", "subfaction": "common", "informational": true },
+              { "name": "Оружие солидарности", "desc": "Штабу взвода придаётся 1 случайное оружие из советского арсенала (АВС-36, ППД-40, ДП-27).", "effect": "Случайное советское оружие штабу", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/ViSMBmT.png", "subfaction": "common" },
+              { "name": "Горные охотники", "desc": "Выберите 3 отряда. При попадании в зону обнаружения вражеского штаба эти отряды не отображаются противнику, пока сами не провалят обнаружение.", "effect": "Условная", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/y4MAsnG.png", "subfaction": "common", "informational": true },
               { "name": "Реконкиста", "desc": "+1 к рукопашной против BeVe в городском бою.", "effect": "+1 рукопашная против BeVe (городской бой)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
               { "name": "Залп отчаяния", "desc": "Если у отряда кончились патроны, все живые бойцы делают последний залп со скорострельностью 1, одноразовая.", "effect": "Последний залп при 0 патронах (одноразово)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "oneTime": true },
               { "name": "Шахтерский динамит", "desc": "Выбранному отряду выдаётся +2 гранаты на бойца, но при броске 1 на d6 боец получает 3 урона. Урон гранат становится d6+1.", "effect": "+2 гранаты/бойца, урон d6+1, риск 1→3 урона", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/p3tabc7.png", "subfaction": "common" },
               { "name": "Бутылки с зажигательной смесью", "desc": "Все гранаты отряда заменяются на бутылки с зажигательной смесью (1/бойца). Попадание как у гранаты, по танку загорание на 4-6, по пехоте 3 урона.", "effect": "Замена гранат на коктейли Молотова", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/SnonpVt.png", "subfaction": "common" },
               { "name": "Бутылкомет Цукермана", "desc": "Взводу добавляется расчёт бутылкомёта. Попадание d10 5-10, дальность 3 гекса, эффект как у бутылок.", "effect": "Добавляет орудие «Бутылкомет Цукермана»", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
               { "name": "Плохой порох", "desc": "Все отряды с стрелковым/пулемётным оружием получают -1 попадание при стрельбе.", "effect": "-1 попадание при стрельбе (пассивно).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "global": false, "passive": true },
-              { "name": "¡Huelga!", "desc": "Все отряды получают боезапас на 25% меньше (патроны, гранаты, снаряды).", "effect": "-25% боезапаса всем отрядам", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
+              { "name": "¡Huelga!", "desc": "Все отряды получают боезапас на 25% меньше (патроны, гранаты, снаряды).", "effect": "-25% боезапаса всем отрядам", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/bYANxnX.png", "subfaction": "common" },
               { "name": "Термитный заряд", "desc": "Сапёрное отделение или штаб сапёров получает 3 термитных заряда для уничтожения техники или амбразур ДОТ.", "effect": "3 заряда (d6=2-6 успех, при 4-6 гибель бойца)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/QJ8IjZX.png", "subfaction": "common" },
               { "name": "Фосфорные гранаты", "desc": "Выбранный отряд получает 7 фосфорных гранат вместо обычных. При попадании 4+ бойцов создаётся дымовая завеса.", "effect": "7 фосфорных гранат, дымовая завеса при попадании 4+ бойцов", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
               { "name": "Ампуломёт АМ-1", "desc": "Добавляет расчёт ампуломёта из 3 человек. Дальность 8 гексов, 3 выстрела, урон d4. При 3 попаданиях в гекс – он загорается.", "effect": "Создаёт отряд «Расчёт ампуломёта АМ-1»", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
