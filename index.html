@@ -757,7 +757,7 @@ function nextTurn() {
       medic.healedThisTurn = true;
       log(`Санитар вылечил ${target.fighter.name} из отряда "${target.squadName}" до полного здоровья.`);
     }
-  });
+  };
   // Обработка возвращения бойцов
   appData.squads.forEach(s => {
     s.fighters.forEach(f => {
