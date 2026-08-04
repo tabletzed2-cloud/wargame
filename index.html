@@ -4224,11 +4224,12 @@ case 'Бюрократия':
   break;
 
 case 'Нестабильные гранаты':
-  squad.appliedCards.push(card.name);
-  appData.squads.filter(s => s.faction === 'BeVe').forEach(s => { ... });
-    if (!s.effects) s.effects = {};
-    s.effects.unstableGrenades = true;
-  });
+appData.squads.filter(s => s.faction === 'BeVe' && !s.hidden).forEach(s => {
+      if (!s.effects) s.effects = {};
+      s.effects.unstableGrenades = true;
+      if (!s.appliedCards) s.appliedCards = [];
+      s.appliedCards.push('Нестабильные гранаты');
+    });
   log('Все отряды BeVe получили нестабильные гранаты (половинный урон, округление вверх).');
   break;
 
@@ -4283,6 +4284,13 @@ case 'Политрук':
     appData.activeCards = appData.activeCards.filter(c => c.name !== 'Анархисты');
     log('Карта «Анархисты» деактивирована из-за политрука.');
   }
+              appData.squads.forEach(s => {
+    if (s.effects?.anarchists) {
+      delete s.effects.anarchists;
+      log(`Эффект «Анархисты» снят с отряда "${s.name}".`);
+    }
+    s.appliedCards = (s.appliedCards || []).filter(c => c !== 'Анархисты');
+  });
   log(`Политрук добавлен в отряд "${squad.name}".`);
               // снимаем эффект анархистов со всех отрядов
   appData.squads.forEach(s => {
@@ -4308,6 +4316,8 @@ case 'Анархисты':
   const shuffled = [...allAIRF].sort(() => Math.random() - 0.5);
   const selected = shuffled.slice(0, count);
   selected.forEach(s => {
+            if (!s.appliedCards) s.appliedCards = [];
+        s.appliedCards.push('Анархисты');
     if (!s.effects) s.effects = {};
     s.effects.anarchists = true;
     // дух +2 можно сделать отдельным модификатором, но проще флагом
