@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.57 — ракета  </title>
+  <title>Боевой модуль v11.58 — грязь  </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -93,7 +93,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.57 — ракета </h2>
+  <h2>⚔️ Боевой модуль v11.58 — грязь </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -254,8 +254,8 @@ if (!selectedFaction) showFactionModal();
   "cardLibrary": [
     { "name": "Дымовые гранаты", "desc": "Выбранный отряд получает по 1 дымовой гранате на бойца. Если есть ≥3 гранат, можно создать дымовую завесу (0,5 ОД).","effect": "Выдача дымовых гранат, возможность создать завесу (d12 направление).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
     { "name": "Минометный обстрел (ротный 82мм)", "desc": "Командир взвода запрашивает минометный обстрел у штаба роты.", "effect": "Появляется кнопка «Минометный обстрел» у штаба. Через 2 хода начинается обстрел (2 хода, 6 выстрелов).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true, "oneTime": true },
-    { "name": "Грязь", "desc": "Из-за плохой погоды оружие загрязнилось и клинит. Вся автоматика получает -1 к скорострельности.", "effect": "Автоматическое оружие: -1 к скорострельности.", "shotMod": -1, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
-    { "name": "Чистое оружие", "desc": "Командир строго следит, чтобы оружие блестело! Вся автоматика получает +1 к скорострельности.", "effect": "Автоматическое оружие: +1 к скорострельности.", "shotMod": 1, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
+    { "name": "Грязь", "desc": "Из-за плохой погоды оружие загрязнилось и клинит. Вся автоматика получает -1 к скорострельности.", "effect": "Автоматическое оружие: -1 к скорострельности.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
+    { "name": "Чистое оружие", "desc": "Командир строго следит, чтобы оружие блестело! Вся автоматика получает +1 к скорострельности.", "effect": "Автоматическое оружие: +1 к скорострельности.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
     { "name": "Ящик с патронами", "desc": "В начале боя каждый отряд получает дополнительный боезапас +40 патронов.", "effect": "+40 патронов каждому отряду.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
     { "name": "Индивидуальный перевязочный пакет", "desc": "Каждому бойцу перед боем выдаётся ИПП.", "effect": "У выбранных отрядов появляется кнопка «ИПП» (восстанавливает 1 HP одноразово).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
     { "name": "Небоевая потеря", "desc": "Происходит несчастный случай, боец получает ранение.", "effect": "1 случайный боец получает 3 урона (если отрядов >6 – 2 бойца из разных отрядов).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
@@ -274,7 +274,7 @@ if (!selectedFaction) showFactionModal();
 ],
             "weapons": [
               { "name": "Винтовка FN model 24/30", "values": [1,1,1,1,1,1], "effectiveRange": 5, "meleeBonus": 1, "icon": "https://i.imgur.com/wiNFynL.png", "iconSize": "30px"},
-              { "name": "Винтовка Geweer M95", "values": [1,1,1,1,1,2], "effectiveRange": 5, "meleeBonus": 1, "icon": "https://i.imgur.com/pUJVSSe.png", "iconSize": "30px", "isAutomatic": true},
+              { "name": "Винтовка Geweer M95", "values": [1,1,1,1,1,2], "effectiveRange": 5, "meleeBonus": 1, "icon": "https://i.imgur.com/pUJVSSe.png", "iconSize": "30px"},
               { "name": "Автоматическая винтовка Johanson M1941", "values": [0,1,1,2,2,2], "effectiveRange": 5, "meleeBonus": 1, "icon": "https://i.imgur.com/QGzAzk7.png", "iconSize": "30px", "isAutomatic": true},
               { "name": "Пистолет Browning Hi-Power", "values": [0,1,1,2,2,3], "effectiveRange": 2, "meleeBonus": 0, "icon": "https://i.imgur.com/kZOQk86.png", "iconSize": "30px", "isAutomatic": true},
               { "name": "Ручной пулемет FN model D", "values": [0,1,1,2,2,3], "effectiveRange": 5, "meleeBonus": 0, "icon": "https://i.imgur.com/ACVEF7D.png", "iconSize": "45px", "isAutomatic": true},
