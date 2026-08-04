@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.65 — гранаты  </title>
+  <title>Боевой модуль v11.66 — карточки  </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -77,6 +77,20 @@
 .detection-modal-content h3 { margin-top: 0; }
 .detection-option { margin: 8px 0; }
 .detection-option label { margin-left: 6px; }
+    .card-item.selectable {
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s;
+}
+.card-item.selectable:hover {
+  border-color: #e74c3c;
+  background: #3a2a2a;
+}
+.card-item.selected {
+  border-color: #c0392b !important;
+  background: #3e2a2a !important;
+  box-shadow: 0 0 12px rgba(192,57,43,0.6);
+}
   </style>
 </head>
 <body>
@@ -93,7 +107,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.65 — гранаты </h2>
+  <h2>⚔️ Боевой модуль v11.66 — карточки </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -3590,10 +3604,12 @@ function renderCardLibrary() {
 
 function renderCardSelectionForBattle() {
   const container = document.getElementById('cardSelectionForBattle');
+  if (!container) return;
+  
   const allCards = [];
   Object.entries(appData.factions).forEach(([faction, data]) => {
     (data.cardLibrary || []).forEach(card => {
-      // Глобальные карты показываем всегда, независимо от фракции
+      // глобальные карты – показываем всегда
       if (!card.global) {
         if (selectedFaction === 'BeVe' && selectedSubFaction) {
           if (faction !== 'BeVe') return;
@@ -3605,23 +3621,37 @@ function renderCardSelectionForBattle() {
       allCards.push({ ...card, faction });
     });
   });
+
   if (allCards.length === 0) {
     container.innerHTML = '<p>Нет карт в библиотеке.</p>';
     return;
   }
-  container.innerHTML = allCards.map((c, i) => {
-    const label = c.informational ? '📋 Инфо' : '';
-    return `<label><input type="checkbox" class="card-check" value="${i}" data-faction="${c.faction}" data-name="${c.name}"> ${c.name} [${c.faction}] ${label} — ${c.effect || c.desc || ''}</label><br>`;
-  }).join('');
+
+  let html = '';
+  allCards.forEach((c, i) => {
+    const imgTag = c.icon ? `<img src="${c.icon}" onerror="this.style.display='none'" style="max-width:50px;max-height:50px;object-fit:cover;border-radius:4px;">` : '';
+    const infoBadge = c.informational ? ' 📋' : '';
+    html += `
+      <div class="card-item selectable" data-faction="${c.faction}" data-name="${c.name}" onclick="this.classList.toggle('selected')">
+        ${imgTag}
+        <div class="card-info">
+          <h4>${c.name}${infoBadge} <small>[${c.faction}]</small></h4>
+          <div class="desc">${c.desc || ''}</div>
+          <div class="effect">Эффект: ${c.effect || ''}</div>
+          <small>Выстр: ${c.shotMod}, Точн: ${c.accuracyMod}, Дух: ${c.moraleMod}</small>
+        </div>
+      </div>`;
+  });
+  container.innerHTML = html;
 }
 
 function activateSelectedCards() {
-  const checks = document.querySelectorAll('.card-check:checked');
-  if (checks.length === 0) return;
+  const selectedCards = document.querySelectorAll('.card-item.selected');
+  if (selectedCards.length === 0) return;
 
-  checks.forEach(cb => {
-    const faction = cb.dataset.faction;
-    const name = cb.dataset.name;
+  selectedCards.forEach(cardDiv => {
+    const faction = cardDiv.dataset.faction;
+    const name = cardDiv.dataset.name;
     const card = appData.factions[faction].cardLibrary.find(c => c.name === name);
     if (!card) return;
 
@@ -4290,7 +4320,8 @@ function activateSelectedCards() {
       }
     }
   });
-
+document.querySelectorAll('.card-item.selected').forEach(el => el.classList.remove('selected'));
+  
   saveData();
   renderActiveEffects();
   updateUI();
