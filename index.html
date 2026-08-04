@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.64 — поле  </title>
+  <title>Боевой модуль v11.65 — гранаты  </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -93,7 +93,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.64 — поле </h2>
+  <h2>⚔️ Боевой модуль v11.65 — гранаты </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -2730,19 +2730,19 @@ function throwGrenades() {
   if (!currentSquad || currentSquad.armor) { log('Техника не бросает гранаты.'); return; }
   if (getEffectiveMorale() <= 1) { log('❌ Отряд бежит.'); return; }
   if (!spendAP(currentSquadIndex, getActionCost(currentSquad, 'special'))) {
-  log('Недостаточно ОД для броска гранат.');
-  return;
-}
+    log('Недостаточно ОД для броска гранат.');
+    return;
+  }
   if (currentSquad.grenades <= 0) { log('Нет гранат!'); return; }
   const activeMods = [...(appData.activeCards || []).filter(c => c.active), ...(appData.modifiers || []).filter(m => m.active)];
   let accMod = activeMods.reduce((s, m) => s + (m.accuracyMod || 0), 0);
   if (appData.flareActive && appData.flareTurn === currentTurn) {
-  const nightMod = (appData.modifiers || []).find(m => m.name === 'Ночь' && m.active);
-  if (nightMod) accMod -= nightMod.accuracyMod;
-}
+    const nightMod = (appData.modifiers || []).find(m => m.name === 'Ночь' && m.active);
+    if (nightMod) accMod -= nightMod.accuracyMod;
+  }
   const modParts = [];
-if (accMod) modParts.push(`точность ${accMod > 0 ? '+' + accMod : accMod}`);
-if (modParts.length) log(`🎯 Модификаторы: ${modParts.join(', ')}`);
+  if (accMod) modParts.push(`точность ${accMod > 0 ? '+' + accMod : accMod}`);
+  if (modParts.length) log(`🎯 Модификаторы: ${modParts.join(', ')}`);
   const isSuppressed = getEffectiveMorale() <= getSuppressionThreshold();
   
   const hasDynamic = currentSquad.effects?.dynamic?.active;
@@ -2770,31 +2770,19 @@ if (modParts.length) log(`🎯 Модификаторы: ${modParts.join(', ')}`
           log(`${f.name} получил 3 урона от динамита!`);
           if (f.hp <= 0) { f.hp = 0; log(`${f.name} погиб от взрыва!`); }
         }
-        // нестабильные гранаты – половинный урон с округлением вверх
-        if (currentSquad.effects?.unstableGrenades) {
-          dmg = Math.ceil(dmg / 2);
-        }
-         totalDamage += dmg;
+        totalDamage += dmg;
         log(`${f.name}: бросок гранаты d10=${roll} -> попадание, урон ${dmg} (динамит)`);
       } else if (hasMolotov) {
         dmg = 3;
-                                  // нестабильные гранаты – половинный урон с округлением вверх
-        if (currentSquad.effects?.unstableGrenades) {
-          dmg = Math.ceil(dmg / 2);
-        }
         totalDamage += dmg;
         log(`${f.name}: бросок бутылки d10=${roll} -> попадание, урон ${dmg} (зажигательная смесь)`);
       } else if (hasPhosphorus) {
         dmg = rollD6();
-                                  // нестабильные гранаты – половинный урон с округлением вверх
-        if (currentSquad.effects?.unstableGrenades) {
-          dmg = Math.ceil(dmg / 2);
-        }
         totalDamage += dmg;
         log(`${f.name}: бросок фосфорной гранаты d10=${roll} -> попадание, урон ${dmg}`);
       } else {
         dmg = rollD6();
-                                  // нестабильные гранаты – половинный урон с округлением вверх
+        // нестабильные гранаты – половинный урон с округлением вверх (только для обычных гранат)
         if (currentSquad.effects?.unstableGrenades) {
           dmg = Math.ceil(dmg / 2);
         }
