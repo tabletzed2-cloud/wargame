@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.69 — карточки  </title>
+  <title>Боевой модуль v12.00 — карточки  </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -91,6 +91,17 @@
   background: #3e2a2a !important;
   box-shadow: 0 0 12px rgba(192,57,43,0.6);
 }
+    .card-type-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  margin-right: 4px;
+  color: #fff;
+}
+.card-type-badge.bonus { background: #27ae60; }
+.card-type-badge.negative { background: #c0392b; }
   </style>
 </head>
 <body>
@@ -107,7 +118,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.69 — карточки </h2>
+  <h2>⚔️ Боевой модуль v12.00 — карточки </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -116,6 +127,7 @@
     <button class="tablinks" onclick="openTab(event,'cardsTab')">🃏 Карты</button>
     <button class="tablinks" onclick="openTab(event,'activeEffectsTab')">✨ Эффекты</button>
     <button class="tablinks" onclick="openTab(event,'awardsTab')">🏅 Награды</button>
+    <button class="tablinks" onclick="openTab(event,'cardsEditorTab')">✏️ Редактор карт</button>
     <button class="tablinks" onclick="openTab(event,'saveTab')">💾 Шаблоны</button>
   </div>
 
@@ -176,9 +188,15 @@
   <div id="rosterTab" class="tabcontent"><h3>Редактирование отряда</h3><div id="rosterContent"></div></div>
   <div id="weaponTab" class="tabcontent"><h3>Личное оружие фракций</h3><div><label>Фракция: <select id="factionSelect" onchange="loadWeaponTable()"></select></label><button onclick="addFaction()">➕ Фракция</button><button onclick="deleteFaction()">❌ Удалить</button></div><div class="section">Прицельная дальность (гексы) и рукопашный бонус (для справки).</div><div id="weaponTableContainer"></div><button onclick="addWeapon()">➕ Оружие</button><button onclick="applyWeaponChanges()">💾 Сохранить</button></div>
   <div id="crewTab" class="tabcontent"><h3>Орудия и расчёты</h3><div><label>Фракция: <select id="crewFactionSelect" onchange="loadCrewWeapons()"></select></label></div><div id="crewWeaponList"></div><button onclick="addCrewWeapon()">➕ Орудие</button><button onclick="applyCrewChanges()">💾 Сохранить</button><hr><div id="crewDetails" style="display:none"></div></div>
-  <div id="cardsTab" class="tabcontent"><h3>🃏 Фракционные карты</h3><div><label>Фракция: <select id="cardsFactionSelect" onchange="renderCardLibrary()"></select></label><button onclick="addCardToLibrary()">➕ Добавить карту</button></div><div id="cardLibraryContainer"></div><hr><h4>Выбрать карты в активные</h4><div id="cardSelectionForBattle"></div><div id="infoCardsContainer" style="margin-top:8px;"></div><button onclick="activateSelectedCards()">✅ Активировать выбранные карты</button></div>
+  <div id="cardsTab" class="tabcontent"><h3>🃏 Выбор карт</h3><div id="cardSelectionForBattle"></div><button onclick="activateSelectedCards()">✅ Активировать выбранные карты</button></div>
   <div id="activeEffectsTab" class="tabcontent"><h3>✨ Активные эффекты</h3><p>Текущие модификаторы, влияющие на бой:</p><div id="activeCardsList"></div><hr><h4>Добавить свободный модификатор</h4><div class="modifier-row"><input type="text" id="modName" placeholder="Название" style="width:100px"><label>Выстр: <input type="number" id="modShots" value="0" style="width:50px"></label><label>Точн: <input type="number" id="modAcc" value="0" style="width:50px"></label><label>Дух: <input type="number" id="modMorale" value="0" style="width:50px"></label><button onclick="addModifier()">➕</button></div><div id="modifiersList"></div></div>
   <div id="saveTab" class="tabcontent"><h3>Шаблоны отрядов</h3><div><label>Фильтр по фракции: <select id="templateFactionFilter" onchange="renderTemplates()"><option value="">Все</option></select></label><button onclick="saveCurrentAsTemplate()">💾 Сохранить отряд как шаблон</button></div><div id="templatesList"></div><hr><button onclick="exportAllData()">📤 Экспорт всех данных</button><input type="file" id="importFile" onchange="importAllData(event)" style="display:none"><button onclick="document.getElementById('importFile').click()">📥 Импорт данных</button></div>
+  <div id="cardsEditorTab" class="tabcontent"><h3>✏️ Редактор карт</h3><div>
+    <label>Фракция: <select id="cardsEditorFactionSelect" onchange="renderCardLibraryEditor()"></select></label>
+    <button onclick="addCardToLibrary()">➕ Добавить карту</button>
+  </div>
+  <div id="cardLibraryContainer"></div>
+</div>
   
   <script>
     // =================== ГЛОБАЛЬНЫЕ ФУНКЦИИ ===================
@@ -266,18 +284,18 @@ if (!selectedFaction) showFactionModal();
   "weapons": [],
   "crewWeapons": [],
   "cardLibrary": [
-    { "name": "Дымовые гранаты", "desc": "Выбранный отряд получает по 1 дымовой гранате на бойца. Если есть ≥3 гранат, можно создать дымовую завесу (0,5 ОД).","effect": "Выдача дымовых гранат, возможность создать завесу (d12 направление).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
-    { "name": "Минометный обстрел (ротный 82мм)", "desc": "Командир взвода запрашивает минометный обстрел у штаба роты.", "effect": "Появляется кнопка «Минометный обстрел» у штаба. Через 2 хода начинается обстрел (2 хода, 6 выстрелов).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true, "oneTime": true },
-    { "name": "Грязь", "desc": "Из-за плохой погоды оружие загрязнилось и клинит. Вся автоматика получает -1 к скорострельности.", "effect": "Автоматическое оружие: -1 к скорострельности.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
-    { "name": "Чистое оружие", "desc": "Командир строго следит, чтобы оружие блестело! Вся автоматика получает +1 к скорострельности.", "effect": "Автоматическое оружие: +1 к скорострельности.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
-    { "name": "Ящик с патронами", "desc": "В начале боя каждый отряд получает дополнительный боезапас +40 патронов.", "effect": "+40 патронов каждому отряду.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
-    { "name": "Индивидуальный перевязочный пакет", "desc": "Каждому бойцу перед боем выдаётся ИПП.", "effect": "У выбранных отрядов появляется кнопка «ИПП» (восстанавливает 1 HP одноразово).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
-    { "name": "Небоевая потеря", "desc": "Происходит несчастный случай, боец получает ранение.", "effect": "1 случайный боец получает 3 урона (если отрядов >6 – 2 бойца из разных отрядов).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
-    { "name": "Адреналин", "desc": "Всплеск адреналина придаёт сил бойцам.", "effect": "У всех отрядов появляется кнопка «Адреналин» (+1 ОД, одноразово).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
-    { "name": "Дополнительный паек", "desc": "Бойцам выдали накануне боя дополнительный паек, что повышает боевой дух.", "effect": "Боевой дух всех отрядов +1.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 1, "icon": "", "subfaction": "global", "global": true },
-    { "name": "Санитар", "desc": "Штабу придаётся дополнительный боец без оружия, который в начале хода полностью лечит одного раненого. Вылеченный боец не может стрелять в этот ход.", "effect": "В штаб добавляется санитар (без оружия).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true },
-    { "name": "Бесшумный шаг", "desc": "Беззвучное перемещение на 1 гекс.", "effect": "Информационная – позволяет скрытно сместиться на 1 гекс.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true, "informational": true },
-    { "name": "Ночь", "desc": "Все отряды получают -1 к меткости и -2 к обнаружению. Выбранный отряд получает 6 осветительных ракет.", "effect": "Штраф меткости -1, -2 к обнаружению. 6 осветительных ракет у выбранного отряда.", "shotMod": 0, "accuracyMod": -1, "moraleMod": 0, "icon": "https://i.pinimg.com/originals/67/6d/86/676d866b93a12b4f5fd223ecaa658749.jpg?nii=t", "subfaction": "global", "global": true, "flares": 6 }
+    { "name": "Дымовые гранаты", "desc": "Выбранный отряд получает по 1 дымовой гранате на бойца. Если есть ≥3 гранат, можно создать дымовую завесу (0,5 ОД).","effect": "Выдача дымовых гранат, возможность создать завесу (d12 направление).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true, "type": "bonus" },
+    { "name": "Минометный обстрел (ротный 82мм)", "desc": "Командир взвода запрашивает минометный обстрел у штаба роты.", "effect": "Появляется кнопка «Минометный обстрел» у штаба. Через 2 хода начинается обстрел (2 хода, 6 выстрелов).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true, "oneTime": true, "type": "bonus" },
+    { "name": "Грязь", "desc": "Из-за плохой погоды оружие загрязнилось и клинит. Вся автоматика получает -1 к скорострельности.", "effect": "Автоматическое оружие: -1 к скорострельности.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true, "type": "negative" },
+    { "name": "Чистое оружие", "desc": "Командир строго следит, чтобы оружие блестело! Вся автоматика получает +1 к скорострельности.", "effect": "Автоматическое оружие: +1 к скорострельности.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true, "type": "bonus" },
+    { "name": "Ящик с патронами", "desc": "В начале боя каждый отряд получает дополнительный боезапас +40 патронов.", "effect": "+40 патронов каждому отряду.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true, "type": "bonus" },
+    { "name": "Индивидуальный перевязочный пакет", "desc": "Каждому бойцу перед боем выдаётся ИПП.", "effect": "У выбранных отрядов появляется кнопка «ИПП» (восстанавливает 1 HP одноразово).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true, "type": "bonus" },
+    { "name": "Небоевая потеря", "desc": "Происходит несчастный случай, боец получает ранение.", "effect": "1 случайный боец получает 3 урона (если отрядов >6 – 2 бойца из разных отрядов).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true, "type": "negative" },
+    { "name": "Адреналин", "desc": "Всплеск адреналина придаёт сил бойцам.", "effect": "У всех отрядов появляется кнопка «Адреналин» (+1 ОД, одноразово).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true, "type": "bonus" },
+    { "name": "Дополнительный паек", "desc": "Бойцам выдали накануне боя дополнительный паек, что повышает боевой дух.", "effect": "Боевой дух всех отрядов +1.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 1, "icon": "", "subfaction": "global", "global": true, "type": "bonus" },
+    { "name": "Санитар", "desc": "Штабу придаётся дополнительный боец без оружия, который в начале хода полностью лечит одного раненого. Вылеченный боец не может стрелять в этот ход.", "effect": "В штаб добавляется санитар (без оружия).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true, "type": "bonus" },
+    { "name": "Бесшумный шаг", "desc": "Беззвучное перемещение на 1 гекс.", "effect": "Информационная – позволяет скрытно сместиться на 1 гекс.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "global", "global": true, "informational": true, "type": "bonus" },
+    { "name": "Ночь", "desc": "Все отряды получают -1 к меткости и -2 к обнаружению. Выбранный отряд получает 6 осветительных ракет.", "effect": "Штраф меткости -1, -2 к обнаружению. 6 осветительных ракет у выбранного отряда.", "shotMod": 0, "accuracyMod": -1, "moraleMod": 0, "icon": "https://i.pinimg.com/originals/67/6d/86/676d866b93a12b4f5fd223ecaa658749.jpg?nii=t", "subfaction": "global", "global": true, "flares": 6, "type": "negative" }
   ]
 },
           "BeVe": {
@@ -306,28 +324,28 @@ if (!selectedFaction) showFactionModal();
               { "type": "mg", "name": "Пулемёт SAU Brugge", "crewSize": 1, "shotRule": "sum_d6", "fullCrewDice": 1, "minCrewDice": 1, "effectiveRange": 5, "icon": "" }
             ],
             "cardLibrary": [
-  { "name": "Кальвинистская эффективность", "desc": "Голландское подразделение получает +1 к меткости, если не двигалось.", "effect": "+1 меткость (голландцы, без движения)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/Iq5NinV.png", "subfaction": "dutch", "requires": "stationary" },
-  { "name": "Ослепляющие гранаты Panzerblinde", "desc": "3 гранаты, ослепляют танк на 2 хода.", "effect": "Ослепление техники (3 заряда)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/dr0Rtrx.png", "subfaction": "common", "charges": 3 },
-  { "name": "Дисковый магазин к FN model D", "desc": "Замена ручных пулемётов FN model D на D-exp во всех отрядах.", "effect": "Апгрейд пулемётов", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/Nl9chjM.png", "subfaction": "common", "upgradeMGs": true },
-  { "name": "Кумулятивные винтовочные гранаты", "desc": "Каждое пехотное отделение получает по 2 гранаты против техники (пробитие 50мм).", "effect": "2 винтовочные гранаты на отделение", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/pdWi1aJ.png", "subfaction": "common", "atGrenades": 2 },
-  { "name": "Снайперский прицел OIP M.38", "desc": "Бенилюксская оптика. Снайперское звено доступно для выбора.", "effect": "Добавьте отряд «Снайперское звено OIP» вручную", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/w8S0GF8.png", "subfaction": "common", "informational": true },
-  { "name": "Фламандская Фурия", "desc": "В рукопашной можно перебросить d6=1 один раз.", "effect": "Переброс 1 в ближнем бою (бельгийцы)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/JMPfPx8.png", "subfaction": "belgian", "meleeReroll": true },
-  { "name": "Длинное дыхание", "desc": "При уничтожении отряда враг рядом получает урон.", "effect": "Маркер возмездия (бельгийцы)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/qbqWUQB.png", "subfaction": "belgian" },
-  { "name": "Geen Duibreed Terug!", "desc": "Бельгийцы получают +2 к духу при живом лейтенанте.", "effect": "+2 дух (бельгийцы)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 2, "icon": "https://i.imgur.com/dffr7GY.png", "subfaction": "belgian", "requiresCommander": true },
-  { "name": "Кальвинистская бережливость", "desc": "Каждые 3 хода восстанавливается 3 патрона.", "effect": "Восстановление боезапаса (голландцы)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/TAC5DDu.png", "subfaction": "dutch", "ammoRegen": 3 },
-  { "name": "Кальвинистская сдержанность", "desc": "Голландцы не могут атаковать в рукопашной, в защите -1.", "effect": "Штраф в ближнем бою (голландцы)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/Ey05OLP.png", "subfaction": "dutch", "meleePenalty": true },
-  { "name": "Taalkwetie (Языковой вопрос)", "desc": "Подразделения за пределами 4 гексов от штаба получают -1 ОД.", "effect": "-1ОД дальше 4 гексов", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/Iy3TeCE.jpeg", "subfaction": "common", "informational": true },
-  { "name": "Упрямство", "desc": "Выбранное подразделение не отступает с заданного гекса ни при каких условиях, даже по приказу.", "effect": "Не отступает", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/padjsmN.png", "subfaction": "common", "informational": true },
-  { "name": "Собачья упряжка", "desc": "Расчёт пулемёта/миномёта +1 гекс за ход.", "effect": "+1 гекс перемещения", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/F88Cvoz.png", "subfaction": "common", "informational": true },
-  { "name": "Велоблиц", "desc": "Велосипедное подразделение ускорение 3 гекса, +1 меткость во фланг.", "effect": "Ускорение и меткость", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/ZKsEbrR.jpeg", "subfaction": "common", "informational": true },
-  { "name": "Скоординированный заградительный огонь", "desc": "Отделение поддержки подавляет 2 смежных гекса.", "effect": "Подавление 2 гексов", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "informational": true },
-  { "name": "Noodrem Аварийный тормоз", "desc": "Техника отъезжает на 1 гекс без траты ОД, следующий ход не двигается.", "effect": "Экстренный манёвр", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/4FArrbf.png", "subfaction": "common", "informational": true },
-  { "name": "Велостоянка", "desc": "Маркер на гексе с велосипедами, враг вызывает -1 духа.", "effect": "-1 духа врагу", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/FKGiGJN.png", "subfaction": "common", "informational": true },
-  { "name": "Устаревшие боеприпасы", "desc": "На складах недостаток современных боеприпасов, со склада выдали патроны времен Великой Войны.", "effect": "Всем отрядам BeVe меткость -1.", "shotMod": 0, "accuracyMod": -1, "moraleMod": 0, "icon": "", "subfaction": "common" },
-  { "name": "Бюрократия", "desc": "Получение патронов на передовой превращается в бумажную волокиту.", "effect": "Если боец отправлен за боеприпасами, он идёт на 2 хода дольше (информационная).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "informational": true },
-  { "name": "Нестабильные гранаты", "desc": "Бойцам выдана партия гранат плохого качества.", "effect": "Урон от гранат уменьшается вдвое (округление вверх).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
-  { "name": "Хрупкая оптика", "desc": "Снайперский прицел разбит, пришёл в негодность.", "effect": "Всё снайперское оружие Geweer OIP M.38 заменяется на обычную Geweer M95.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
-  { "name": "Торговый дух", "desc": "Обменять одну карточку снаряжения на случайную.", "effect": "Обмен карты", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/SY8Y04E.png", "subfaction": "common", "informational": true }     
+  { "name": "Кальвинистская эффективность", "desc": "Голландское подразделение получает +1 к меткости, если не двигалось.", "effect": "+1 меткость (голландцы, без движения)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/Iq5NinV.png", "subfaction": "dutch", "requires": "stationary", "type": "bonus" },
+  { "name": "Ослепляющие гранаты Panzerblinde", "desc": "3 гранаты, ослепляют танк на 2 хода.", "effect": "Ослепление техники (3 заряда)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/dr0Rtrx.png", "subfaction": "common", "charges": 3, "type": "bonus" },
+  { "name": "Дисковый магазин к FN model D", "desc": "Замена ручных пулемётов FN model D на D-exp во всех отрядах.", "effect": "Апгрейд пулемётов", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/Nl9chjM.png", "subfaction": "common", "upgradeMGs": true, "type": "bonus" },
+  { "name": "Кумулятивные винтовочные гранаты", "desc": "Каждое пехотное отделение получает по 2 гранаты против техники (пробитие 50мм).", "effect": "2 винтовочные гранаты на отделение", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/pdWi1aJ.png", "subfaction": "common", "atGrenades": 2, "type": "bonus" },
+  { "name": "Снайперский прицел OIP M.38", "desc": "Бенилюксская оптика. Снайперское звено доступно для выбора.", "effect": "Добавьте отряд «Снайперское звено OIP» вручную", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/w8S0GF8.png", "subfaction": "common", "informational": true, "type": "bonus" },
+  { "name": "Фламандская Фурия", "desc": "В рукопашной можно перебросить d6=1 один раз.", "effect": "Переброс 1 в ближнем бою (бельгийцы)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/JMPfPx8.png", "subfaction": "belgian", "meleeReroll": true, "type": "bonus" },
+  { "name": "Длинное дыхание", "desc": "При уничтожении отряда враг рядом получает урон.", "effect": "Маркер возмездия (бельгийцы)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/qbqWUQB.png", "subfaction": "belgian", "type": "bonus" },
+  { "name": "Geen Duibreed Terug!", "desc": "Бельгийцы получают +2 к духу при живом лейтенанте.", "effect": "+2 дух (бельгийцы)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 2, "icon": "https://i.imgur.com/dffr7GY.png", "subfaction": "belgian", "requiresCommander": true, "type": "bonus" },
+  { "name": "Кальвинистская бережливость", "desc": "Каждые 3 хода восстанавливается 3 патрона.", "effect": "Восстановление боезапаса (голландцы)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/TAC5DDu.png", "subfaction": "dutch", "ammoRegen": 3, "type": "negative" },
+  { "name": "Кальвинистская сдержанность", "desc": "Голландцы не могут атаковать в рукопашной, в защите -1.", "effect": "Штраф в ближнем бою (голландцы)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/Ey05OLP.png", "subfaction": "dutch", "meleePenalty": true, "type": "negative" },
+  { "name": "Taalkwetie (Языковой вопрос)", "desc": "Подразделения за пределами 4 гексов от штаба получают -1 ОД.", "effect": "-1ОД дальше 4 гексов", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/Iy3TeCE.jpeg", "subfaction": "common", "informational": true, "type": "negative" },
+  { "name": "Упрямство", "desc": "Выбранное подразделение не отступает с заданного гекса ни при каких условиях, даже по приказу.", "effect": "Не отступает", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/padjsmN.png", "subfaction": "common", "informational": true, "type": "negative" },
+  { "name": "Собачья упряжка", "desc": "Расчёт пулемёта/миномёта +1 гекс за ход.", "effect": "+1 гекс перемещения", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/F88Cvoz.png", "subfaction": "common", "informational": true, "type": "bonus" },
+  { "name": "Велоблиц", "desc": "Велосипедное подразделение ускорение 3 гекса, +1 меткость во фланг.", "effect": "Ускорение и меткость", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/ZKsEbrR.jpeg", "subfaction": "common", "informational": true, "type": "bonus" },
+  { "name": "Скоординированный заградительный огонь", "desc": "Отделение поддержки подавляет 2 смежных гекса.", "effect": "Подавление 2 гексов", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "informational": true, "type": "negative" },
+  { "name": "Noodrem Аварийный тормоз", "desc": "Техника отъезжает на 1 гекс без траты ОД, следующий ход не двигается.", "effect": "Экстренный манёвр", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/4FArrbf.png", "subfaction": "common", "informational": true, "type": "bonus" },
+  { "name": "Велостоянка", "desc": "Маркер на гексе с велосипедами, враг вызывает -1 духа.", "effect": "-1 духа врагу", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/FKGiGJN.png", "subfaction": "common", "informational": true, "type": "negative" },
+  { "name": "Устаревшие боеприпасы", "desc": "На складах недостаток современных боеприпасов, со склада выдали патроны времен Великой Войны.", "effect": "Всем отрядам BeVe меткость -1.", "shotMod": 0, "accuracyMod": -1, "moraleMod": 0, "icon": "", "subfaction": "common", "type": "negative" },
+  { "name": "Бюрократия", "desc": "Получение патронов на передовой превращается в бумажную волокиту.", "effect": "Если боец отправлен за боеприпасами, он идёт на 2 хода дольше (информационная).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "informational": true, "type": "negative" },
+  { "name": "Нестабильные гранаты", "desc": "Бойцам выдана партия гранат плохого качества.", "effect": "Урон от гранат уменьшается вдвое (округление вверх).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "type": "negative" },
+  { "name": "Хрупкая оптика", "desc": "Снайперский прицел разбит, пришёл в негодность.", "effect": "Всё снайперское оружие Geweer OIP M.38 заменяется на обычную Geweer M95.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "type": "negative" },
+  { "name": "Торговый дух", "desc": "Обменять одну карточку снаряжения на случайную.", "effect": "Обмен карты", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/SY8Y04E.png", "subfaction": "common", "informational": true, "type": "bonus" }     
            ] 
           },
           "A.I.R.F.": {
@@ -357,29 +375,29 @@ if (!selectedFaction) showFactionModal();
               { "type": "mortar", "name": "Ампуломёт АМ-1", "crewSize": 3, "shotRule": "fixed_per_crew", "shotsFull": 3, "shotsReduced2": 2, "shotsReduced1": 1, "effectiveRange": 8, "splashDamageDice": 1, "isAmpulomet": true, "damageType": "d4", "icon": "" }
             ],
             "cardLibrary": [
-              { "name": "Интербригада", "desc": "Выбранный отряд состоит из ветеранов интербригад, воевавших в Испании.", "effect": "Бойцы отряда получают знак «Интербригада». Информационная – знак выдаётся вручную.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/BUqCiN4.png", "subfaction": "common", "informational": true },
-              { "name": "Por la revolución!", "desc": "+1 в рукопашной, +1 к боевому духу отряда, в следующем ходу -1 ОД, одноразовая.", "effect": "+1 рукопашная, +1 дух, -1 ОД на след. ход (активируется 1 раз для всех стрелковых, штурмовых, сапёрных и штабов)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 1, "icon": "https://i.imgur.com/p545iht.png", "subfaction": "common", "oneTime": true },
-              { "name": "¡No pasarán!", "desc": "+1 к скорострельности каждого бойца и -1 к меткости на одну атаку, игнорирует подавление. Придаётся стрелковым и пулемётным отделениям, одноразовая.", "effect": "+1 скорострельность, -1 меткость (1 атака), игнорирует подавление", "shotMod": 1, "accuracyMod": -1, "moraleMod": 0, "icon": "", "subfaction": "common", "oneTime": true },
-              { "name": "Испанская ярость", "desc": "+1 в рукопашной. Активируется 1 раз у каждого отряда кроме бронетехники.", "effect": "+1 рукопашная (1 раз)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "oneTime": true },
-              { "name": "Оружие солидарности", "desc": "Штабу взвода придаётся 1 случайное оружие из советского арсенала (АВС-36, ППД-40, ДП-27).", "effect": "Случайное советское оружие штабу", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/ViSMBmT.png", "subfaction": "common" },
-              { "name": "Горные охотники", "desc": "Выберите 3 отряда. При попадании в зону обнаружения вражеского штаба эти отряды не отображаются противнику, пока сами не провалят обнаружение.", "effect": "Условная", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/y4MAsnG.png", "subfaction": "common", "informational": true },
-              { "name": "Реконкиста", "desc": "+1 к рукопашной против BeVe в городском бою.", "effect": "+1 рукопашная против BeVe (городской бой)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
-              { "name": "Залп отчаяния", "desc": "Если у отряда кончились патроны, все живые бойцы делают последний залп со скорострельностью 1, одноразовая.", "effect": "Последний залп при 0 патронах (одноразово)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "oneTime": true },
-              { "name": "Шахтерский динамит", "desc": "Выбранному отряду выдаётся +2 гранаты на бойца, но при броске 1 на d6 боец получает 3 урона. Урон гранат становится d6+1.", "effect": "+2 гранаты/бойца, урон d6+1, риск 1→3 урона", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/p3tabc7.png", "subfaction": "common" },
-              { "name": "Бутылки с зажигательной смесью", "desc": "Все гранаты отряда заменяются на бутылки с зажигательной смесью (1/бойца). Попадание как у гранаты, по танку загорание на 4-6, по пехоте 3 урона.", "effect": "Замена гранат на коктейли Молотова", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/SnonpVt.png", "subfaction": "common" },
-              { "name": "Бутылкомет Цукермана", "desc": "Взводу добавляется расчёт бутылкомёта. Попадание d10 5-10, дальность 3 гекса, эффект как у бутылок.", "effect": "Добавляет орудие «Бутылкомет Цукермана»", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
-              { "name": "Плохой порох", "desc": "Все отряды с стрелковым/пулемётным оружием получают -1 попадание при стрельбе.", "effect": "-1 попадание при стрельбе (пассивно).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "global": false, "passive": true },
-              { "name": "¡Huelga!", "desc": "Все отряды получают боезапас на 25% меньше (патроны, гранаты, снаряды).", "effect": "-25% боезапаса всем отрядам", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/bYANxnX.png", "subfaction": "common" },
-              { "name": "Термитный заряд", "desc": "Сапёрное отделение или штаб сапёров получает 3 термитных заряда для уничтожения техники или амбразур ДОТ.", "effect": "3 заряда (d6=2-6 успех, при 4-6 гибель бойца)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/QJ8IjZX.png", "subfaction": "common" },
-              { "name": "Фосфорные гранаты", "desc": "Выбранный отряд получает 7 фосфорных гранат вместо обычных. При попадании 4+ бойцов создаётся дымовая завеса.", "effect": "7 фосфорных гранат, дымовая завеса при попадании 4+ бойцов", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
-              { "name": "Ампуломёт АМ-1", "desc": "Добавляет расчёт ампуломёта из 3 человек. Дальность 8 гексов, 3 выстрела, урон d4. При 3 попаданиях в гекс – он загорается.", "effect": "Создаёт отряд «Расчёт ампуломёта АМ-1»", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
-              { "name": "Ранцевый огнемёт РОКС-3", "desc": "Сапёрное отделение или штаб сапёров получает огнемёт (3 струи). Струя поражает всех в гексе (d6=2-6, урон 2).", "effect": "Заменяет оружие одного бойца на РОКС-3 (3 заряда)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" },
-              { "name": "Горное пончо", "desc": "В гористо-холмистой местности все отряды при проверке обнаружения пробрасывают с модификатором «Камуфляж».", "effect": "Условная", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "informational": true },
-              { "name": "Талреп-якорь", "desc": "На технику устанавливается специальное оборудование для самовытягивания из грязи или затягивания на возвышенность. На заезд на новый уровень высоты требуется трата всех ОД.", "effect": "Условная", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "informational": true },
-              { "name": "Политрук", "desc": "Командование направляет политрука для поддержания морали.", "effect": "В выбранный отряд добавляется боец «Политрук» (ПП Star Si-35). Боевой дух всех отрядов +1, может снять подавление. Отменяет «Мародёрство» и «Анархисты».", "shotMod": 0, "accuracyMod": 0, "moraleMod": 1, "icon": "", "subfaction": "common" },
-              { "name": "Мародёрство", "desc": "Когда отряд заходит в окоп/здание, где был враг, он 1 ход бездействует.", "effect": "Информационная. Не работает при наличии политрука.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "informational": true },
-              { "name": "Анархисты", "desc": "Среди бойцов оказались анархисты, не любящие приказы.", "effect": "20% отрядов (окр. вверх) получают эффект «Анархисты»: 50% шанс в начале хода потерять 2 ОД или совершить случайную атаку. Боевой дух +2. Отменяется политруком.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common" }, 
-              { "name": "Огненное поле", "desc": "Перед игрой отметьте гекс в 2 гексах от стартовых позиций. В любой момент подожгите его, нанеся d6 урона врагу и заставив отступить.", "effect": "Информационная – позволяет поджечь выбранный гекс", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "informational": true }
+              { "name": "Интербригада", "desc": "Выбранный отряд состоит из ветеранов интербригад, воевавших в Испании.", "effect": "Бойцы отряда получают знак «Интербригада». Информационная – знак выдаётся вручную.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/BUqCiN4.png", "subfaction": "common", "informational": true, "type": "bonus" },
+              { "name": "Por la revolución!", "desc": "+1 в рукопашной, +1 к боевому духу отряда, в следующем ходу -1 ОД, одноразовая.", "effect": "+1 рукопашная, +1 дух, -1 ОД на след. ход (активируется 1 раз для всех стрелковых, штурмовых, сапёрных и штабов)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 1, "icon": "https://i.imgur.com/p545iht.png", "subfaction": "common", "oneTime": true, "type": "bonus" },
+              { "name": "¡No pasarán!", "desc": "+1 к скорострельности каждого бойца и -1 к меткости на одну атаку, игнорирует подавление. Придаётся стрелковым и пулемётным отделениям, одноразовая.", "effect": "+1 скорострельность, -1 меткость (1 атака), игнорирует подавление", "shotMod": 1, "accuracyMod": -1, "moraleMod": 0, "icon": "", "subfaction": "common", "oneTime": true, "type": "bonus" },
+              { "name": "Испанская ярость", "desc": "+1 в рукопашной. Активируется 1 раз у каждого отряда кроме бронетехники.", "effect": "+1 рукопашная (1 раз)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "oneTime": true, "type": "bonus" },
+              { "name": "Оружие солидарности", "desc": "Штабу взвода придаётся 1 случайное оружие из советского арсенала (АВС-36, ППД-40, ДП-27).", "effect": "Случайное советское оружие штабу", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/ViSMBmT.png", "subfaction": "common", "type": "bonus" },
+              { "name": "Горные охотники", "desc": "Выберите 3 отряда. При попадании в зону обнаружения вражеского штаба эти отряды не отображаются противнику, пока сами не провалят обнаружение.", "effect": "Условная", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/y4MAsnG.png", "subfaction": "common", "informational": true, "type": "bonus" },
+              { "name": "Реконкиста", "desc": "+1 к рукопашной против BeVe в городском бою.", "effect": "+1 рукопашная против BeVe (городской бой)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "type": "bonus" },
+              { "name": "Залп отчаяния", "desc": "Если у отряда кончились патроны, все живые бойцы делают последний залп со скорострельностью 1, одноразовая.", "effect": "Последний залп при 0 патронах (одноразово)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "oneTime": true, "type": "bonus" },
+              { "name": "Шахтерский динамит", "desc": "Выбранному отряду выдаётся +2 гранаты на бойца, но при броске 1 на d6 боец получает 3 урона. Урон гранат становится d6+1.", "effect": "+2 гранаты/бойца, урон d6+1, риск 1→3 урона", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/p3tabc7.png", "subfaction": "common", "type": "bonus" },
+              { "name": "Бутылки с зажигательной смесью", "desc": "Все гранаты отряда заменяются на бутылки с зажигательной смесью (1/бойца). Попадание как у гранаты, по танку загорание на 4-6, по пехоте 3 урона.", "effect": "Замена гранат на коктейли Молотова", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/SnonpVt.png", "subfaction": "common", "type": "bonus" },
+              { "name": "Бутылкомет Цукермана", "desc": "Взводу добавляется расчёт бутылкомёта. Попадание d10 5-10, дальность 3 гекса, эффект как у бутылок.", "effect": "Добавляет орудие «Бутылкомет Цукермана»", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "type": "bonus" },
+              { "name": "Плохой порох", "desc": "Все отряды с стрелковым/пулемётным оружием получают -1 попадание при стрельбе.", "effect": "-1 попадание при стрельбе (пассивно).", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "global": false, "passive": true, "type": "negative" },
+              { "name": "¡Huelga!", "desc": "Все отряды получают боезапас на 25% меньше (патроны, гранаты, снаряды).", "effect": "-25% боезапаса всем отрядам", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/bYANxnX.png", "subfaction": "common", "type": "negative" },
+              { "name": "Термитный заряд", "desc": "Сапёрное отделение или штаб сапёров получает 3 термитных заряда для уничтожения техники или амбразур ДОТ.", "effect": "3 заряда (d6=2-6 успех, при 4-6 гибель бойца)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "https://i.imgur.com/QJ8IjZX.png", "subfaction": "common", "type": "bonus" },
+              { "name": "Фосфорные гранаты", "desc": "Выбранный отряд получает 7 фосфорных гранат вместо обычных. При попадании 4+ бойцов создаётся дымовая завеса.", "effect": "7 фосфорных гранат, дымовая завеса при попадании 4+ бойцов", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "type": "bonus" },
+              { "name": "Ампуломёт АМ-1", "desc": "Добавляет расчёт ампуломёта из 3 человек. Дальность 8 гексов, 3 выстрела, урон d4. При 3 попаданиях в гекс – он загорается.", "effect": "Создаёт отряд «Расчёт ампуломёта АМ-1»", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "type": "bonus" },
+              { "name": "Ранцевый огнемёт РОКС-3", "desc": "Сапёрное отделение или штаб сапёров получает огнемёт (3 струи). Струя поражает всех в гексе (d6=2-6, урон 2).", "effect": "Заменяет оружие одного бойца на РОКС-3 (3 заряда)", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "type": "bonus" },
+              { "name": "Горное пончо", "desc": "В гористо-холмистой местности все отряды при проверке обнаружения пробрасывают с модификатором «Камуфляж».", "effect": "Условная", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "informational": true, "type": "bonus" },
+              { "name": "Талреп-якорь", "desc": "На технику устанавливается специальное оборудование для самовытягивания из грязи или затягивания на возвышенность. На заезд на новый уровень высоты требуется трата всех ОД.", "effect": "Условная", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "informational": true, "type": "bonus" },
+              { "name": "Политрук", "desc": "Командование направляет политрука для поддержания морали.", "effect": "В выбранный отряд добавляется боец «Политрук» (ПП Star Si-35). Боевой дух всех отрядов +1, может снять подавление. Отменяет «Мародёрство» и «Анархисты».", "shotMod": 0, "accuracyMod": 0, "moraleMod": 1, "icon": "", "subfaction": "common", "type": "bonus" },
+              { "name": "Мародёрство", "desc": "Когда отряд заходит в окоп/здание, где был враг, он 1 ход бездействует.", "effect": "Информационная. Не работает при наличии политрука.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "informational": true, "type": "negative" },
+              { "name": "Анархисты", "desc": "Среди бойцов оказались анархисты, не любящие приказы.", "effect": "20% отрядов (окр. вверх) получают эффект «Анархисты»: 50% шанс в начале хода потерять 2 ОД или совершить случайную атаку. Боевой дух +2. Отменяется политруком.", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "type": "negative" }, 
+              { "name": "Огненное поле", "desc": "Перед игрой отметьте гекс в 2 гексах от стартовых позиций. В любой момент подожгите его, нанеся d6 урона врагу и заставив отступить.", "effect": "Информационная – позволяет поджечь выбранный гекс", "shotMod": 0, "accuracyMod": 0, "moraleMod": 0, "icon": "", "subfaction": "common", "informational": true, "type": "bonus" }
                ]
               
           }
@@ -602,7 +620,16 @@ appData.squads.forEach(squad => {
     squad.crewInstances.forEach(ci => { if (ci.active === undefined) ci.active = true; });
   }
 });
-
+// миграция: добавляем type, если отсутствует
+Object.values(appData.factions).forEach(faction => {
+  (faction.cardLibrary || []).forEach(card => {
+    if (!card.type) {
+      // Можно попытаться определить по имени или по умолчанию bonus, но лучше ручная классификация при первом создании.
+      // Пока поставим 'bonus', но при сбросе данных всё обновится.
+      card.type = 'bonus';
+    }
+  });
+});
 // Миграция: добавляем desc в награды, если их нет
 // Миграция наград: заполняем критерии, бонусы и размеры из дефолтных данных
 const defaultData = getDefaultData();
@@ -3589,8 +3616,8 @@ assignUniqueCrewKeys(currentSquad); renderCrewAssignmentsList(); }
 
 
     // =================== ВКЛАДКА КАРТЫ ===================
-function renderCardLibrary() { 
-  const faction = document.getElementById('cardsFactionSelect').value; 
+function renderCardLibraryEditor() { 
+  const faction = document.getElementById('cardsEditorFactionSelect').value; 
   let cards = getFactionCards(faction);
   cards = cards.filter(c => !c.informational);
   if (selectedFaction === 'BeVe' && selectedSubFaction) {
@@ -3608,17 +3635,15 @@ function renderCardLibrary() {
       <div class="card-info"><h4>${c.name}</h4><div class="desc">${c.desc}</div><div class="effect">Эффект: ${c.effect}</div><small>Выстр: ${c.shotMod}, Точн: ${c.accuracyMod}, Дух: ${c.moraleMod}</small></div><button onclick="editCard('${faction}',${origIdx})">✏️</button><button onclick="deleteCard('${faction}',${origIdx})">❌</button></div>`;
     }).join('');
   }
-  renderCardSelectionForBattle();
-}  
+ }  
 
 function renderCardSelectionForBattle() {
   const container = document.getElementById('cardSelectionForBattle');
   if (!container) return;
-  
+
   const allCards = [];
   Object.entries(appData.factions).forEach(([faction, data]) => {
     (data.cardLibrary || []).forEach(card => {
-      // глобальные карты – показываем всегда
       if (!card.global) {
         if (selectedFaction === 'BeVe' && selectedSubFaction) {
           if (faction !== 'BeVe') return;
@@ -3636,18 +3661,22 @@ function renderCardSelectionForBattle() {
     return;
   }
 
+  const typeLabels = { bonus: 'Бонус', negative: 'Негатив' };
   let html = '';
-  allCards.forEach((c, i) => {
-    const imgTag = c.icon ? `<img src="${c.icon}" onerror="this.style.display='none'" style="max-width:50px;max-height:50px;object-fit:cover;border-radius:4px;">` : '';
+  allCards.forEach(c => {
+    const imgTag = c.icon
+      ? `<img src="${c.icon}" onerror="this.style.display='none'" style="max-width:50px;max-height:50px;object-fit:cover;border-radius:4px;">`
+      : '';
     const infoBadge = c.informational ? ' 📋' : '';
+    const typeBadge = `<span class="card-type-badge ${c.type || 'bonus'}">${typeLabels[c.type] || 'Бонус'}</span> `;
+
     html += `
       <div class="card-item selectable" data-faction="${c.faction}" data-name="${c.name}" onclick="this.classList.toggle('selected')">
         ${imgTag}
         <div class="card-info">
-          <h4>${c.name}${infoBadge} <small>[${c.faction}]</small></h4>
+          <h4>${typeBadge}${c.name}${infoBadge} <small>[${c.faction}]</small></h4>
           <div class="desc">${c.desc || ''}</div>
           <div class="effect">Эффект: ${c.effect || ''}</div>
-          <small>Выстр: ${c.shotMod}, Точн: ${c.accuracyMod}, Дух: ${c.moraleMod}</small>
         </div>
       </div>`;
   });
@@ -3655,16 +3684,53 @@ function renderCardSelectionForBattle() {
 }
 
 function activateSelectedCards() {
-  const selectedCards = document.querySelectorAll('.card-item.selected');
-  if (selectedCards.length === 0) return;
+  const selectedDivs = document.querySelectorAll('.card-item.selected');
+  if (selectedDivs.length === 0) return;
 
-  selectedCards.forEach(cardDiv => {
-    const faction = cardDiv.dataset.faction;
-    const name = cardDiv.dataset.name;
+  let selectedCards = [];
+  selectedDivs.forEach(div => {
+    const faction = div.dataset.faction;
+    const name = div.dataset.name;
     const card = appData.factions[faction].cardLibrary.find(c => c.name === name);
+    if (card) selectedCards.push({ card, faction });
+  });
+
+  // Ограничение: бонусных карт не более 3 бесплатно
+  const bonusCount = selectedCards.filter(item => item.card.type === 'bonus').length;
+  if (bonusCount > 3) {
+    const extra = bonusCount - 3;
+    const allNegative = [];
+    const addNegativesFromFaction = (factionKey) => {
+      const lib = appData.factions[factionKey]?.cardLibrary || [];
+      lib.forEach(c => {
+        if (c.type === 'negative' && !c.informational &&
+            !selectedCards.some(s => s.card.name === c.name && s.faction === factionKey) &&
+            !allNegative.some(n => n.card.name === c.name && n.faction === factionKey)) {
+          allNegative.push({ card: c, faction: factionKey });
+        }
+      });
+    };
+    addNegativesFromFaction('_global');
+    if (selectedFaction !== '_global') {
+      if (selectedFaction === 'test') {
+        Object.keys(appData.factions).filter(f => f !== '_global').forEach(f => addNegativesFromFaction(f));
+      } else {
+        addNegativesFromFaction(selectedFaction);
+      }
+    }
+    const shuffled = allNegative.sort(() => Math.random() - 0.5);
+    const extraCards = shuffled.slice(0, extra);
+    extraCards.forEach(item => selectedCards.push(item));
+    log(`⚠️ Превышен лимит бонусных карт. Добавлены негативные: ${extraCards.map(i => i.card.name).join(', ')}`);
+  }
+
+  // Активируем карты из selectedCards
+  selectedCards.forEach(item => {
+    const card = item.card;
+    const faction = item.faction;
     if (!card) return;
 
-    // Фламандская Фурия обрабатывается отдельно
+    // Фламандская Фурия – специальная обработка
     if (card.name === 'Фламандская Фурия') {
       const targets = appData.squads.filter(s => !s.hidden);
       if (targets.length === 0) {
@@ -3681,14 +3747,14 @@ function activateSelectedCards() {
       return;
     }
 
-    // Информационные карты просто добавляем в активные
+    // Информационные карты
     if (card.informational) {
       appData.activeCards.push({ ...card, faction, active: true });
-      log(`📋 Информационная карта "${card.name}" активирована. Эффект: ${card.effect || card.desc}`);
+      log(`📋 Информационная карта "${card.name}" активирована.`);
       return;
     }
 
-    // Карты, требующие выбора конкретного отряда (пустой массив – можно пополнять)
+    // Карты, требующие выбора конкретного отряда (можно оставить пустым)
     const perSquad = [];
     if (perSquad.includes(card.name)) {
       const list = appData.squads.map((s,i) => `${i}: ${s.name} [${s.faction}]`).join('\n');
@@ -4198,7 +4264,6 @@ function activateSelectedCards() {
         appData.enemyFlareAvailable = true;
         appData.enemyFlareTurn = currentTurn;
         log(`Отряд "${list[idx].name}" получил 6 осветительных ракет.`);
-        // добавляем всем видимым отрядам, т.к. модификатор общий
         appData.squads.filter(s => !s.hidden).forEach(s => {
           if (!s.appliedCards) s.appliedCards = [];
           s.appliedCards.push(card.name);
@@ -4329,6 +4394,14 @@ function activateSelectedCards() {
       }
     }
   });
+
+  document.querySelectorAll('.card-item.selected').forEach(el => el.classList.remove('selected'));
+  saveData();
+  renderActiveEffects();
+  updateUI();
+  log('Карты активированы');
+});
+    
 document.querySelectorAll('.card-item.selected').forEach(el => el.classList.remove('selected'));
   
   saveData();
@@ -4342,10 +4415,10 @@ function applyCardEffect(card, squad) {
     squad.flemishFury = true;
   }
 }
-    function populateCardsFactionSelect() { const sel = document.getElementById('cardsFactionSelect'); if (sel) sel.innerHTML = Object.keys(appData.factions).map(f=>`<option>${f}</option>`).join(''); }
+    function populateCardsFactionSelect() { const sel = document.getElementById('cardsEditorFactionSelect'); if (sel) sel.innerHTML = Object.keys(appData.factions).map(f=>`<option>${f}</option>`).join(''); }
 // =================== РЕДАКТИРОВАНИЕ КАРТ ===================
 function addCardToLibrary() {
-  const faction = document.getElementById('cardsFactionSelect').value;
+  const faction = document.getElementById('cardsEditorFactionSelect').value;
   const name = prompt('Название карты:');
   if (!name) return;
   const desc = prompt('Описание:');
@@ -4360,14 +4433,14 @@ function addCardToLibrary() {
     informational: false
   });
   saveData();
-  renderCardLibrary();
+  renderCardLibraryEditor();
 }
 
 function deleteCard(faction, idx) {
   if (!confirm('Удалить карту?')) return;
   appData.factions[faction].cardLibrary.splice(idx, 1);
   saveData();
-  renderCardLibrary();
+  renderCardLibraryEditor();
 }
 
 function editCard(faction, idx) {
@@ -4384,7 +4457,7 @@ function editCard(faction, idx) {
   const newIcon = prompt('URL иконки:', card.icon || '');
   if (newIcon !== null) card.icon = newIcon;
   saveData();
-  renderCardLibrary();
+  renderCardLibraryEditor();
 }
     function renderAwardsReference() {
   const container = document.getElementById('awardsReference');
@@ -4466,6 +4539,11 @@ container.innerHTML = filteredTemplates.map(t => {
   renderSquadSelector();
   updateUI();
 }
+function populateCardsEditorFactionSelect() {
+  const sel = document.getElementById('cardsEditorFactionSelect');
+  if (sel) sel.innerHTML = Object.keys(appData.factions).map(f => `<option>${f}</option>`).join('');
+}
+    
     function clearAllSquads() { if (!confirm('Удалить ВСЕ отряды из боя?')) return; appData.squads = []; currentSquad = null; currentSquadIndex = -1; morale = 0; saveData(); renderSquadSelector(); updateUI(); }
     function renderTemplates() { const filterFaction = document.getElementById('templateFactionFilter')?.value || ''; const list = appData.templates.filter(t=>!filterFaction || t.faction===filterFaction); document.getElementById('templatesList').innerHTML = list.map((t,i)=>{ const origIdx = appData.templates.indexOf(t); return `<div><b>${t.name}</b> [${t.faction}] (${t.fighters.length} бойцов, дух ${t.baseMorale}) <button onclick="loadTemplateFromList(${origIdx})">Загрузить</button> <button onclick="deleteTemplate(${origIdx})">Удалить</button></div>`; }).join(''); const sel = document.getElementById('templateFactionFilter'); if (sel) { const cur = sel.value; sel.innerHTML = '<option value="">Все</option>' + Object.keys(appData.factions).map(f=>`<option value="${f}" ${f===cur?'selected':''}>${f}</option>`).join(''); } }
     function saveCurrentAsTemplate() { if(!currentSquad) return; const name = prompt('Имя шаблона:', currentSquad.name); if(!name) return; const tmpl = JSON.parse(JSON.stringify(currentSquad)); tmpl.name = name; appData.templates.push(tmpl); saveData(); renderTemplates(); }
@@ -4483,11 +4561,12 @@ container.innerHTML = filteredTemplates.map(t => {
       if (tabName === 'rosterTab') buildRosterEditor();
       else if (tabName === 'weaponTab') { populateFactionSelect(); loadWeaponTable(); }
       else if (tabName === 'crewTab') { populateCrewFactionSelect(); loadCrewWeapons(); }
-      else if (tabName === 'cardsTab') { populateCardsFactionSelect(); renderCardLibrary(); }
+      else if (tabName === 'cardsTab') { renderCardSelectionForBattle(); }
       else if (tabName === 'activeEffectsTab') { renderActiveEffects(); }
       else if (tabName === 'saveTab') renderTemplates();
       else if (tabName === 'battleTab') { renderSquadSelector(); renderTemplateSelection(); updateUI(); renderEmbarkPanel(); renderFactionInfo(); }
       else if (tabName === 'awardsTab') { renderAwardsReference(); }
+      else if (tabName === 'cardsEditorTab') { populateCardsEditorFactionSelect(); renderCardLibraryEditor();}
     }
 function useFighterIPP(fighterIndex) {
   if (!currentSquad) return;
