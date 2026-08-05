@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Боевой модуль v11.68 — карточки  </title>
+  <title>Боевой модуль v11.69 — карточки  </title>
   <style>
     body{font-family:sans-serif;background:#1e1e1e;color:#ddd;margin:10px}
     button,select,input,textarea{font-size:.9rem;padding:5px 8px;margin:2px;border-radius:4px;border:none}
@@ -107,7 +107,7 @@
     </div>
   </div>
 </div>
-  <h2>⚔️ Боевой модуль v11.68 — карточки </h2>
+  <h2>⚔️ Боевой модуль v11.69 — карточки </h2>
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event,'battleTab')">⚡ Бой</button>
     <button class="tablinks" onclick="openTab(event,'rosterTab')">👥 Состав</button>
@@ -339,7 +339,7 @@ if (!selectedFaction) showFactionModal();
   { "id": "dagger", "name": "Знак «Кинжал Республики»", "icon": "https://i.imgur.com/BbBP97K.png", "iconWidth": "40px", "iconHeight": "50px", "bonus": "Может перебросить провал на обнаружение", "criteria": "Выдается всем выжившим бойцам отряда, подобравшихся незамеченными к противнику на дистанцию рывка в рукопашную атаку 2-3 гекса" },
   { "id": "sapper", "name": "Медаль «За Сапёрную Доблесть»", "icon": "", "iconWidth": "40px", "iconHeight": "55px", "bonus": "При провале подрыва не погибает а получает только 1 ед. урона", "criteria": "Получает сапер, который успешно подорвал бронетехнику или ДОТ при этом выжил" },
   { "id": "interbrigade", "name": "Знак «Интербригада»", "icon": "https://i.imgur.com/RxXHvpf.png", "iconWidth": "50px", "iconHeight": "50px", "bonus": "+1 к меткости", "criteria": "Выдавался иностранцам добровольцам участвовавшим в конфликтах на стороне Коминтерна." },
-  { "id": "loyalty", "name": "Орден «За верность Республике»", "icon": "https://i.imgur.com/jt7QgKm.png", "iconWidth": "40px", "iconHeight": "50px", "bonus": "+1 к боевому духу всех отрядов во взводе", "criteria": "Выдается командиру взвода если ни один его отряд не бежал с поля боя. +1 к боевому духу всех отрядов во взводе" }
+  { "id": "loyalty", "name": "Орден «За верность Республике»", "icon": "https://i.imgur.com/jt7QgKm.png", "iconWidth": "40px", "iconHeight": "50px", "bonus": "+1 к боевому духу всех отрядов во взводе", "criteria": "Выдается командиру взвода если ни один его отряд не бежал с поля боя. +1 к боевому духу отряда" }
 ],
             "weapons": [
               { "name": "Винтовка Vz.24", "values": [1,1,1,1,1,1], "effectiveRange": 5, "meleeBonus": 1, "icon": "https://i.imgur.com/MOKxQYc.png", "iconSize": "40px"},
@@ -1191,6 +1191,10 @@ currentSquad.fighters.forEach((f, index) => {
       const base = currentSquad.baseMorale;
       const mod = (appData.activeCards || []).filter(c => c.active).reduce((s, c) => s + (c.moraleMod || 0), 0) + (appData.modifiers || []).filter(m => m.active).reduce((s, m) => s + (m.moraleMod || 0), 0);
       let extraMorale = 0;
+      // бонус знака «За верность Республике»
+if (appData.squads.some(s => s.fighters.some(f => f.awards?.includes('loyalty')))) {
+  extraMorale += 1;
+}
 if (currentSquad.effects?.geenDuibreed) {
   const commanderAlive = currentSquad.fighters.some(f => f.isCommander && f.hp > 0);
   if (commanderAlive) extraMorale = 2;
@@ -2091,7 +2095,14 @@ function resupply(type) {
     function setMoraleDirect() { const v = parseInt(document.getElementById('moraleDirectInput').value); if (!isNaN(v) && currentSquad) { morale = Math.max(0, v); currentSquad.currentMorale = morale; updateUI(); saveData(); } }
     function healAll() { if (!currentSquad) return; currentSquad.fighters.forEach(f => f.hp = f.maxHp); morale = currentSquad.baseMorale; currentSquad.currentMorale = morale; suppressed = routed = false; updateUI(); saveData(); }
     function resetAll() { if (!currentSquad) return; currentSquad.fighters.forEach(f => f.hp = f.maxHp); morale = currentSquad.baseMorale; currentSquad.currentMorale = morale; suppressed = routed = false; updateUI(); saveData(); }
-    function getEffectiveMorale() { return morale + (appData.activeCards || []).filter(c => c.active).reduce((s, c) => s + (c.moraleMod || 0), 0) + (appData.modifiers || []).filter(m => m.active).reduce((s, m) => s + (m.moraleMod || 0), 0); }
+    function getEffectiveMorale() {
+  let base = morale;
+  const mod = (appData.activeCards || []).filter(c => c.active).reduce((s, c) => s + (c.moraleMod || 0), 0)
+           + (appData.modifiers || []).filter(m => m.active).reduce((s, m) => s + (m.moraleMod || 0), 0);
+  // бонус знака «За верность Республике»
+  const hasLoyalty = appData.squads.some(s => s.fighters.some(f => f.awards?.includes('loyalty')));
+  return base + mod + (hasLoyalty ? 1 : 0);
+}
     function isInfantrySquad(s) { return s.name.includes('Пехотное отделение'); }
 function isInfantryOrSupport(s) { return s.name.includes('Пехотное отделение') || s.name.includes('Отделение поддержки'); }
 function isInfantryOrHQ(s) { return s.name.includes('Пехотное отделение') || s.name.includes('Штаб взвода'); }
@@ -3229,9 +3240,7 @@ if (modParts.length) log(`🎯 Модификаторы: ${modParts.join(', ')}`
       const w = weapons.find(w => w.name === f.weapon);
       if (!w) return;
       let penalty = (badPowderTarget === index) ? 1 : 0;
-          // награда «Интербригада»
       let personalAccBonus = f.awards?.includes('interbrigade') ? 1 : 0;
-      // этот бонус потом добавится к effRoll
       let shots = Math.min(w.values[rollD6() - 1] + shotMod - penalty, currentSquad.ammoSmall);
  // Проверка на грязь/чистое оружие
 if (w.isAutomatic) {
