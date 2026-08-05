@@ -4402,13 +4402,6 @@ function activateSelectedCards() {
   log('Карты активированы');
 }
     
-document.querySelectorAll('.card-item.selected').forEach(el => el.classList.remove('selected'));
-  
-  saveData();
-  renderActiveEffects();
-  updateUI();
-  log('Карты активированы');
-}
 function applyCardEffect(card, squad) {
   // Логика применения эффекта (сейчас только для "Фламандская Фурия")
   if (card.name === 'Фламандская Фурия') {
